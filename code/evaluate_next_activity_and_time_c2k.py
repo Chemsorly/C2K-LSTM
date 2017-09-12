@@ -139,13 +139,10 @@ for row in spamreader:
             timeseqs3.append(times3)
         line = ''
         times = []
-        times2 = []
-        times3 = []
         numlines+=1
-    #line+=row[1]
     line+=unichr(int(row[1])+ascii_offset)
-    timesincelastevent = int(row[3]) #4 is calculated time since last event
-    timesincecasestart = int(row[4]) #5 is timestamp aka time since case start
+    timesincelastevent = int(row[3]) #3 is calculated time since last event
+    timesincecasestart = int(row[4]) #4 is timestamp aka time since case start
     timediff = timesincelastevent
     timediff2 = timesincecasestart
     timediff3 = int(row[2]) 

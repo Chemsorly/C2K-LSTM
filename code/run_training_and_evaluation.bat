@@ -1,3 +1,8 @@
+REM create folders if not exist (e.g. after git clone)
+if not exist .\output_files\folds\ mkdir .\output_files\folds
+if not exist .\output_files\models\ mkdir .\output_files\models
+if not exist .\output_files\results\ mkdir .\output_files\results
+
 REM cleanup previous models so only new models remain. other files get overwritten anyway
 del /s .\output_files\models\*
 
