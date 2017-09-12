@@ -3,8 +3,10 @@ if not exist .\output_files\folds\ mkdir .\output_files\folds
 if not exist .\output_files\models\ mkdir .\output_files\models
 if not exist .\output_files\results\ mkdir .\output_files\results
 
-REM cleanup previous models so only new models remain. other files get overwritten anyway
+REM cleanup previous created files
+del /s /F /Q .\output_files\folds\*
 del /s /F /Q .\output_files\models\*
+del /s /F /Q .\output_files\results\*
 
 REM run train_c2k.py
 python train_c2k.py
