@@ -185,13 +185,11 @@ predict_size = 1
 model = load_model('output_files/models/'+modelfile)
 
 # define helper functions
-def encode(sentence, times, times3, maxlen=maxlen):
+def encode(sentence, times, times2, times3, maxlen=maxlen):
     num_features = len(chars)+4
     X = np.zeros((1, maxlen, num_features), dtype=np.float32)
     leftpad = maxlen-len(sentence)
-    times2 = np.cumsum(times)
     for t, char in enumerate(sentence):
-        multiset_abstraction = Counter(sentence[:t+1])
         for c in chars:
             if c==char:
                 X[0, t+leftpad, char_indices[c]] = 1
@@ -223,76 +221,93 @@ three_ahead_pred = []
 
 
 # make predictions
-with open('output_files/results/next_activity_and_time_%s' % eventlog, 'wb') as csvfile:
+with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog, 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    spamwriter.writerow(["Prefix length", "Groud truth", "Predicted", "Levenshtein", "Damerau", "Jaccard", "Ground truth times", "Predicted times", "RMSE", "MAE", "Median AE"])
-    for prefix_size in range(2,maxlen):
-        print(prefix_size)
-        for line, times, times3 in izip(lines, lines_t, lines_t3):
-            times.append(0)
-            cropped_line = ''.join(line[:prefix_size])
-            cropped_times = times[:prefix_size]
-            cropped_times3 = times3[:prefix_size]
-            if '!' in cropped_line:
-                continue # make no prediction for this case, since this case has ended already
-            ground_truth = ''.join(line[prefix_size:prefix_size+predict_size])
-            ground_truth_t = times[prefix_size:prefix_size+predict_size]
-            predicted = ''
-            predicted_t = []
-            for i in range(predict_size):
-                if len(ground_truth)<=i:
-                    continue
-                enc = encode(cropped_line, cropped_times, cropped_times3)
-                y = model.predict(enc, verbose=0)
-                y_char = y[0][0]
-                y_t = y[1][0][0]
-                prediction = getSymbol(y_char)              
-                cropped_line += prediction
-                if y_t<0:
-                    y_t=0
-                cropped_times.append(y_t)
-                y_t = y_t * divisor
-                cropped_times3.append(cropped_times3[-1] + timedelta(seconds=y_t).seconds)
-                predicted_t.append(y_t)
-                if i==0:
-                    if len(ground_truth_t)>0:
-                        one_ahead_pred.append(y_t)
-                        one_ahead_gt.append(ground_truth_t[0])
-                if i==1:
-                    if len(ground_truth_t)>1:
-                        two_ahead_pred.append(y_t)
-                        two_ahead_gt.append(ground_truth_t[1])
-                if i==2:
-                    if len(ground_truth_t)>2:
-                        three_ahead_pred.append(y_t)
-                        three_ahead_gt.append(ground_truth_t[2])
-                if prediction == '!': # end of case was just predicted, therefore, stop predicting further into the future
-                    print('! predicted, end case')
-                    break
-                predicted += prediction
-            output = []
-            if len(ground_truth)>0:
-                output.append(prefix_size)
-                output.append(unicode(ground_truth).encode("utf-8"))
-                output.append(unicode(predicted).encode("utf-8"))
-                output.append(1 - distance.nlevenshtein(predicted, ground_truth))
-                dls = 1 - (damerau_levenshtein_distance(unicode(predicted), unicode(ground_truth)) / max(len(predicted),len(ground_truth)))
-                if dls<0:
-                    dls=0 # we encountered problems with Damerau-Levenshtein Similarity on some linux machines where the default character encoding of the operating system caused it to be negative, this should never be the case
-                output.append(dls)
-                output.append(1 - distance.jaccard(predicted, ground_truth))
-                output.append('; '.join(str(x) for x in ground_truth_t))
-                output.append('; '.join(str(x) for x in predicted_t))
-                if len(predicted_t)>len(ground_truth_t): # if predicted more events than length of case, only use needed number of events for time evaluation
-                    predicted_t = predicted_t[:len(ground_truth_t)]
-                if len(ground_truth_t)>len(predicted_t): # if predicted less events than length of case, put 0 as placeholder prediction
-                    predicted_t.extend(range(len(ground_truth_t)-len(predicted_t)))
-                if len(ground_truth_t)>0 and len(predicted_t)>0:
-                    output.append('')
-                    output.append(metrics.mean_absolute_error([ground_truth_t[0]], [predicted_t[0]]))
-                    output.append(metrics.median_absolute_error([ground_truth_t[0]], [predicted_t[0]]))
-                else:
-                    output.append('')
-                    output.append('')
-                    output.append('')
-                spamwriter.writerow(output)
+    spamwriter.writerow(["sequenceid", "prefix", "timestamp", "sumduration", "sumprevious", "completion"])
+	sequenceid = 0
+    for line, times, times2, times3 in izip(lines, lines_t, lines_t2, lines_t3):
+		#line = sequence of symbols (activityid)
+		#times = sequence of time since last event
+		#times3 = sequence of durations
+		#calculate max line length
+		sequencelength = length(line)
+		times.append(0)
+		for prefix_size in range(2,sequencelength):
+			print(prefix_size)			
+			cropped_line = ''.join(line[:prefix_size])
+			cropped_times = times[:prefix_size]
+			cropped_times2 = times2[:prefix_size]
+			cropped_times3 = times3[:prefix_size]
+			if '!' in cropped_line:
+				continue # make no prediction for this case, since this case has ended already
+			ground_truth = ''.join(line[prefix_size:prefix_size+predict_size])
+			ground_truth_t = times[prefix_size:prefix_size+predict_size]
+			predicted = ''
+			predicted_t = []
+
+			#predict until n
+
+			for i in range(predict_size):
+				if len(ground_truth)<=i:
+					continue
+				enc = encode(cropped_line, cropped_times, cropped_times2, cropped_times3)
+				y = model.predict(enc, verbose=0)
+				y_char = y[0][0]
+				y_t = y[1][0][0]
+				prediction = getSymbol(y_char)              
+				cropped_line += prediction
+				if y_t<0:
+					y_t=0
+				cropped_times.append(y_t)
+				y_t = y_t * divisor
+				cropped_times3.append(cropped_times3[-1] + timedelta(seconds=y_t).seconds)
+				predicted_t.append(y_t)
+				if i==0:
+					if len(ground_truth_t)>0:
+						one_ahead_pred.append(y_t)
+						one_ahead_gt.append(ground_truth_t[0])
+				if i==1:
+					if len(ground_truth_t)>1:
+						two_ahead_pred.append(y_t)
+						two_ahead_gt.append(ground_truth_t[1])
+				if i==2:
+					if len(ground_truth_t)>2:
+						three_ahead_pred.append(y_t)
+						three_ahead_gt.append(ground_truth_t[2])
+				if prediction == '!': # end of case was just predicted, therefore, stop predicting further into the future
+					print('! predicted, end case')
+					break
+				predicted += prediction
+				#end prediction loop
+			#end prefix loop
+		sequenceid += 1
+		#end sequence loop
+
+
+			#output stuff
+            #output = []
+            #if len(ground_truth)>0:
+            #    output.append(prefix_size)
+            #    output.append(unicode(ground_truth).encode("utf-8"))
+            #    output.append(unicode(predicted).encode("utf-8"))
+            #    output.append(1 - distance.nlevenshtein(predicted, ground_truth))
+            #    dls = 1 - (damerau_levenshtein_distance(unicode(predicted), unicode(ground_truth)) / max(len(predicted),len(ground_truth)))
+            #    if dls<0:
+            #        dls=0 # we encountered problems with Damerau-Levenshtein Similarity on some linux machines where the default character encoding of the operating system caused it to be negative, this should never be the case
+            #    output.append(dls)
+            #    output.append(1 - distance.jaccard(predicted, ground_truth))
+            #    output.append('; '.join(str(x) for x in ground_truth_t))
+            #    output.append('; '.join(str(x) for x in predicted_t))
+            #    if len(predicted_t)>len(ground_truth_t): # if predicted more events than length of case, only use needed number of events for time evaluation
+            #        predicted_t = predicted_t[:len(ground_truth_t)]
+            #    if len(ground_truth_t)>len(predicted_t): # if predicted less events than length of case, put 0 as placeholder prediction
+            #        predicted_t.extend(range(len(ground_truth_t)-len(predicted_t)))
+            #    if len(ground_truth_t)>0 and len(predicted_t)>0:
+            #        output.append('')
+            #        output.append(metrics.mean_absolute_error([ground_truth_t[0]], [predicted_t[0]]))
+            #        output.append(metrics.median_absolute_error([ground_truth_t[0]], [predicted_t[0]]))
+            #    else:
+            #        output.append('')
+            #        output.append('')
+            #        output.append('')
+            #    spamwriter.writerow(output)
