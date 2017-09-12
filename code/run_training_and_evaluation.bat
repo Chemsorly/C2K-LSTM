@@ -4,7 +4,7 @@ if not exist .\output_files\models\ mkdir .\output_files\models
 if not exist .\output_files\results\ mkdir .\output_files\results
 
 REM cleanup previous models so only new models remain. other files get overwritten anyway
-del /s .\output_files\models\*
+del /s /F /Q .\output_files\models\*
 
 REM run train_c2k.py
 python train_c2k.py
