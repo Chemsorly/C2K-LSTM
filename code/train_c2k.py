@@ -249,10 +249,12 @@ num_features = len(chars)+4
 print('num features: {}'.format(num_features))
 X = np.zeros((len(sentences), maxlen, num_features), dtype=np.float32)
 y_a = np.zeros((len(sentences), len(target_chars)), dtype=np.float32)
-y_t = np.zeros((len(sentences)), dtype=np.float32)
+y_t = np.zeros((len(sentences),3), dtype=np.float32)
 for i, sentence in enumerate(sentences):
     leftpad = maxlen-len(sentence)
     next_t = next_chars_t[i]
+	next_t2 = next_chars_t2[i]
+	next_t3 = next_chars_t3[i]
     sentence_t = sentences_t[i]
     sentence_t2 = sentences_t2[i]
     sentence_t3 = sentences_t3[i]
@@ -264,13 +266,15 @@ for i, sentence in enumerate(sentences):
         X[i, t+leftpad, len(chars)] = t+1
         X[i, t+leftpad, len(chars)+1] = sentence_t[t]/divisor
         X[i, t+leftpad, len(chars)+2] = sentence_t2[t]/divisor2
-        X[i, t+leftpad, len(chars)+3] = sentence_t3[t]/divisor3 #todo: find out what divisor does
+        X[i, t+leftpad, len(chars)+3] = sentence_t3[t]/divisor3
     for c in target_chars:
         if c==next_chars[i]:
             y_a[i, target_char_indices[c]] = 1-softness
         else:
             y_a[i, target_char_indices[c]] = softness/(len(target_chars)-1)
-    y_t[i] = next_t/divisor
+    y_t[i,0] = next_t/divisor
+	y_t[i,1] = next_t2/divisor
+	y_t[i,2] = next_t3/divisor
     np.set_printoptions(threshold=np.nan)
 
 # output first 3 batches of matrix [0-2,0-(maxlen-1),0-(num_features-1)]
@@ -296,7 +300,7 @@ b2_1 = BatchNormalization()(l2_1)
 l2_2 = LSTM(100, consume_less='gpu', init='glorot_uniform', return_sequences=False, dropout_W=0.2)(b1) # the layer specialized in time prediction
 b2_2 = BatchNormalization()(l2_2)
 act_output = Dense(len(target_chars), activation='softmax', init='glorot_uniform', name='act_output')(b2_1)
-time_output = Dense(1, init='glorot_uniform', name='time_output')(b2_2)
+time_output = Dense(3, init='glorot_uniform', name='time_output')(b2_2)
 
 model = Model(input=[main_input], output=[act_output, time_output])
 

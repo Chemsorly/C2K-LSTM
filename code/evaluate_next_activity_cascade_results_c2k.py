@@ -109,7 +109,6 @@ target_char_indices = dict((c, i) for i, c in enumerate(target_chars))
 target_indices_char = dict((i, c) for i, c in enumerate(target_chars))
 print(indices_char)
 
-
 lastcase = ''
 line = ''
 firstLine = True
@@ -170,13 +169,11 @@ fold3 = lines[2*elems_per_fold:]
 fold3_t = timeseqs[2*elems_per_fold:]
 fold3_t2 = timeseqs2[2*elems_per_fold:]
 fold3_t3 = timeseqs3[2*elems_per_fold:]
-#fold3_t4 = timeseqs4[2*elems_per_fold:]
 
 lines = fold3
 lines_t = fold3_t
 lines_t2 = fold3_t2
 lines_t3 = fold3_t3
-#lines_t4 = fold1_t4 + fold2_t4
 
 # set parameters
 predict_size = 1
@@ -193,10 +190,10 @@ def encode(sentence, times, times2, times3, maxlen=maxlen):
         for c in chars:
             if c==char:
                 X[0, t+leftpad, char_indices[c]] = 1
-        X[i, t+leftpad, len(chars)] = t+1
-        X[i, t+leftpad, len(chars)+1] = times[t]/divisor
-        X[i, t+leftpad, len(chars)+2] = times2[t]/divisor2
-        X[i, t+leftpad, len(chars)+3] = times3[t]/divisor3
+        X[0, t+leftpad, len(chars)] = t+1
+        X[0, t+leftpad, len(chars)+1] = times[t]/divisor
+        X[0, t+leftpad, len(chars)+2] = times2[t]/divisor2
+        X[0, t+leftpad, len(chars)+3] = times3[t]/divisor3
     return X
 
 def getSymbol(predictions):
@@ -210,31 +207,22 @@ def getSymbol(predictions):
         i += 1
     return symbol
 
-one_ahead_gt = []
-one_ahead_pred = []
-
-two_ahead_gt = []
-two_ahead_pred = []
-
-three_ahead_gt = []
-three_ahead_pred = []
-
-
 # make predictions
 with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog, 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
     spamwriter.writerow(["sequenceid", "prefix", "sumprevious", "timestamp", "sumduration", "completion"])
-	sequenceid = 0
+    sequenceid = 0
     for line, times, times2, times3 in izip(lines, lines_t, lines_t2, lines_t3):
 		#line = sequence of symbols (activityid)
 		#times = sequence of time since last event
 		#times2 = sequence of timestamps
 		#times3 = sequence of durations
 		#calculate max line length
-		sequencelength = length(line)
+		sequencelength = len(line)
+		print('sequence length: {}'.format(sequencelength))	
 		times.append(0)
 		for prefix_size in range(2,sequencelength):
-			print(prefix_size)			
+			print('prefix size: {}'.format(prefix_size))			
 			cropped_line = ''.join(line[:prefix_size])
 			cropped_times = times[:prefix_size]
 			cropped_times2 = times2[:prefix_size]
@@ -255,8 +243,11 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
 				y = model.predict(enc, verbose=0)
 				y_char = y[0][0]
 				y_t = y[1][0][0]
-				y_t2 = y[0][1][0]
-				y_t3 = y[0][0][1]
+				#print(y_char)
+				#print(y_t)
+				#print(y)
+				y_t2 = y[2][0][0]	#fix: find field for y[2]
+				y_t3 = y[3][0][0]	#fix: find field for y[3]
 				prediction = getSymbol(y_char)
 				cropped_line += prediction
 				if y_t<0:
@@ -277,27 +268,22 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
 					print('! predicted, end case')
 					break
 				predicted += prediction
-				predicted_t += y_t
-				predicted_t2 += y_t2
-				predicted_t3 += y_t3
+				predicted_t.append(y_t)
+				predicted_t2.append(y_t2)
+				predicted_t3.append(y_t3)
 				#end prediction loop
 
 			#output stuff (sequence, prefix)
 			output = []
 			output.append(sequenceid)
-			output.append(',')
-			output.append(predict_size)
-			output.append(',')
+			output.append(prefix_size)
 			output.append(sum(predicted_t))
-			output.append(',')
 			output.append(max(predicted_t2))
-			output.append(',')
 			output.append(sum(predicted_t3))
-			output.append(',')
 			output.append(prefix_size / sequencelength)
 
 			spamwriter.writerow(output)
 			#end prefix loop
 		sequenceid += 1
 		#end sequence loop
-	print('finished generating cascade results')
+print('finished generating cascade results')
