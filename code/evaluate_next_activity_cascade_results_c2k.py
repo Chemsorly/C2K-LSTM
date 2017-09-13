@@ -223,7 +223,7 @@ three_ahead_pred = []
 # make predictions
 with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog, 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    spamwriter.writerow(["sequenceid", "prefix", "timestamp", "sumduration", "sumprevious", "completion"])
+    spamwriter.writerow(["sequenceid", "prefix", "sumprevious", "timestamp", "sumduration", "completion"])
 	sequenceid = 0
     for line, times, times2, times3 in izip(lines, lines_t, lines_t2, lines_t3):
 		#line = sequence of symbols (activityid)
@@ -293,6 +293,8 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
 			output.append(max(predicted_t2))
 			output.append(',')
 			output.append(sum(predicted_t3))
+			output.append(',')
+			output.append(prefix_size / sequencelength)
 
 			spamwriter.writerow(output)
 			#end prefix loop
