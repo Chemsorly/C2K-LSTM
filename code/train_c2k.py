@@ -253,8 +253,8 @@ y_t = np.zeros((len(sentences),3), dtype=np.float32)
 for i, sentence in enumerate(sentences):
     leftpad = maxlen-len(sentence)
     next_t = next_chars_t[i]
-	next_t2 = next_chars_t2[i]
-	next_t3 = next_chars_t3[i]
+    next_t2 = next_chars_t2[i]
+    next_t3 = next_chars_t3[i]
     sentence_t = sentences_t[i]
     sentence_t2 = sentences_t2[i]
     sentence_t3 = sentences_t3[i]
@@ -273,8 +273,8 @@ for i, sentence in enumerate(sentences):
         else:
             y_a[i, target_char_indices[c]] = softness/(len(target_chars)-1)
     y_t[i,0] = next_t/divisor
-	y_t[i,1] = next_t2/divisor
-	y_t[i,2] = next_t3/divisor
+    y_t[i,1] = next_t2/divisor
+    y_t[i,2] = next_t3/divisor
     np.set_printoptions(threshold=np.nan)
 
 # output first 3 batches of matrix [0-2,0-(maxlen-1),0-(num_features-1)]
