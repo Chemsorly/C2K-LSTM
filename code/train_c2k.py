@@ -259,7 +259,6 @@ for i, sentence in enumerate(sentences):
     sentence_t2 = sentences_t2[i]
     sentence_t3 = sentences_t3[i]
     for t, char in enumerate(sentence):
-        multiset_abstraction = Counter(sentence[:t+1])
         for c in chars:
             if c==char:
                 X[i, t+leftpad, char_indices[c]] = 1
@@ -273,8 +272,8 @@ for i, sentence in enumerate(sentences):
         else:
             y_a[i, target_char_indices[c]] = softness/(len(target_chars)-1)
     y_t[i,0] = next_t/divisor
-    y_t[i,1] = next_t2/divisor
-    y_t[i,2] = next_t3/divisor
+    y_t[i,1] = next_t2/divisor2
+    y_t[i,2] = next_t3/divisor3
     np.set_printoptions(threshold=np.nan)
 
 # output first 3 batches of matrix [0-2,0-(maxlen-1),0-(num_features-1)]

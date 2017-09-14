@@ -138,6 +138,8 @@ for row in spamreader:
             timeseqs3.append(times3)
         line = ''
         times = []
+        times2 = []
+        times3 = []
         numlines+=1
     line+=unichr(int(row[1])+ascii_offset)
     timesincelastevent = int(row[3]) #3 is calculated time since last event
@@ -212,81 +214,77 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
     spamwriter.writerow(["sequenceid", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp"])
     sequenceid = 0
-    print('sequences: {}'.format(len(lines)))	
+    print('sequences: {}'.format(len(lines)))    
     for pline, ptimes, ptimes2, ptimes3 in izip(lines, lines_t, lines_t2, lines_t3):
-		#line = sequence of symbols (activityid)
-		#times = sequence of time since last event
-		#times2 = sequence of timestamps
-		#times3 = sequence of durations
-		#calculate max line length
-		sequencelength = len(pline)
-		print('sequence length: {}'.format(sequencelength))
-		#calculate ground truth
-		sequencelength = len(pline)
-		ground_truth_sumprevious = sum(ptimes)
-		ground_truth_timestamp = ptimes2[-1]
-		ptimes.append(0)
-		for prefix_size in range(2,sequencelength):
-			print('prefix size: {}'.format(prefix_size))			
-			cropped_line = ''.join(line[:prefix_size])
-			cropped_times = ptimes[:prefix_size]
-			cropped_times2 = ptimes2[:prefix_size]
-			cropped_times3 = ptimes3[:prefix_size]
-			if '!' in cropped_line:
-				break # make no prediction for this case, since this case has ended already
-			#ground_truth = ''.join(line[prefix_size:prefix_size+predict_size])
-			#ground_truth_t = times[prefix_size:prefix_size+predict_size]
-			predicted = ''
-			predicted_t = []
-			predicted_t2 = []
-			predicted_t3 = []
+        #line = sequence of symbols (activityid)
+        #times = sequence of time since last event
+        #times2 = sequence of timestamps
+        #times3 = sequence of durations
+        #calculate max line length
+        sequencelength = len(pline)
+        print('sequence length: {}'.format(sequencelength))
+        #calculate ground truth
+        ground_truth_sumprevious = sum(ptimes)
+        ground_truth_timestamp = ptimes2[-1]
+        ptimes.append(0)
+        ptimes2.append(0)
+        ptimes3.append(0)
+        for prefix_size in range(1,sequencelength):
+            print('prefix size: {}'.format(prefix_size))            
+            cropped_line = ''.join(line[:prefix_size])
+            cropped_times = ptimes[:prefix_size]
+            cropped_times2 = ptimes2[:prefix_size]
+            cropped_times3 = ptimes3[:prefix_size]
+            if '!' in cropped_line:
+                break # make no prediction for this case, since this case has ended already
+            predicted = ''
+            predicted_t = []
+            predicted_t2 = []
+            predicted_t3 = []
+            #predict until ! found
+            for i in range(sequencelength):
+                enc = encode(cropped_line, cropped_times, cropped_times2, cropped_times3)
+                y = model.predict(enc, verbose=0)
+                y_char = y[0][0]
+                y_t = y[1][0][0]
+                y_t2 = y[1][0][1]
+                y_t3 = y[1][0][2]
+                prediction = getSymbol(y_char)
+                cropped_line += prediction
+                if y_t<0:
+                    y_t=0
+                if y_t2<0:
+                    y_t2=0
+                if y_t3<0:
+                    y_t3=0
+                cropped_times.append(y_t)
+                cropped_times2.append(y_t2)
+                cropped_times3.append(y_t3)
+                y_t = y_t * divisor
+                y_t2 = y_t2 * divisor2
+                y_t3 = y_t3 * divisor3
+                if prediction == '!': # end of case was just predicted, therefore, stop predicting further into the future
+                    print('! predicted, end case')
+                    continue
+                predicted += prediction
+                predicted_t.append(y_t)
+                predicted_t2.append(y_t2)
+                predicted_t3.append(y_t3)
+                #end prediction loop
 
-			#predict until ! found
-			for i in range(maxlen):
-				enc = encode(cropped_line, cropped_times, cropped_times2, cropped_times3)
-				y = model.predict(enc, verbose=0)
-				y_char = y[0][0]
-				y_t = y[1][0][0]
-				y_t2 = y[1][0][1]
-				y_t3 = y[1][0][2]
-				prediction = getSymbol(y_char)
-				cropped_line += prediction
-				if y_t<0:
-					y_t=0
-				if y_t2<0:
-					y_t2=0
-				if y_t3<0:
-					y_t3=0
-				cropped_times.append(y_t)
-				cropped_times2.append(y_t2)
-				cropped_times3.append(y_t3)
-
-				y_t = y_t * divisor
-				y_t2 = y_t2 * divisor2
-				y_t3 = y_t3 * divisor3
-
-				if prediction == '!': # end of case was just predicted, therefore, stop predicting further into the future
-					print('! predicted, end case')
-					break
-				predicted += prediction
-				predicted_t.append(y_t)
-				predicted_t2.append(y_t2)
-				predicted_t3.append(y_t3)
-				#end prediction loop
-
-			#output stuff (sequence, prefix)
-			output = []
-			output.append(sequenceid)
-			output.append(prefix_size)
-			output.append(sum(times[:prefix_size] + sum(predicted_t)))
-			output.append(predicted_t2[-1])
-			#output.append(sum(predicted_t3)) #remove duration because process is parallel and therefore sum is useless
-			output.append(prefix_size / sequencelength)
-			output.append(ground_truth_sumprevious)
-			output.append(ground_truth_timestamp)
-
-			spamwriter.writerow(output)
-			#end prefix loop
-		sequenceid += 1
-		#end sequence loop
+            #output stuff (sequence, prefix)
+            if len(predicted) > 0:
+                output = []
+                output.append(sequenceid)
+                output.append(prefix_size)
+                output.append(sum(times[:prefix_size]) + sum(predicted_t))
+                output.append(predicted_t2[-1])
+                #output.append(sum(predicted_t3)) #remove duration because process is parallel and therefore sum is useless
+                output.append(prefix_size / sequencelength)
+                output.append(ground_truth_sumprevious)
+                output.append(ground_truth_timestamp)
+                spamwriter.writerow(output)
+            #end prefix loop
+        sequenceid += 1
+        #end sequence loop
 print('finished generating cascade results')
