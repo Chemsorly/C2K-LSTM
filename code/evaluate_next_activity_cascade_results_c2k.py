@@ -245,7 +245,7 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
 				y_t = y[1][0][0]
 				#print(y_char)
 				#print(y_t)
-				#print(y)
+				print(y)
 				y_t2 = y[2][0][0]	#fix: find field for y[2]
 				y_t3 = y[3][0][0]	#fix: find field for y[3]
 				prediction = getSymbol(y_char)
