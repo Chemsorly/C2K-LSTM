@@ -277,7 +277,7 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
 			output.append(sequenceid)
 			output.append(prefix_size)
 			output.append(sum(predicted_t))
-			output.append(max(predicted_t2))
+			output.append(predicted_t2[-1])
 			output.append(sum(predicted_t3))
 			output.append(prefix_size / sequencelength)
 
