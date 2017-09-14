@@ -213,26 +213,25 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
     spamwriter.writerow(["sequenceid", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp"])
     sequenceid = 0
     print('sequences: {}'.format(len(lines)))	
-    for line, times, times2, times3 in izip(lines, lines_t, lines_t2, lines_t3):
+    for pline, ptimes, ptimes2, ptimes3 in izip(lines, lines_t, lines_t2, lines_t3):
 		#line = sequence of symbols (activityid)
 		#times = sequence of time since last event
 		#times2 = sequence of timestamps
 		#times3 = sequence of durations
 		#calculate max line length
-		sequencelength = len(line)
-		print('sequence length: {}'.format(sequencelength))	
-
+		sequencelength = len(pline)
+		print('sequence length: {}'.format(sequencelength))
 		#calculate ground truth
-        ground_truth_sumprevious = sum(times)
-        ground_truth_timestamp = times2[-1]
-
-		times.append(0)
+		sequencelength = len(pline)
+		ground_truth_sumprevious = sum(ptimes)
+		ground_truth_timestamp = ptimes2[-1]
+		ptimes.append(0)
 		for prefix_size in range(2,sequencelength):
 			print('prefix size: {}'.format(prefix_size))			
 			cropped_line = ''.join(line[:prefix_size])
-			cropped_times = times[:prefix_size]
-			cropped_times2 = times2[:prefix_size]
-			cropped_times3 = times3[:prefix_size]
+			cropped_times = ptimes[:prefix_size]
+			cropped_times2 = ptimes2[:prefix_size]
+			cropped_times3 = ptimes3[:prefix_size]
 			if '!' in cropped_line:
 				break # make no prediction for this case, since this case has ended already
 			#ground_truth = ''.join(line[prefix_size:prefix_size+predict_size])
@@ -279,7 +278,7 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
 			output = []
 			output.append(sequenceid)
 			output.append(prefix_size)
-			output.append(sum(predicted_t))
+			output.append(sum(times[:prefix_size] + sum(predicted_t)))
 			output.append(predicted_t2[-1])
 			#output.append(sum(predicted_t3)) #remove duration because process is parallel and therefore sum is useless
 			output.append(prefix_size / sequencelength)
