@@ -236,18 +236,17 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
 			predicted_t2 = []
 			predicted_t3 = []
 
-			predict_size = sequencelength - prefix_size
-			#predict until n
-			for i in range(predict_size):
+			#predict until ! found
+			for i in range(maxlen):
 				enc = encode(cropped_line, cropped_times, cropped_times2, cropped_times3)
 				y = model.predict(enc, verbose=0)
 				y_char = y[0][0]
 				y_t = y[1][0][0]
 				#print(y_char)
 				#print(y_t)
-				print(y)
-				y_t2 = y[2][0][0]	#fix: find field for y[2]
-				y_t3 = y[3][0][0]	#fix: find field for y[3]
+				#print(y)
+				y_t2 = y[0][0][1]	#fix: find field for y[2]
+				y_t3 = y[0][0][2]	#fix: find field for y[3]
 				prediction = getSymbol(y_char)
 				cropped_line += prediction
 				if y_t<0:
