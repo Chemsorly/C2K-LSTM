@@ -210,7 +210,7 @@ def getSymbol(predictions):
 # make predictions
 with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog, 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    spamwriter.writerow(["sequenceid", "prefix", "sumprevious", "timestamp", "sumduration", "completion"])
+    spamwriter.writerow(["sequenceid", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp"])
     sequenceid = 0
     for line, times, times2, times3 in izip(lines, lines_t, lines_t2, lines_t3):
 		#line = sequence of symbols (activityid)
@@ -220,6 +220,11 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
 		#calculate max line length
 		sequencelength = len(line)
 		print('sequence length: {}'.format(sequencelength))	
+
+		#calculate ground truth
+		ground_truth_sumprevious = sum(times)
+		ground_truth_timestamp = times2[-1]
+
 		times.append(0)
 		for prefix_size in range(2,sequencelength):
 			print('prefix size: {}'.format(prefix_size))			
@@ -242,11 +247,8 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
 				y = model.predict(enc, verbose=0)
 				y_char = y[0][0]
 				y_t = y[1][0][0]
-				#print(y_char)
-				#print(y_t)
-				#print(y)
-				y_t2 = y[0][0][1]	#fix: find field for y[2]
-				y_t3 = y[0][0][2]	#fix: find field for y[3]
+				y_t2 = y[0][0][1]
+				y_t3 = y[0][0][2]
 				prediction = getSymbol(y_char)
 				cropped_line += prediction
 				if y_t<0:
@@ -278,8 +280,10 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
 			output.append(prefix_size)
 			output.append(sum(predicted_t))
 			output.append(predicted_t2[-1])
-			output.append(sum(predicted_t3))
+			#output.append(sum(predicted_t3)) #remove duration because process is parallel and therefore sum is useless
 			output.append(prefix_size / sequencelength)
+			output.append(ground_truth_sumprevious)
+			output.append(ground_truth_timestamp)
 
 			spamwriter.writerow(output)
 			#end prefix loop
