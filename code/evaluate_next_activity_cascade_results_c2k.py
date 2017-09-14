@@ -212,7 +212,7 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
     spamwriter.writerow(["sequenceid", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp"])
     sequenceid = 0
-	print('sequences: {}'.format(len(lines)))	
+    print('sequences: {}'.format(len(lines)))	
     for line, times, times2, times3 in izip(lines, lines_t, lines_t2, lines_t3):
 		#line = sequence of symbols (activityid)
 		#times = sequence of time since last event
@@ -223,8 +223,8 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
 		print('sequence length: {}'.format(sequencelength))	
 
 		#calculate ground truth
-		ground_truth_sumprevious = sum(times)
-		ground_truth_timestamp = times2[-1]
+        ground_truth_sumprevious = sum(times)
+        ground_truth_timestamp = times2[-1]
 
 		times.append(0)
 		for prefix_size in range(2,sequencelength):
