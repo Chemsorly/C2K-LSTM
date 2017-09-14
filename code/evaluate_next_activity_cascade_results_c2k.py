@@ -248,8 +248,8 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
 				y = model.predict(enc, verbose=0)
 				y_char = y[0][0]
 				y_t = y[1][0][0]
-				y_t2 = y[0][0][1]
-				y_t3 = y[0][0][2]
+				y_t2 = y[1][0][1]
+				y_t3 = y[1][0][2]
 				prediction = getSymbol(y_char)
 				cropped_line += prediction
 				if y_t<0:
