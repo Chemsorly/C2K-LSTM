@@ -119,6 +119,10 @@ timeseqs3 = [] # absolute time of previous event
 times = []
 times2 = []
 times3 = []
+meta_tv1 = []
+meta_tv2 = []
+meta_plannedtimestamp = []
+meta_processid = []
 numlines = 0
 casestarttime = None
 lasteventtime = None
@@ -136,10 +140,14 @@ for row in spamreader:
             timeseqs.append(times)
             timeseqs2.append(times2)
             timeseqs3.append(times3)
+            meta_plannedtimestamp.append(meta_tv1)
+            meta_processid.append(meta_tv2)
         line = ''
         times = []
         times2 = []
         times3 = []
+        meta_tv1 = []
+        meta_tv2 = []
         numlines+=1
     line+=unichr(int(row[1])+ascii_offset)
     timesincelastevent = int(row[3]) #3 is calculated time since last event
@@ -150,6 +158,8 @@ for row in spamreader:
     times.append(timediff)
     times2.append(timediff2)
     times3.append(timediff3)
+    meta_tv1.append(int(row[6]))
+    meta_tv2.append(int(row[7]))
     lasteventtime = t
     firstLine = False
 
@@ -158,6 +168,8 @@ lines.append(line)
 timeseqs.append(times)
 timeseqs2.append(times2)
 timeseqs3.append(times3)
+meta_plannedtimestamp.append(meta_tv1)
+meta_processid.append(meta_tv2)
 numlines+=1
 
 divisor = np.mean([item for sublist in timeseqs for item in sublist]) #variable for lstm model
@@ -171,11 +183,15 @@ fold3 = lines[2*elems_per_fold:]
 fold3_t = timeseqs[2*elems_per_fold:]
 fold3_t2 = timeseqs2[2*elems_per_fold:]
 fold3_t3 = timeseqs3[2*elems_per_fold:]
+fold3_m1 = meta_plannedtimestamp[2*elems_per_fold:]
+fold3_m2 = meta_processid[2*elems_per_fold:]
 
 lines = fold3
 lines_t = fold3_t
 lines_t2 = fold3_t2
 lines_t3 = fold3_t3
+lines_m1 = fold3_m1
+lines_m2 = fold3_m2
 
 # set parameters
 predict_size = 1
@@ -212,10 +228,10 @@ def getSymbol(predictions):
 # make predictions
 with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog, 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    spamwriter.writerow(["sequenceid","sequencelength", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp", "gt_allowed"])
+    spamwriter.writerow(["sequenceid","sequencelength", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp", "gt_planned", "gt_instance", "prefix_activities", "predicted_activities"])
     sequenceid = 0
     print('sequences: {}'.format(len(lines)))    
-    for pline, ptimes, ptimes2, ptimes3 in izip(lines, lines_t, lines_t2, lines_t3):
+    for pline, ptimes, ptimes2, ptimes3, pmeta1, pmeta2 in izip(lines, lines_t, lines_t2, lines_t3, lines_m1, lines_m2):
         #line = sequence of symbols (activityid)
         #times = sequence of time since last event
         #times2 = sequence of timestamps
@@ -226,9 +242,9 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
         #calculate ground truth
         ground_truth_sumprevious = sum(ptimes)
         ground_truth_timestamp = ptimes2[-1]
-        #ptimes.append(0)
-        #ptimes2.append(0)
-        #ptimes3.append(0)
+        ground_truth_plannedtimestamp = pmeta1[-1]
+        ground_truth_processid = pmeta2[-1]
+
         for prefix_size in range(1,sequencelength):
             print('prefix size: {}'.format(prefix_size))            
             cropped_line = ''.join(line[:prefix_size])
@@ -241,8 +257,10 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
             predicted_t = []
             predicted_t2 = []
             predicted_t3 = []
+            
+            prefix_activities = cropped_line = ''.join(line[:prefix_size])
             #predict until ! found
-            for i in range(maxlen):
+            for i in range(100):
                 enc = encode(cropped_line, cropped_times, cropped_times2, cropped_times3)
                 y = model.predict(enc, verbose=0)
                 y_char = y[0][0]
@@ -285,6 +303,12 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
                 output.append(prefix_size / sequencelength)
                 output.append(ground_truth_sumprevious)
                 output.append(ground_truth_timestamp)
+                output.append(ground_truth_plannedtimestamp)
+                output.append(ground_truth_processid)
+                prefix_activities = ' '.join(map(lambda x : str(ord(x)- ascii_offset),prefix_activities))
+                predicted_activities = ' '.join(map(lambda x : str(ord(x)- ascii_offset),predicted))
+                output.append(prefix_activities)   #prefix_activities.encode('utf-8'))
+                output.append(predicted_activities)   #predicted.encode('utf-8'))
                 spamwriter.writerow(output)
             #end prefix loop
         sequenceid += 1
