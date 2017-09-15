@@ -5,8 +5,8 @@ CNTK
 Keras  
 
 # Additional Python modules
-distance
-jellyfish
+distance  
+jellyfish  
 
 
 See [dockerfile](https://git.chemsorly.com/Docker/Keras-CNTK-Windows) as example
