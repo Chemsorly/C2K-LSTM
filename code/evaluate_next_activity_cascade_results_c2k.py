@@ -212,7 +212,7 @@ def getSymbol(predictions):
 # make predictions
 with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog, 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    spamwriter.writerow(["sequenceid", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp"])
+    spamwriter.writerow(["sequenceid","sequencelength", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp", "gt_allowed"])
     sequenceid = 0
     print('sequences: {}'.format(len(lines)))    
     for pline, ptimes, ptimes2, ptimes3 in izip(lines, lines_t, lines_t2, lines_t3):
@@ -226,9 +226,9 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
         #calculate ground truth
         ground_truth_sumprevious = sum(ptimes)
         ground_truth_timestamp = ptimes2[-1]
-        ptimes.append(0)
-        ptimes2.append(0)
-        ptimes3.append(0)
+        #ptimes.append(0)
+        #ptimes2.append(0)
+        #ptimes3.append(0)
         for prefix_size in range(1,sequencelength):
             print('prefix size: {}'.format(prefix_size))            
             cropped_line = ''.join(line[:prefix_size])
@@ -242,7 +242,7 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
             predicted_t2 = []
             predicted_t3 = []
             #predict until ! found
-            for i in range(sequencelength):
+            for i in range(maxlen):
                 enc = encode(cropped_line, cropped_times, cropped_times2, cropped_times3)
                 y = model.predict(enc, verbose=0)
                 y_char = y[0][0]
@@ -250,6 +250,9 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
                 y_t2 = y[1][0][1]
                 y_t3 = y[1][0][2]
                 prediction = getSymbol(y_char)
+                if prediction == '!': # end of case was just predicted, therefore, stop predicting further into the future
+                    print('! predicted, end case')
+                    break                
                 cropped_line += prediction
                 if y_t<0:
                     y_t=0
@@ -263,9 +266,7 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
                 y_t = y_t * divisor
                 y_t2 = y_t2 * divisor2
                 y_t3 = y_t3 * divisor3
-                if prediction == '!': # end of case was just predicted, therefore, stop predicting further into the future
-                    print('! predicted, end case')
-                    continue
+
                 predicted += prediction
                 predicted_t.append(y_t)
                 predicted_t2.append(y_t2)
@@ -276,6 +277,7 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
             if len(predicted) > 0:
                 output = []
                 output.append(sequenceid)
+                output.append(sequencelength)
                 output.append(prefix_size)
                 output.append(sum(times[:prefix_size]) + sum(predicted_t))
                 output.append(predicted_t2[-1])
