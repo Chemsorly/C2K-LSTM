@@ -86,7 +86,7 @@ namespace Analyser
                 //create buckets
                 List<Bucket> BucketList = new List<Bucket>();
                 for (int i = 0; i * BucketGranularity <= 1; i++)
-                    BucketList.Add(new Bucket() {BucketLevel = i, ViolationStrings = new List<string>(), PredictionAccuraciesSP =  new List<double>(), PredictionAccuraciesTS = new List<double>()});
+                    BucketList.Add(new Bucket() {BucketLevel = i, ViolationStringsTS = new List<string>(),ViolationStringsSP = new List<string>(), PredictionAccuraciesSP =  new List<double>(), PredictionAccuraciesTS = new List<double>()});
 
                 //fill buckets
                 foreach (var line in output)
@@ -96,7 +96,8 @@ namespace Analyser
                     {
                         if (line.Completion >= i * BucketGranularity && line.Completion < (i + 1) * BucketGranularity)
                         {
-                            BucketList[i].ViolationStrings.Add(line.Violation_String);
+                            BucketList[i].ViolationStringsTS.Add(line.Violation_StringTS);
+                            BucketList[i].ViolationStringsSP.Add(line.Violation_StringSP);
                             BucketList[i].PredictionAccuraciesSP.Add(line.AccuracySumprevious);
                             BucketList[i].PredictionAccuraciesTS.Add(line.AccuracyTimestamp);
                             break;
@@ -106,17 +107,28 @@ namespace Analyser
 
                 //writelines
                 List<String> exportrows = new List<string>();
-                exportrows.Add("sequenceid,sequencelength,prefix,sumprevious,timestamp,completion,gt_sumprevious,gt_timestamp,gt_planned,gt_instance,prefix_activities,predicted_activities,accuracy_sumprevious,accuracy_timestamp,violation_effective,violation_predicted,violation_string");
+                exportrows.Add("sequenceid,sequencelength,prefix,sumprevious,timestamp,completion,gt_sumprevious,gt_timestamp,gt_planned,gt_instance,prefix_activities,predicted_activities,accuracy_sumprevious,accuracy_timestamp,violation_effective,violation_predicted_sp,violation_predicted_ts,violation_string_sp,violation_string_ts");
                 foreach (var line in output)
                 {
-                    exportrows.Add($"{line.SequenceID},{line.SequenceLength},{line.Prefix},{line.SumPrevious},{line.Timestamp},{line.Completion},{line.GT_SumPrevious},{line.GT_Timestamp},{line.GT_Planned},{line.GT_InstanceID},{line.PrefixActivities},{line.PredictedActivities},{line.AccuracySumprevious},{line.AccuracyTimestamp},{line.Violation_Effective},{line.Violation_Predicted},{line.Violation_String}");
+                    exportrows.Add($"{line.SequenceID},{line.SequenceLength},{line.Prefix},{line.SumPrevious},{line.Timestamp},{line.Completion},{line.GT_SumPrevious},{line.GT_Timestamp},{line.GT_Planned},{line.GT_InstanceID},{line.PrefixActivities},{line.PredictedActivities},{line.AccuracySumprevious},{line.AccuracyTimestamp},{line.Violation_Effective},{line.Violation_PredictedSP},{line.Violation_PredictedTS},{line.Violation_StringSP},{line.Violation_StringTS}");
                 }
+
                 //add buckets
-                exportrows.Add("bucket_level,(TN+TP) / Count, Count, Median Sumprevious Accuracy, Median Timestamp Accuracy");
+                exportrows.Add("bucket_level,(TN+TP) / Count (SP), (TN+TP) / Count (TS), Count, Median Sumprevious Accuracy, Median Timestamp Accuracy");
                 foreach (var bucket in BucketList)
-                    if(bucket.ViolationStrings.Any())
-                        exportrows.Add($"{bucket.BucketLevel * BucketGranularity}, {bucket.ViolationRatio},{bucket.ViolationStrings.Count},{bucket.PredictionMeanSP},{bucket.PredictionMeanTS}  ");
-                exportrows.Add($"Total,{BucketList.Where(t => t.ViolationStrings.Count > 0).Sum(t => t.ViolationRatio) / (double)BucketList.Count(t => t.ViolationStrings.Any())},{BucketList.Sum(t => t.ViolationStrings.Count)},{BucketList.Where(t => t.ViolationStrings.Count > 0).Sum(t => t.PredictionMeanSP) / (double)BucketList.Count(t => t.ViolationStrings.Any())},{BucketList.Where(t => t.ViolationStrings.Count > 0).Sum(t => t.PredictionMeanTS) / (double)BucketList.Count(t => t.ViolationStrings.Any())}");
+                    if(bucket.ViolationStringsTS.Any())
+                        exportrows.Add($"{bucket.BucketLevel * BucketGranularity}," +
+                                       $"{bucket.ViolationRatioTS}," +
+                                       $"{bucket.ViolationRatioSP}," +
+                                       $"{bucket.ViolationStringsTS.Count}," +
+                                       $"{bucket.PredictionMeanSP}," +
+                                       $"{bucket.PredictionMeanTS}");
+                exportrows.Add($"Total," +
+                               $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Sum(t => t.ViolationRatioTS) / (double)BucketList.Count(t => t.ViolationStringsTS.Any())}," +
+                               $"{BucketList.Where(t => t.ViolationStringsSP.Count > 0).Sum(t => t.ViolationRatioSP) / (double)BucketList.Count(t => t.ViolationStringsSP.Any())}," +
+                               $"{BucketList.Sum(t => t.ViolationStringsTS.Count)}," +
+                               $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Sum(t => t.PredictionMeanSP) / (double)BucketList.Count(t => t.ViolationStringsTS.Any())}," +
+                               $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Sum(t => t.PredictionMeanTS) / (double)BucketList.Count(t => t.ViolationStringsTS.Any())}");
 
                 ////export as csv to match LSTM input examples
                 File.WriteAllLines(OutFile, exportrows);
@@ -164,19 +176,23 @@ namespace Analyser
             public double AccuracySumprevious { get; set; }
             public double AccuracyTimestamp { get; set; }
             public bool Violation_Effective => GT_Timestamp > GT_Planned;
-            public bool Violation_Predicted => Timestamp > GT_Planned;
-            public String Violation_String => CalculateViolationString(Violation_Effective, Violation_Predicted);
+            public bool Violation_PredictedTS => Timestamp > GT_Planned;
+            public bool Violation_PredictedSP => SumPrevious > GT_Planned;
+            public String Violation_StringTS => CalculateViolationString(Violation_Effective, Violation_PredictedTS);
+            public String Violation_StringSP => CalculateViolationString(Violation_Effective, Violation_PredictedSP);
         }
 
         class Bucket
         {
             public int BucketLevel { get; set; }
 
-            public List<String> ViolationStrings { get; set; }
+            public List<String> ViolationStringsTS { get; set; }
+            public List<String> ViolationStringsSP { get; set; }
             public List<Double> PredictionAccuraciesSP { get; set; }
             public List<Double> PredictionAccuraciesTS { get; set; }
             //binary prediction
-            public double ViolationRatio => (double) ViolationStrings.Count(t => t == "TN" || t == "TP") / (double) ViolationStrings.Count;
+            public double ViolationRatioTS => (double) ViolationStringsTS.Count(t => t == "TN" || t == "TP") / (double) ViolationStringsTS.Count;
+            public double ViolationRatioSP => (double )ViolationStringsSP.Count(t => t == "TN" || t == "TP") / (double)ViolationStringsSP.Count;
 
             //regression prediction
             public double PredictionMeanSP => Median(PredictionAccuraciesSP.ToArray());
