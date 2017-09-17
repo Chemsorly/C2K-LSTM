@@ -86,7 +86,7 @@ namespace Analyser
                 //create buckets
                 List<Bucket> BucketList = new List<Bucket>();
                 for (int i = 0; i * BucketGranularity <= 1; i++)
-                    BucketList.Add(new Bucket() {BucketLevel = i, ViolationStrings = new List<string>()});
+                    BucketList.Add(new Bucket() {BucketLevel = i, ViolationStrings = new List<string>(), PredictionAccuraciesSP =  new List<double>(), PredictionAccuraciesTS = new List<double>()});
 
                 //fill buckets
                 foreach (var line in output)
@@ -97,6 +97,8 @@ namespace Analyser
                         if (line.Completion >= i * BucketGranularity && line.Completion < (i + 1) * BucketGranularity)
                         {
                             BucketList[i].ViolationStrings.Add(line.Violation_String);
+                            BucketList[i].PredictionAccuraciesSP.Add(line.AccuracySumprevious);
+                            BucketList[i].PredictionAccuraciesTS.Add(line.AccuracyTimestamp);
                             break;
                         }
                     }
@@ -110,11 +112,11 @@ namespace Analyser
                     exportrows.Add($"{line.SequenceID},{line.SequenceLength},{line.Prefix},{line.SumPrevious},{line.Timestamp},{line.Completion},{line.GT_SumPrevious},{line.GT_Timestamp},{line.GT_Planned},{line.GT_InstanceID},{line.PrefixActivities},{line.PredictedActivities},{line.AccuracySumprevious},{line.AccuracyTimestamp},{line.Violation_Effective},{line.Violation_Predicted},{line.Violation_String}");
                 }
                 //add buckets
-                exportrows.Add("bucket_level,(TN+TP) / Count, Count");
+                exportrows.Add("bucket_level,(TN+TP) / Count, Count, Median Sumprevious Accuracy, Median Timestamp Accuracy");
                 foreach (var bucket in BucketList)
                     if(bucket.ViolationStrings.Any())
-                        exportrows.Add($"{bucket.BucketLevel * BucketGranularity}, {bucket.ViolationRatio},{bucket.ViolationStrings.Count} ");
-                exportrows.Add($"Total,{BucketList.Where(t => t.ViolationStrings.Count > 0).Sum(t => t.ViolationRatio) / (double)BucketList.Count},{BucketList.Sum(t => t.ViolationStrings.Count)}");
+                        exportrows.Add($"{bucket.BucketLevel * BucketGranularity}, {bucket.ViolationRatio},{bucket.ViolationStrings.Count},{bucket.PredictionMeanSP},{bucket.PredictionMeanTS}  ");
+                exportrows.Add($"Total,{BucketList.Where(t => t.ViolationStrings.Count > 0).Sum(t => t.ViolationRatio) / (double)BucketList.Count(t => t.ViolationStrings.Any())},{BucketList.Sum(t => t.ViolationStrings.Count)},{BucketList.Where(t => t.ViolationStrings.Count > 0).Sum(t => t.PredictionMeanSP) / (double)BucketList.Count(t => t.ViolationStrings.Any())},{BucketList.Sum(t => t.ViolationStrings.Count)},{BucketList.Where(t => t.ViolationStrings.Count > 0).Sum(t => t.PredictionMeanTS) / (double)BucketList.Count(t => t.ViolationStrings.Any())}");
 
                 ////export as csv to match LSTM input examples
                 File.WriteAllLines(OutFile, exportrows);
@@ -171,8 +173,22 @@ namespace Analyser
             public int BucketLevel { get; set; }
 
             public List<String> ViolationStrings { get; set; }
-
+            public List<Double> PredictionAccuraciesSP { get; set; }
+            public List<Double> PredictionAccuraciesTS { get; set; }
+            //binary prediction
             public double ViolationRatio => (double) ViolationStrings.Count(t => t == "TN" || t == "TP") / (double) ViolationStrings.Count;
+
+            //regression prediction
+            public double PredictionMeanSP => Median(PredictionAccuraciesSP.ToArray());
+            public double PredictionMeanTS => Median(PredictionAccuraciesTS.ToArray());
+        }
+
+        static double Median(double[] xs)
+        {
+            //https://stackoverflow.com/questions/4140719/calculate-median-in-c-sharp
+            var ys = xs.OrderBy(x => x).ToList();
+            double mid = (ys.Count - 1) / 2.0;
+            return (ys[(int)(mid)] + ys[(int)(mid + 0.5)]) / 2;
         }
     }
 }
