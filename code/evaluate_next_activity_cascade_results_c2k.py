@@ -231,34 +231,33 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
     spamwriter.writerow(["sequenceid","sequencelength", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp", "gt_planned", "gt_instance", "prefix_activities", "predicted_activities"])
     sequenceid = 0
     print('sequences: {}'.format(len(lines)))    
-    for pline, ptimes, ptimes2, ptimes3, pmeta1, pmeta2 in izip(lines, lines_t, lines_t2, lines_t3, lines_m1, lines_m2):
+    for line, times, times2, times3, meta1, meta2 in izip(lines, lines_t, lines_t2, lines_t3, lines_m1, lines_m2):
         #line = sequence of symbols (activityid)
         #times = sequence of time since last event
         #times2 = sequence of timestamps
         #times3 = sequence of durations
         #calculate max line length
-        sequencelength = len(pline)
+        sequencelength = len(line)
         print('sequence length: {}'.format(sequencelength))
         #calculate ground truth
-        ground_truth_sumprevious = sum(ptimes)
-        ground_truth_timestamp = ptimes2[-1]
-        ground_truth_plannedtimestamp = pmeta1[-1]
-        ground_truth_processid = pmeta2[-1]
+        ground_truth_sumprevious = sum(times)
+        ground_truth_timestamp = times2[-1]
+        ground_truth_plannedtimestamp = meta1[-1]
+        ground_truth_processid = meta2[-1]
 
         for prefix_size in range(1,sequencelength):
             print('prefix size: {}'.format(prefix_size))            
             cropped_line = ''.join(line[:prefix_size])
-            cropped_times = ptimes[:prefix_size]
-            cropped_times2 = ptimes2[:prefix_size]
-            cropped_times3 = ptimes3[:prefix_size]
+            cropped_times = times[:prefix_size]
+            cropped_times2 = times2[:prefix_size]
+            cropped_times3 = times3[:prefix_size]
             if '!' in cropped_line:
                 break # make no prediction for this case, since this case has ended already
             predicted = ''
             predicted_t = []
             predicted_t2 = []
-            predicted_t3 = []
-            
-            prefix_activities = cropped_line = ''.join(line[:prefix_size])
+            predicted_t3 = []            
+            prefix_activities = ''.join(line[:prefix_size])
             #predict until ! found
             for i in range(100):
                 enc = encode(cropped_line, cropped_times, cropped_times2, cropped_times3)
