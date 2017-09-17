@@ -116,7 +116,7 @@ namespace Analyser
                 foreach (var bucket in BucketList)
                     if(bucket.ViolationStrings.Any())
                         exportrows.Add($"{bucket.BucketLevel * BucketGranularity}, {bucket.ViolationRatio},{bucket.ViolationStrings.Count},{bucket.PredictionMeanSP},{bucket.PredictionMeanTS}  ");
-                exportrows.Add($"Total,{BucketList.Where(t => t.ViolationStrings.Count > 0).Sum(t => t.ViolationRatio) / (double)BucketList.Count(t => t.ViolationStrings.Any())},{BucketList.Sum(t => t.ViolationStrings.Count)},{BucketList.Where(t => t.ViolationStrings.Count > 0).Sum(t => t.PredictionMeanSP) / (double)BucketList.Count(t => t.ViolationStrings.Any())},{BucketList.Sum(t => t.ViolationStrings.Count)},{BucketList.Where(t => t.ViolationStrings.Count > 0).Sum(t => t.PredictionMeanTS) / (double)BucketList.Count(t => t.ViolationStrings.Any())}");
+                exportrows.Add($"Total,{BucketList.Where(t => t.ViolationStrings.Count > 0).Sum(t => t.ViolationRatio) / (double)BucketList.Count(t => t.ViolationStrings.Any())},{BucketList.Sum(t => t.ViolationStrings.Count)},{BucketList.Where(t => t.ViolationStrings.Count > 0).Sum(t => t.PredictionMeanSP) / (double)BucketList.Count(t => t.ViolationStrings.Any())},{BucketList.Where(t => t.ViolationStrings.Count > 0).Sum(t => t.PredictionMeanTS) / (double)BucketList.Count(t => t.ViolationStrings.Any())}");
 
                 ////export as csv to match LSTM input examples
                 File.WriteAllLines(OutFile, exportrows);
