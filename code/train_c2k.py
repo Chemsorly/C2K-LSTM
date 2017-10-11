@@ -31,6 +31,14 @@ from itertools import izip
 from datetime import datetime
 from math import log
 
+# create folder is not exist
+if not os.path.exists('output_files/folds'):
+    os.makedirs('output_files/folds')
+if not os.path.exists('output_files/models'):
+    os.makedirs('output_files/models')
+if not os.path.exists('output_files/results'):
+    os.makedirs('output_files/results')
+
 lastcase = ''
 line = ''
 firstLine = True
