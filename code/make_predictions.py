@@ -24,14 +24,11 @@ import matplotlib.pyplot as plt
 from collections import Counter
 
 eventlog = "c2k_data_comma_lstmready.csv"
-modelfile = ""
+modelfile = "model-latest.h5"
 csvfile = open('../data/%s' % eventlog, 'r')
 spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
 next(spamreader, None)  # skip the headers
 ascii_offset = 161
-
-if __name__ == "__main__":
-    modelfile = sys.argv[1]
 
 print('target eventlog: ' + eventlog)
 print('target model: ' + modelfile)
