@@ -32,6 +32,30 @@ from itertools import izip
 from datetime import datetime
 from math import log
 
+#parameters
+#int architecture: 1,2,3
+par_architecture = ""
+
+#int neurons: 50,100,150,200
+par_neurons = ""
+
+#double dropout: 0.2, 0.4, 0.6, 0.8
+par_dropout = ""
+
+#int patience: 20, 40, 60, 80
+par_patience = ""
+
+#int optimizing algorithm: ~7
+par_algorithm = ""
+
+#get args
+if __name__ == "__main__":
+    par_architecture = sys.argv[1]
+    par_neurons = sys.argv[2]
+    par_dropout = sys.argv[3]
+    par_patience = sys.argv[4]
+    par_algorithm = sys.argv[5]
+
 # create folder is not exist
 if not os.path.exists('output_files/folds'):
     os.makedirs('output_files/folds')
@@ -41,36 +65,12 @@ if not os.path.exists('output_files/results'):
     os.makedirs('output_files/results')
 
 #clear folders
-folder = '/output_files/folds'
-for the_file in os.listdir(folder):
-    file_path = os.path.join(folder, the_file)
-    try:
-        if os.path.isfile(file_path):
-            os.unlink(file_path)
-        elif os.path.isdir(file_path): shutil.rmtree(file_path)
-    except Exception as e:
-        print(e)
-
-folder = '/output_files/models'
-for the_file in os.listdir(folder):
-    file_path = os.path.join(folder, the_file)
-    try:
-        if os.path.isfile(file_path):
-            os.unlink(file_path)
-        elif os.path.isdir(file_path): shutil.rmtree(file_path)
-    except Exception as e:
-        print(e)
-        
-folder = '/output_files/results'
-for the_file in os.listdir(folder):
-    file_path = os.path.join(folder, the_file)
-    try:
-        if os.path.isfile(file_path):
-            os.unlink(file_path)
-        eelif os.path.isdir(file_path): shutil.rmtree(file_path)
-    except Exception as e:
-        print(e)
-        
+shutil.rmtree('output_files/folds')
+os.makedirs('output_files/folds')
+shutil.rmtree('output_files/models')
+os.makedirs('output_files/models')
+shutil.rmtree('output_files/results')
+os.makedirs('output_files/results')        
 
 lastcase = ''
 line = ''
@@ -333,11 +333,11 @@ print('Matrix file has been created...')
 print('Build model...')
 main_input = Input(shape=(maxlen, num_features), name='main_input')
 # train a 2-layer LSTM with one shared layer
-l1 = LSTM(100, consume_less='gpu', init='glorot_uniform', return_sequences=True, dropout_W=0.2)(main_input) # the shared layer
+l1 = LSTM(int(par_neurons), consume_less='gpu', init='glorot_uniform', return_sequences=True, dropout_W=float(par_dropout))(main_input) # the shared layer
 b1 = BatchNormalization()(l1)
-l2_1 = LSTM(100, consume_less='gpu', init='glorot_uniform', return_sequences=False, dropout_W=0.2)(b1) # the layer specialized in activity prediction
+l2_1 = LSTM(int(par_neurons), consume_less='gpu', init='glorot_uniform', return_sequences=False, dropout_W=float(par_dropout))(b1) # the layer specialized in activity prediction
 b2_1 = BatchNormalization()(l2_1)
-l2_2 = LSTM(100, consume_less='gpu', init='glorot_uniform', return_sequences=False, dropout_W=0.2)(b1) # the layer specialized in time prediction
+l2_2 = LSTM(int(par_neurons), consume_less='gpu', init='glorot_uniform', return_sequences=False, dropout_W=float(par_dropout))(b1) # the layer specialized in time prediction
 b2_2 = BatchNormalization()(l2_2)
 act_output = Dense(len(target_chars), activation='softmax', init='glorot_uniform', name='act_output')(b2_1)
 time_output = Dense(3, init='glorot_uniform', name='time_output')(b2_2)
@@ -349,6 +349,6 @@ opt = Nadam(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=1e-08, schedule_decay=0.
 model.compile(loss={'act_output':'categorical_crossentropy', 'time_output':'mae'}, optimizer=opt)
 early_stopping = EarlyStopping(monitor='val_loss', patience=42)
 model_checkpoint = ModelCheckpoint('output_files/models/model_{epoch:02d}-{val_loss:.2f}.h5', monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=False, mode='auto')
-lr_reducer = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=10, verbose=0, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
+lr_reducer = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=int(par_patience), verbose=0, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
 
 model.fit(X, {'act_output':y_a, 'time_output':y_t}, validation_split=0.2, verbose=2, callbacks=[early_stopping, model_checkpoint, lr_reducer], batch_size=maxlen, nb_epoch=500)
