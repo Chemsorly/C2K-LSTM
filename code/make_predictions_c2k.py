@@ -20,7 +20,6 @@ from sklearn import metrics
 from math import sqrt
 import time
 from datetime import datetime, timedelta
-import matplotlib.pyplot as plt
 from collections import Counter
 
 eventlog = "c2k_data_comma_lstmready.csv"
