@@ -234,7 +234,7 @@ with open('output_files/results/results.csv', 'wb') as csvfile:
         #times3 = sequence of durations
         #calculate max line length
         sequencelength = len(line)
-        print('sequence length: {}'.format(sequencelength))
+        #print('sequence length: {}'.format(sequencelength))
         #calculate ground truth
         ground_truth_sumprevious = sum(times)
         ground_truth_timestamp = times2[-1]
