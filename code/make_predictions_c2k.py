@@ -20,7 +20,6 @@ from sklearn import metrics
 from math import sqrt
 import time
 from datetime import datetime, timedelta
-import matplotlib.pyplot as plt
 from collections import Counter
 
 eventlog = "c2k_data_comma_lstmready.csv"
@@ -235,7 +234,7 @@ with open('output_files/results/results.csv', 'wb') as csvfile:
         #times3 = sequence of durations
         #calculate max line length
         sequencelength = len(line)
-        print('sequence length: {}'.format(sequencelength))
+        #print('sequence length: {}'.format(sequencelength))
         #calculate ground truth
         ground_truth_sumprevious = sum(times)
         ground_truth_timestamp = times2[-1]
@@ -243,7 +242,6 @@ with open('output_files/results/results.csv', 'wb') as csvfile:
         ground_truth_processid = meta2[-1]
 
         for prefix_size in range(1,sequencelength):
-            print('prefix size: {}'.format(prefix_size))            
             cropped_line = ''.join(line[:prefix_size])
             cropped_times = times[:prefix_size]
             cropped_times2 = times2[:prefix_size]
@@ -265,7 +263,6 @@ with open('output_files/results/results.csv', 'wb') as csvfile:
                 y_t3 = y[1][0][2]
                 prediction = getSymbol(y_char)
                 if prediction == '!': # end of case was just predicted, therefore, stop predicting further into the future
-                    print('! predicted, end case')
                     break                
                 cropped_line += prediction
                 if y_t<0:
