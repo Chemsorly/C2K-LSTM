@@ -1,11 +1,15 @@
 ﻿using Microsoft.VisualBasic.FileIO;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using OxyPlot;
+using OxyPlot.Axes;
+using OxyPlot.Series;
 using SearchOption = System.IO.SearchOption;
 
 namespace Analyser
@@ -14,6 +18,8 @@ namespace Analyser
     {
         const double BucketGranularity = 0.05; //creates a bucket every 0.05 of completion
         const double FmetricBeta = 1;
+        private const int PlotModelHeight = 512;
+        private const int PlotModelWidth = 512;
 
         static void Main(string[] args)
         {
@@ -22,7 +28,71 @@ namespace Analyser
             System.Threading.Thread.CurrentThread.CurrentCulture = customCulture;
 
             DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\raw");
+            DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results");
             List<FileInfo> InFiles = InFolder.EnumerateFiles("*",SearchOption.AllDirectories).Where(t => t.Name.Contains(".csv") && !t.Name.Contains(".edited.csv")).ToList();
+
+            #region init global models
+            OxyPlot.PlotModel model_glob_precision_sp = new PlotModel() { Title = "Results: Precision SP" };
+            model_glob_precision_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_precision_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_precision_sp.IsLegendVisible = true;
+
+            OxyPlot.PlotModel model_glob_recall_sp = new PlotModel() { Title = "Results: Recall SP" };
+            model_glob_recall_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_recall_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_recall_sp.IsLegendVisible = true;
+
+            OxyPlot.PlotModel model_glob_speceficity_sp = new PlotModel() { Title = "Results: Speceficity SP" };
+            model_glob_speceficity_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_speceficity_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_speceficity_sp.IsLegendVisible = true;
+
+            OxyPlot.PlotModel model_glob_falsepositives_sp = new PlotModel() { Title = "Results: False Positives SP" };
+            model_glob_falsepositives_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_falsepositives_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_falsepositives_sp.IsLegendVisible = true;
+
+            OxyPlot.PlotModel model_glob_negativepredictions_sp = new PlotModel() { Title = "Results: Negative Predictions SP" };
+            model_glob_negativepredictions_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_negativepredictions_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_negativepredictions_sp.IsLegendVisible = true;
+
+            OxyPlot.PlotModel model_glob_accuracy_sp = new PlotModel() { Title = "Results: Accuracy SP" };
+            model_glob_accuracy_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_accuracy_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_accuracy_sp.IsLegendVisible = true;
+
+            //TS
+            OxyPlot.PlotModel model_glob_precision_ts = new PlotModel() { Title = "Results: Precision TS" };
+            model_glob_precision_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_precision_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_precision_ts.IsLegendVisible = true;
+
+            OxyPlot.PlotModel model_glob_recall_ts = new PlotModel() { Title = "Results: Recall TS" };
+            model_glob_recall_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_recall_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_recall_ts.IsLegendVisible = true;
+
+            OxyPlot.PlotModel model_glob_speceficity_ts = new PlotModel() { Title = "Results: Speceficity TS" };
+            model_glob_speceficity_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_speceficity_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_speceficity_ts.IsLegendVisible = true;
+
+            OxyPlot.PlotModel model_glob_falsepositives_ts = new PlotModel() { Title = "Results: False Positives TS" };
+            model_glob_falsepositives_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_falsepositives_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_falsepositives_ts.IsLegendVisible = true;
+
+            OxyPlot.PlotModel model_glob_negativepredictions_ts = new PlotModel() { Title = "Results: Negative Predictions TS" };
+            model_glob_negativepredictions_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_negativepredictions_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_negativepredictions_ts.IsLegendVisible = true;
+
+            OxyPlot.PlotModel model_glob_accuracy_ts = new PlotModel() { Title = "Results: Accuracy TS" };
+            model_glob_accuracy_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_accuracy_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_accuracy_ts.IsLegendVisible = true;
+            #endregion
 
             foreach (var file in InFiles)
             {
@@ -33,6 +103,7 @@ namespace Analyser
                     parser.TextFieldType = FieldType.Delimited;
                     parser.SetDelimiters(",");
                     bool firstline = true;
+                    List<String> Parameters = ExtractParams(file.Name.Replace("results-", String.Empty).Replace(".csv", String.Empty));
                     while (!parser.EndOfData)
                     {
                         //rows
@@ -292,12 +363,190 @@ namespace Analyser
                                    $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.FMeasureTS)}"
                                    );
 
-
-
                     ////export as csv to match LSTM input examples
                     File.WriteAllLines($"{file.FullName.Replace(".csv","")}.edited.csv", exportrows);
+
+                    //plot and export
+                    //SP series
+                    OxyPlot.PlotModel model_sp = new PlotModel() {Title = "Results" };
+                    model_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion"});
+                    model_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value"});
+                    model_sp.IsLegendVisible = true;
+
+                    var precisionSeries_sp = new LineSeries() {Title = "Precision_sp" };
+                    var recallSeries_sp = new LineSeries() { Title = "Recall_sp" };
+                    var speceficitySeries_sp = new LineSeries() { Title = "Speceficity_sp" };
+                    var falsepositivesSeries_sp = new LineSeries() { Title = "False Positives_sp" };
+                    var negativepredictedSeries_sp = new LineSeries() { Title = "Negative Predictions_sp" };
+                    var accuracySeries_sp = new LineSeries() { Title = "Accuracy_sp" };
+
+                    var precisionSeries_sp_global = new LineSeries() { Title = String.Join(" ", Parameters)};
+                    var recallSeries_sp_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+                    var speceficitySeries_sp_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+                    var falsepositivesSeries_sp_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+                    var negativepredictedSeries_sp_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+                    var accuracySeries_sp_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+
+                    foreach (var bucket in BucketList)
+                    {
+                        precisionSeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.PrecisionSP));
+                        recallSeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.RecallSP));
+                        speceficitySeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.SpecificitySP));
+                        falsepositivesSeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.FalsePositiveRateSP));
+                        negativepredictedSeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.NegativePredictedValueSP));
+                        accuracySeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.AccuracySP));
+
+                        precisionSeries_sp_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.PrecisionSP));
+                        recallSeries_sp_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.RecallSP));
+                        speceficitySeries_sp_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.SpecificitySP));
+                        falsepositivesSeries_sp_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.FalsePositiveRateSP));
+                        negativepredictedSeries_sp_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.NegativePredictedValueSP));
+                        accuracySeries_sp_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.AccuracySP));
+                    }
+
+                    model_sp.Series.Add(precisionSeries_sp);
+                    model_sp.Series.Add(recallSeries_sp);
+                    model_sp.Series.Add(speceficitySeries_sp);
+                    model_sp.Series.Add(falsepositivesSeries_sp);
+                    model_sp.Series.Add(negativepredictedSeries_sp);
+                    model_sp.Series.Add(accuracySeries_sp);
+                    using (var filestream = new FileStream($"{file.FullName.Replace(".csv", "")}.plot_sp.pdf", FileMode.OpenOrCreate))
+                    {
+                        OxyPlot.PdfExporter.Export(model_sp, filestream, PlotModelHeight, PlotModelWidth);
+                        filestream.Close();
+                    }
+                    //add to global
+                    model_glob_precision_sp.Series.Add(precisionSeries_sp_global);
+                    model_glob_recall_sp.Series.Add(recallSeries_sp_global);
+                    model_glob_speceficity_sp.Series.Add(speceficitySeries_sp_global);
+                    model_glob_falsepositives_sp.Series.Add(falsepositivesSeries_sp_global);
+                    model_glob_negativepredictions_sp.Series.Add(negativepredictedSeries_sp_global);
+                    model_glob_accuracy_sp.Series.Add(accuracySeries_sp_global);
+
+                    //TS series
+                    OxyPlot.PlotModel model_ts = new PlotModel() { Title = "Results" };
+                    model_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+                    model_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+                    model_ts.IsLegendVisible = true;
+
+                    var precisionSeries_ts = new LineSeries() { Title = "Precision_ts" };
+                    var recallSeries_ts = new LineSeries() { Title = "Recall_ts" };
+                    var speceficitySeries_ts = new LineSeries() { Title = "Speceficity_ts" };
+                    var falsepositivesSeries_ts = new LineSeries() { Title = "False Positives_ts" };
+                    var negativepredictedSeries_ts = new LineSeries() { Title = "Negative Predictions_ts" };
+                    var accuracySeries_ts = new LineSeries() { Title = "Accuracy_ts" };
+
+                    var precisionSeries_ts_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+                    var recallSeries_ts_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+                    var speceficitySeries_ts_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+                    var falsepositivesSeries_ts_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+                    var negativepredictedSeries_ts_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+                    var accuracySeries_ts_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+
+                    foreach (var bucket in BucketList)
+                    {
+                        precisionSeries_ts.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.PrecisionTS));
+                        recallSeries_ts.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.RecallTS));
+                        speceficitySeries_ts.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.SpecificityTS));
+                        falsepositivesSeries_ts.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.FalsePositiveRateTS));
+                        negativepredictedSeries_ts.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.NegativePredictedValueTS));
+                        accuracySeries_ts.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.AccuracyTS));
+
+                        precisionSeries_ts_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.PrecisionTS));
+                        recallSeries_ts_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.RecallTS));
+                        speceficitySeries_ts_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.SpecificityTS));
+                        falsepositivesSeries_ts_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.FalsePositiveRateTS));
+                        negativepredictedSeries_ts_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.NegativePredictedValueTS));
+                        accuracySeries_ts_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.AccuracyTS));
+                    }
+
+                    model_ts.Series.Add(precisionSeries_ts);
+                    model_ts.Series.Add(recallSeries_ts);
+                    model_ts.Series.Add(speceficitySeries_ts);
+                    model_ts.Series.Add(falsepositivesSeries_ts);
+                    model_ts.Series.Add(negativepredictedSeries_ts);
+                    model_ts.Series.Add(accuracySeries_ts);
+                    using (var filestream = new FileStream($"{file.FullName.Replace(".csv", "")}.plot_ts.pdf", FileMode.OpenOrCreate))
+                    {
+                        OxyPlot.PdfExporter.Export(model_ts, filestream, PlotModelHeight, PlotModelWidth);
+                        filestream.Close();
+                    }
+                    //add to global
+                    model_glob_precision_ts.Series.Add(precisionSeries_ts_global);
+                    model_glob_recall_ts.Series.Add(recallSeries_ts_global);
+                    model_glob_speceficity_ts.Series.Add(speceficitySeries_ts_global);
+                    model_glob_falsepositives_ts.Series.Add(falsepositivesSeries_ts_global);
+                    model_glob_negativepredictions_ts.Series.Add(negativepredictedSeries_ts_global);
+                    model_glob_accuracy_ts.Series.Add(accuracySeries_ts_global);
                 }
             }
+
+            #region print global
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_precision_sp.pdf", FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_precision_sp, filestream, PlotModelHeight, PlotModelWidth);
+                filestream.Close();
+            }
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_recall_sp.pdf", FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_recall_sp, filestream, PlotModelHeight, PlotModelWidth);
+                filestream.Close();
+            }
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_speceficity_sp.pdf", FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_speceficity_sp, filestream, PlotModelHeight, PlotModelWidth);
+                filestream.Close();
+            }
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_falsepositives_sp.pdf", FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_falsepositives_sp, filestream, PlotModelHeight, PlotModelWidth);
+                filestream.Close();
+            }
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_negativepredictions_sp.pdf", FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_negativepredictions_sp, filestream, PlotModelHeight, PlotModelWidth);
+                filestream.Close();
+            }
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_accuracy_sp.pdf", FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_accuracy_sp, filestream, PlotModelHeight, PlotModelWidth);
+                filestream.Close();
+            }
+
+            //ts
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_precision_ts.pdf", FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_precision_ts, filestream, PlotModelHeight, PlotModelWidth);
+                filestream.Close();
+            }
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_recall_ts.pdf", FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_recall_ts, filestream, PlotModelHeight, PlotModelWidth);
+                filestream.Close();
+            }
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_speceficity_ts.pdf", FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_speceficity_ts, filestream, PlotModelHeight, PlotModelWidth);
+                filestream.Close();
+            }
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_falsepositives_ts.pdf", FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_falsepositives_ts, filestream, PlotModelHeight, PlotModelWidth);
+                filestream.Close();
+            }
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_negativepredictions_ts.pdf", FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_negativepredictions_ts, filestream, PlotModelHeight, PlotModelWidth);
+                filestream.Close();
+            }
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_accuracy_ts.pdf", FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_accuracy_ts, filestream, PlotModelHeight, PlotModelWidth);
+                filestream.Close();
+            }
+
+            #endregion
+
         }
 
         public static double CalculateAccuracy(double pInput, double pReference)
@@ -319,6 +568,14 @@ namespace Analyser
                 return "TN";
 
             return "oops";
+        }
+
+        public static List<String> ExtractParams(String pParameterString)
+        {
+            var paras = pParameterString.Split(' ');
+
+            //we only want 1,2,3; neurons, dropout, patience
+            return new List<string>() {paras[1], paras[2] , paras[3] };
         }
 
         class Line
