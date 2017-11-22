@@ -150,7 +150,7 @@ chars = list(set().union(*chars))
 chars.sort()
 target_chars = copy.copy(chars)
 chars.remove('!')
-print('total chars: {}, target chars: {}\n'.format(len(chars), len(target_chars)))
+print('total chars: {}, target chars: {}'.format(len(chars), len(target_chars)))
 char_indices = dict((c, i) for i, c in enumerate(chars)) #dictionary<key,value> with <char, index> where char is unique symbol for activity
 indices_char = dict((i, c) for i, c in enumerate(chars)) #dictionary<key,value> with <index, char> where char is unique symbol for activity
 target_char_indices = dict((c, i) for i, c in enumerate(target_chars))
@@ -215,11 +215,11 @@ timeseqs3.append(times3)
 numlines+=1
 
 divisor = np.mean([item for sublist in timeseqs for item in sublist]) #variable for lstm model
-print('divisor: {}\n'.format(divisor))
+print('divisor: {}'.format(divisor))
 divisor2 = np.mean([item for sublist in timeseqs2 for item in sublist]) #variable for lstm model
-print('divisor2: {}\n'.format(divisor2))
+print('divisor2: {}'.format(divisor2))
 divisor3 = np.mean([item for sublist in timeseqs3 for item in sublist]) #variable for lstm model
-print('divisor3: {}\n'.format(divisor3))
+print('divisor3: {}'.format(divisor3))
 
 elems_per_fold = int(round(numlines/3))
 fold1 = lines[:elems_per_fold]
@@ -285,9 +285,9 @@ for line, line_t, line_t2, line_t3 in izip(lines, lines_t, lines_t2, lines_t3):
             next_chars_t3.append(line_t3[i])
 print('nb sequences:', len(sentences))
 
-print('Vectorization...\n')
+print('Vectorization...')
 num_features = len(chars)+4
-print('num features: {}\n'.format(num_features))
+print('num features: {}'.format(num_features))
 X = np.zeros((len(sentences), maxlen, num_features), dtype=np.float32)
 y_a = np.zeros((len(sentences), len(target_chars)), dtype=np.float32)
 y_t = np.zeros((len(sentences),3), dtype=np.float32)
@@ -327,10 +327,10 @@ with open("output_files/folds/matrix.txt", "w") as text_file:
                 row+=','                    
                 text_file.write(row+'\n')
         text_file.write('batch end\n')
-print('Matrix file has been created...\n')
+print('Matrix file has been created...')
             
 # build the model: 
-print('Build model...\n')
+print('Build model...')
 main_input = Input(shape=(maxlen, num_features), name='main_input')
 # train a 2-layer LSTM with one shared layer
 l1 = LSTM(par_neurons, consume_less='gpu', init='glorot_uniform', return_sequences=True, dropout_W=par_dropout)(main_input) # the shared layer
