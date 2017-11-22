@@ -344,7 +344,27 @@ time_output = Dense(3, init='glorot_uniform', name='time_output')(b2_2)
 
 model = Model(input=[main_input], output=[act_output, time_output])
 
-opt = Nadam(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=1e-08, schedule_decay=0.004, clipvalue=3)
+if par_algorithm == 1:
+    opt = Nadam(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=1e-08, schedule_decay=0.004, clipvalue=3)
+    print('Optimizer: nadam')
+elif par_algorithm == 2:
+    opt = optimizers.RMSprop(lr=0.001, rho=0.9, epsilon=1e-08, decay=0.0) #"good for rnn"
+    print('Optimizer: rmsprop')
+elif par_algorithm == 3:
+    opt = optimizers.Adamax(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
+    print('Optimizer: adamax')
+elif par_algorithm == 4:
+    opt = optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
+    print('Optimizer: adam')
+elif par_algorithm == 5:
+    opt = optimizers.Adadelta(lr=1.0, rho=0.95, epsilon=1e-08, decay=0.0)
+    print('Optimizer: adelta')
+elif par_algorithm == 6:
+    opt = optimizers.Adagrad(lr=0.01, epsilon=1e-08, decay=0.0)
+    print('Optimizer: adagrad')
+elif par_algorithm == 7:
+    opt = optimizers.SGD(lr=0.01, momentum=0.0, decay=0.0, nesterov=False)
+    print('Optimizer: sgd')
 
 model.compile(loss={'act_output':'categorical_crossentropy', 'time_output':'mae'}, optimizer=opt)
 early_stopping = EarlyStopping(monitor='val_loss', patience=42)
