@@ -18,8 +18,8 @@ namespace Analyser
     {
         const double BucketGranularity = 0.05; //creates a bucket every 0.05 of completion
         const double FmetricBeta = 1;
-        private const int PlotModelHeight = 512;
         private const int PlotModelWidth = 512;
+        private const int PlotModelHeight = 512;
 
         static void Main(string[] args)
         {
@@ -30,6 +30,8 @@ namespace Analyser
             DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\raw");
             DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results");
             List<FileInfo> InFiles = InFolder.EnumerateFiles("*",SearchOption.AllDirectories).Where(t => t.Name.Contains(".csv") && !t.Name.Contains(".edited.csv")).ToList();
+
+            int maxSequences = 0;
 
             #region init global models
             OxyPlot.PlotModel model_glob_precision_sp = new PlotModel() { Title = "Results: Precision SP" };
@@ -92,6 +94,19 @@ namespace Analyser
             model_glob_accuracy_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
             model_glob_accuracy_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
             model_glob_accuracy_ts.IsLegendVisible = true;
+
+            OxyPlot.PlotModel model_glob_predictedsequences = new PlotModel() { Title = "Predicted sequences" };
+            var model_glob_predictedsequences_cataxis = new CategoryAxis() {Position = AxisPosition.Bottom, Title = "Parameters", Angle = 45, FontSize = 8};
+            model_glob_predictedsequences.Axes.Add(model_glob_predictedsequences_cataxis);
+            model_glob_predictedsequences.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Percentage" });
+            Dictionary<String,int> predictedSequences = new Dictionary<string, int>();
+
+            OxyPlot.PlotModel model_glob_validsequences = new PlotModel(){Title = "Valid prediction sequences"};
+            var model_glob_validsequences_cataxis = new CategoryAxis {Position = AxisPosition.Bottom, Title = "Parameters", Angle = 45, FontSize = 8 };
+            model_glob_validsequences.Axes.Add(model_glob_validsequences_cataxis);
+            model_glob_validsequences.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Percentage" });
+            Dictionary<String, int> validSequences = new Dictionary<string, int>();
+
             #endregion
 
             foreach (var file in InFiles)
@@ -103,11 +118,13 @@ namespace Analyser
                     parser.TextFieldType = FieldType.Delimited;
                     parser.SetDelimiters(",");
                     bool firstline = true;
+                    int rows = 0;
                     List<String> Parameters = ExtractParams(file.Name.Replace("results-", String.Empty).Replace(".csv", String.Empty));
                     while (!parser.EndOfData)
                     {
                         //rows
                         string[] fields = parser.ReadFields();
+                        rows++;
 
                         if (firstline || String.IsNullOrEmpty(fields[0]))
                         {
@@ -157,6 +174,10 @@ namespace Analyser
                         line.AccuracySumprevious = CalculateAccuracy(line.SumPrevious, line.GT_SumPrevious);
                         line.AccuracyTimestamp = CalculateAccuracy(line.Timestamp, line.GT_Timestamp);
                     }
+
+                    //save longest sequence
+                    if (rows > maxSequences)
+                        maxSequences = rows;
 
                     //create buckets
                     List<Bucket> BucketList = new List<Bucket>();
@@ -213,7 +234,8 @@ namespace Analyser
                                    "violation_string_sp," +
                                    "violation_string_ts," +
                                    "deviation_abs_sp," +
-                                   "deviation_abs_ts");
+                                   "deviation_abs_ts," +
+                                   "valid_suffix");
                     foreach (var line in output)
                     {
                         exportrows.Add($"{line.SequenceID}," +
@@ -236,7 +258,8 @@ namespace Analyser
                                        $"{line.Violation_StringSP}," +
                                        $"{line.Violation_StringTS}," +
                                        $"{line.DeviationAbsoluteSumprevious}," +
-                                       $"{line.DeviationAbsoluteTimestamp}");
+                                       $"{line.DeviationAbsoluteTimestamp},"+
+                                       $"{line.IsValidPrediction}");
                     }
 
                     //add buckets
@@ -412,7 +435,7 @@ namespace Analyser
                     model_sp.Series.Add(accuracySeries_sp);
                     using (var filestream = new FileStream($"{file.FullName.Replace(".csv", "")}.plot_sp.pdf", FileMode.OpenOrCreate))
                     {
-                        OxyPlot.PdfExporter.Export(model_sp, filestream, PlotModelHeight, PlotModelWidth);
+                        OxyPlot.PdfExporter.Export(model_sp, filestream, PlotModelWidth, PlotModelHeight);
                         filestream.Close();
                     }
                     //add to global
@@ -468,7 +491,7 @@ namespace Analyser
                     model_ts.Series.Add(accuracySeries_ts);
                     using (var filestream = new FileStream($"{file.FullName.Replace(".csv", "")}.plot_ts.pdf", FileMode.OpenOrCreate))
                     {
-                        OxyPlot.PdfExporter.Export(model_ts, filestream, PlotModelHeight, PlotModelWidth);
+                        OxyPlot.PdfExporter.Export(model_ts, filestream, PlotModelWidth, PlotModelHeight);
                         filestream.Close();
                     }
                     //add to global
@@ -478,73 +501,103 @@ namespace Analyser
                     model_glob_falsepositives_ts.Series.Add(falsepositivesSeries_ts_global);
                     model_glob_negativepredictions_ts.Series.Add(negativepredictedSeries_ts_global);
                     model_glob_accuracy_ts.Series.Add(accuracySeries_ts_global);
+
+                    //get valid/predicted sequences
+                    validSequences.Add(String.Join(" ", Parameters), output.Count(t => t.IsValidPrediction));
+                    predictedSequences.Add(String.Join(" ", Parameters), output.Count);
                 }
             }
 
             #region print global
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_precision_sp.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_precision_sp, filestream, PlotModelHeight, PlotModelWidth);
+                OxyPlot.PdfExporter.Export(model_glob_precision_sp, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
             }
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_recall_sp.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_recall_sp, filestream, PlotModelHeight, PlotModelWidth);
+                OxyPlot.PdfExporter.Export(model_glob_recall_sp, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
             }
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_speceficity_sp.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_speceficity_sp, filestream, PlotModelHeight, PlotModelWidth);
+                OxyPlot.PdfExporter.Export(model_glob_speceficity_sp, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
             }
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_falsepositives_sp.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_falsepositives_sp, filestream, PlotModelHeight, PlotModelWidth);
+                OxyPlot.PdfExporter.Export(model_glob_falsepositives_sp, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
             }
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_negativepredictions_sp.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_negativepredictions_sp, filestream, PlotModelHeight, PlotModelWidth);
+                OxyPlot.PdfExporter.Export(model_glob_negativepredictions_sp, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
             }
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_accuracy_sp.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_accuracy_sp, filestream, PlotModelHeight, PlotModelWidth);
+                OxyPlot.PdfExporter.Export(model_glob_accuracy_sp, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
             }
 
             //ts
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_precision_ts.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_precision_ts, filestream, PlotModelHeight, PlotModelWidth);
+                OxyPlot.PdfExporter.Export(model_glob_precision_ts, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
             }
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_recall_ts.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_recall_ts, filestream, PlotModelHeight, PlotModelWidth);
+                OxyPlot.PdfExporter.Export(model_glob_recall_ts, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
             }
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_speceficity_ts.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_speceficity_ts, filestream, PlotModelHeight, PlotModelWidth);
+                OxyPlot.PdfExporter.Export(model_glob_speceficity_ts, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
             }
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_falsepositives_ts.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_falsepositives_ts, filestream, PlotModelHeight, PlotModelWidth);
+                OxyPlot.PdfExporter.Export(model_glob_falsepositives_ts, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
             }
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_negativepredictions_ts.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_negativepredictions_ts, filestream, PlotModelHeight, PlotModelWidth);
+                OxyPlot.PdfExporter.Export(model_glob_negativepredictions_ts, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
             }
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_accuracy_ts.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_accuracy_ts, filestream, PlotModelHeight, PlotModelWidth);
+                OxyPlot.PdfExporter.Export(model_glob_accuracy_ts, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
             }
 
+            //prediction validity
+            ColumnSeries validpredictionSeries = new ColumnSeries();
+            model_glob_validsequences.Series.Add(validpredictionSeries);
+            foreach (var entry in validSequences)
+            {
+                model_glob_validsequences_cataxis.ActualLabels.Add(entry.Key);
+                validpredictionSeries.Items.Add(new ColumnItem() {Value = (double)entry.Value / (double)maxSequences });
+            }
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_valid_sequences.pdf", FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_validsequences, filestream, PlotModelWidth *3, PlotModelHeight);
+                filestream.Close();
+            }
+
+            ColumnSeries predictionsSeries = new ColumnSeries();
+            model_glob_predictedsequences.Series.Add(predictionsSeries);
+            foreach (var entry in predictedSequences)
+            {
+                model_glob_predictedsequences_cataxis.ActualLabels.Add(entry.Key);
+                predictionsSeries.Items.Add(new ColumnItem() {Value = (double)entry.Value / (double)maxSequences });
+            }
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_predicted_sequences.pdf", FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_predictedsequences, filestream, PlotModelWidth * 3, PlotModelHeight);
+                filestream.Close();
+            }
             #endregion
 
         }
@@ -574,8 +627,8 @@ namespace Analyser
         {
             var paras = pParameterString.Split(' ');
 
-            //we only want 1,2,3; neurons, dropout, patience
-            return new List<string>() {paras[1], paras[2] , paras[3] };
+            //we only want 1,2,3; neurons, dropout, patience, algorithm
+            return new List<string>() {paras[1], paras[2] , paras[3], paras[4] };
         }
 
         class Line
@@ -604,7 +657,8 @@ namespace Analyser
             public bool Violation_PredictedSP => SumPrevious > GT_Planned;
             public String Violation_StringTS => CalculateViolationString(Violation_Effective, Violation_PredictedTS);
             public String Violation_StringSP => CalculateViolationString(Violation_Effective, Violation_PredictedSP);
-            
+            public bool IsValidPrediction => IsValidSequence(PredictedActivities);
+
         }
 
         class Bucket
@@ -676,6 +730,119 @@ namespace Analyser
             var ys = xs.OrderBy(x => x).ToList();
             double mid = (ys.Count - 1) / 2.0;
             return (ys[(int)(mid)] + ys[(int)(mid + 0.5)]) / 2;
+        }
+
+        static bool IsValidSequence(String pSequence)
+        {
+            //split sequence by whitespace
+            List<int> sequence = pSequence.Split(' ').Select(int.Parse).ToList();
+
+            //iterate
+            for (int i = 0; i < sequence.Count; i++)
+            {
+                var leg = GetTransportLeg(sequence[i]);
+
+                //get next item from same transport leg
+                for (int j = i + 1; j < sequence.Count; j++)
+                {
+                    if (GetTransportLeg(sequence[j]) == leg)
+                    {
+                        //check if next item in leg is valid
+                        var valid = GetValidFollowing(sequence[i]);
+                        if (valid.Any() && !valid.Contains(sequence[j]))
+                        {
+                            return false;
+                        }else if (!valid.Any())
+                            return false;
+
+                        break;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        static int GetTransportLeg(int pNumber)
+        {
+            switch (pNumber)
+            {
+                case 1:
+                    return 1;
+                case 2:
+                    return 1;
+                case 3:
+                    return 1;
+                case 4:
+                    return 1;
+                case 5:
+                    return 2;
+                case 6:
+                    return 2;
+                case 7:
+                    return 2;
+                case 8:
+                    return 2;
+                case 9:
+                    return 3;
+                case 10:
+                    return 3;
+                case 11:
+                    return 3;
+                case 12:
+                    return 3;
+                case 13:
+                    return 4;
+                case 14:
+                    return 4;
+                case 15:
+                    return 4;
+                case 16:
+                    return 4;
+                default:
+                    throw new Exception("unknown transport leg");
+            }
+        }
+
+        static List<int> GetValidFollowing(int pNumber)
+        {
+            switch (pNumber)
+            {
+                case 1:
+                    return new List<int>() { 2 };
+                case 2:
+                    return new List<int>() { 3 };
+                case 3:
+                    return new List<int>() { 2,4 };
+                case 4:
+                    return new List<int>() { };
+                case 5:
+                    return new List<int>() { 6 };
+                case 6:
+                    return new List<int>() { 7 };
+                case 7:
+                    return new List<int>() { 6,8 };
+                case 8:
+                    return new List<int>() {  };
+                case 9:
+                    return new List<int>() { 10 };
+                case 10:
+                    return new List<int>() { 11 };
+                case 11:
+                    return new List<int>() { 10,12 };
+                case 12:
+                    return new List<int>() { };
+                case 13:
+                    return new List<int>() { 14 };
+                case 14:
+                    return new List<int>() { 15 };
+                case 15:
+                    return new List<int>() { 14,16 };
+                case 16:
+                    return new List<int>() { };
+                default:
+                    throw new Exception("wront sequence token");
+            }
         }
     }
 }
