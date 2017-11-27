@@ -16,6 +16,7 @@ from keras.layers.recurrent import LSTM, GRU, SimpleRNN
 from keras.layers import Input
 from keras.utils.data_utils import get_file
 from keras.optimizers import Nadam
+from keras import optimizers
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from keras.layers.normalization import BatchNormalization
 from collections import Counter
