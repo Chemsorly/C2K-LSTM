@@ -32,6 +32,10 @@ namespace Analyser
             List<FileInfo> InFiles = InFolder.EnumerateFiles("*",SearchOption.AllDirectories).Where(t => t.Name.Contains(".csv") && !t.Name.Contains(".edited.csv")).ToList();
 
             int maxSequences = 0;
+            List<Bucket> allBuckets = new List<Bucket>();
+            List<String>[] allParameters = new List<String>[4];
+            for(int i = 0; i < allParameters.Length; i++)
+                allParameters[i] = new List<string>();
 
             #region init global models
             OxyPlot.PlotModel model_glob_precision_sp = new PlotModel() { Title = "Results: Precision SP" };
@@ -107,6 +111,27 @@ namespace Analyser
             model_glob_validsequences.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Percentage" });
             Dictionary<String, int> validSequences = new Dictionary<string, int>();
 
+            //boxplots
+            OxyPlot.PlotModel model_glob_boxplot_neurons_sp = new PlotModel() { Title = "Number of Neurons comparison (t >= 0.5)" };
+            var model_glob_boxplot_neurons_sp_cataxis = new CategoryAxis { Position = AxisPosition.Bottom, Title = "Parameters", Angle = 45, FontSize = 8 };
+            model_glob_boxplot_neurons_sp.Axes.Add(model_glob_boxplot_neurons_sp_cataxis);
+            model_glob_boxplot_neurons_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (Percentage)" });
+
+            OxyPlot.PlotModel model_glob_boxplot_dropout_sp = new PlotModel() { Title = "Dropout comparison (t >= 0.5)" };
+            var model_glob_boxplot_dropout_sp_cataxis = new CategoryAxis { Position = AxisPosition.Bottom, Title = "Parameters", Angle = 45, FontSize = 8 };
+            model_glob_boxplot_dropout_sp.Axes.Add(model_glob_boxplot_dropout_sp_cataxis);
+            model_glob_boxplot_dropout_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (Percentage)" });
+
+            OxyPlot.PlotModel model_glob_boxplot_patience_sp = new PlotModel() { Title = "Patience comparison (t >= 0.5)" };
+            var model_glob_boxplot_patience_sp_cataxis = new CategoryAxis { Position = AxisPosition.Bottom, Title = "Parameters", Angle = 45, FontSize = 8 };
+            model_glob_boxplot_patience_sp.Axes.Add(model_glob_boxplot_patience_sp_cataxis);
+            model_glob_boxplot_patience_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (Percentage)" });
+
+            OxyPlot.PlotModel model_glob_boxplot_algorithm_sp = new PlotModel() { Title = "Algorithm comparison (t >= 0.5)" };
+            var model_glob_boxplot_algorithm_sp_cataxis = new CategoryAxis() { Position = AxisPosition.Bottom, Title = "Parameters", Angle = 45, FontSize = 8 };
+            model_glob_boxplot_algorithm_sp.Axes.Add(model_glob_boxplot_algorithm_sp_cataxis);
+            model_glob_boxplot_algorithm_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (Percentage)" });
+
             #endregion
 
             foreach (var file in InFiles)
@@ -120,6 +145,10 @@ namespace Analyser
                     bool firstline = true;
                     int rows = 0;
                     List<String> Parameters = ExtractParams(file.Name.Replace("results-", String.Empty).Replace(".csv", String.Empty));
+                    //add to global
+                    for (int i = 0; i < allParameters.Length; i++)
+                        allParameters[i].Add(Parameters[i]);
+
                     while (!parser.EndOfData)
                     {
                         //rows
@@ -183,6 +212,7 @@ namespace Analyser
                     List<Bucket> BucketList = new List<Bucket>();
                     for (int i = 0; i * BucketGranularity <= 1; i++)
                         BucketList.Add(new Bucket() { BucketLevel = i,
+                            Parameters = Parameters,
                             Prediction_SP = new List<double>(),
                             Prediction_TS = new List<double>(),
                             ViolationStringsTS = new List<string>(),
@@ -412,6 +442,9 @@ namespace Analyser
 
                     foreach (var bucket in BucketList)
                     {
+                        //add to full list
+                        allBuckets.Add(bucket);
+
                         precisionSeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.PrecisionSP));
                         recallSeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.RecallSP));
                         speceficitySeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.SpecificitySP));
@@ -600,6 +633,167 @@ namespace Analyser
             }
             #endregion
 
+            #region boxplots
+            var boxplotSeries_sp_neurons = new BoxPlotSeries() {};
+            model_glob_boxplot_neurons_sp.Series.Add(boxplotSeries_sp_neurons);
+            var parameters = allParameters[0].Distinct().Select(t => Double.Parse(t)).ToList();
+            parameters.Sort();
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_neurons_sp_cataxis.ActualLabels.Add($"Precision {parameters[i]}");
+                boxplotSeries_sp_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.PrecisionSP).ToList(), i));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_neurons_sp_cataxis.ActualLabels.Add($"Recall {parameters[i]}");
+                boxplotSeries_sp_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.RecallSP).ToList(), i + (parameters.Count * 1)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_neurons_sp_cataxis.ActualLabels.Add($"Speceficity {parameters[i]}");
+                boxplotSeries_sp_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.SpecificitySP).ToList(), i + (parameters.Count * 2)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_neurons_sp_cataxis.ActualLabels.Add($"FalsePositive {parameters[i]}");
+                boxplotSeries_sp_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.FalsePositiveRateSP).ToList(), i + (parameters.Count * 3)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_neurons_sp_cataxis.ActualLabels.Add($"NegativePredicted {parameters[i]}");
+                boxplotSeries_sp_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.NegativePredictedValueSP).ToList(), i + (parameters.Count * 4)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_neurons_sp_cataxis.ActualLabels.Add($"Accuracy {parameters[i]}");
+                boxplotSeries_sp_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.AccuracySP).ToList(), i + (parameters.Count * 5)));
+            }
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_neurons.pdf",FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_boxplot_neurons_sp, filestream, PlotModelWidth * 3, PlotModelHeight);
+                filestream.Close();
+            }
+
+            var boxplotSeries_sp_dropout = new BoxPlotSeries() { };
+            model_glob_boxplot_dropout_sp.Series.Add(boxplotSeries_sp_dropout);
+            parameters = allParameters[1].Distinct().Select(t => Double.Parse(t)).ToList();
+            parameters.Sort();
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_dropout_sp_cataxis.ActualLabels.Add($"Precision {parameters[i]}");
+                boxplotSeries_sp_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.PrecisionSP).ToList(), i));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_dropout_sp_cataxis.ActualLabels.Add($"Recall {parameters[i]}");
+                boxplotSeries_sp_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.RecallSP).ToList(), i + (parameters.Count * 1)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_dropout_sp_cataxis.ActualLabels.Add($"Speceficity {parameters[i]}");
+                boxplotSeries_sp_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.SpecificitySP).ToList(), i + (parameters.Count * 2)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_dropout_sp_cataxis.ActualLabels.Add($"FalsePositive {parameters[i]}");
+                boxplotSeries_sp_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.FalsePositiveRateSP).ToList(), i + (parameters.Count * 3)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_dropout_sp_cataxis.ActualLabels.Add($"NegativePredicted {parameters[i]}");
+                boxplotSeries_sp_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.NegativePredictedValueSP).ToList(), i + (parameters.Count * 4)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_dropout_sp_cataxis.ActualLabels.Add($"Accuracy {parameters[i]}");
+                boxplotSeries_sp_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.AccuracySP).ToList(), i + (parameters.Count * 5)));
+            }
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_dropout.pdf", FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_boxplot_dropout_sp, filestream, PlotModelWidth * 3, PlotModelHeight);
+                filestream.Close();
+            }
+
+            var boxplotSeries_sp_patience = new BoxPlotSeries() { };
+            model_glob_boxplot_patience_sp.Series.Add(boxplotSeries_sp_patience);
+            parameters = allParameters[2].Distinct().Select(t => Double.Parse(t)).ToList();
+            parameters.Sort();
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_patience_sp_cataxis.ActualLabels.Add($"Precision {parameters[i]}");
+                boxplotSeries_sp_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.PrecisionSP).ToList(), i));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_patience_sp_cataxis.ActualLabels.Add($"Recall {parameters[i]}");
+                boxplotSeries_sp_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.RecallSP).ToList(), i + (parameters.Count * 1)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_patience_sp_cataxis.ActualLabels.Add($"Speceficity {parameters[i]}");
+                boxplotSeries_sp_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.SpecificitySP).ToList(), i + (parameters.Count * 2)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_patience_sp_cataxis.ActualLabels.Add($"FalsePositive {parameters[i]}");
+                boxplotSeries_sp_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.FalsePositiveRateSP).ToList(), i + (parameters.Count * 3)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_patience_sp_cataxis.ActualLabels.Add($"NegativePredicted {parameters[i]}");
+                boxplotSeries_sp_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.NegativePredictedValueSP).ToList(), i + (parameters.Count * 4)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_patience_sp_cataxis.ActualLabels.Add($"Accuracy {parameters[i]}");
+                boxplotSeries_sp_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.AccuracySP).ToList(), i + (parameters.Count * 5)));
+            }
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_patience.pdf", FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_boxplot_patience_sp, filestream, PlotModelWidth * 3, PlotModelHeight);
+                filestream.Close();
+            }
+
+            var boxplotSeries_sp_algorithm = new BoxPlotSeries() { };
+            model_glob_boxplot_algorithm_sp.Series.Add(boxplotSeries_sp_algorithm);
+            parameters = allParameters[3].Distinct().Select(t => Double.Parse(t)).ToList();
+            parameters.Sort();
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_algorithm_sp_cataxis.ActualLabels.Add($"Precision {parameters[i]}");
+                boxplotSeries_sp_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.PrecisionSP).ToList(), i));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_algorithm_sp_cataxis.ActualLabels.Add($"Recall {parameters[i]}");
+                boxplotSeries_sp_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.RecallSP).ToList(), i + (parameters.Count * 1)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_algorithm_sp_cataxis.ActualLabels.Add($"Speceficity {parameters[i]}");
+                boxplotSeries_sp_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.SpecificitySP).ToList(), i + (parameters.Count * 2)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_algorithm_sp_cataxis.ActualLabels.Add($"FalsePositive {parameters[i]}");
+                boxplotSeries_sp_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.FalsePositiveRateSP).ToList(), i + (parameters.Count * 3)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_algorithm_sp_cataxis.ActualLabels.Add($"NegativePredicted {parameters[i]}");
+                boxplotSeries_sp_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.NegativePredictedValueSP).ToList(), i + (parameters.Count * 4)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_algorithm_sp_cataxis.ActualLabels.Add($"Accuracy {parameters[i]}");
+                boxplotSeries_sp_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.AccuracySP).ToList(), i + (parameters.Count * 5)));
+            }
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_algorithm.pdf", FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_boxplot_algorithm_sp, filestream, PlotModelWidth * 3, PlotModelHeight);
+                filestream.Close();
+            }
+            #endregion
         }
 
         public static double CalculateAccuracy(double pInput, double pReference)
@@ -664,6 +858,7 @@ namespace Analyser
         class Bucket
         {
             public int BucketLevel { get; set; }
+            public List<String> Parameters { get; set; }
 
             //counts
             public int TPcountSP => ViolationStringsSP.Count(t => t == "TP");
@@ -843,6 +1038,37 @@ namespace Analyser
                 default:
                     throw new Exception("wront sequence token");
             }
+        }
+
+        static BoxPlotItem CreateBoxplot(List<double> pValues, double pX)
+        {
+            //https://searchcode.com/codesearch/view/28446375/
+            var values = pValues.Where(t => !Double.IsNaN(t)).ToList();
+            values.Sort();
+
+            var median = Median(values.ToArray());
+            int r = values.Count % 2;
+            double firstQuartil = Median(values.Take((values.Count + r) / 2).ToArray());
+            double thirdQuartil = Median(values.Skip((values.Count - r) / 2).ToArray());
+            var iqr = thirdQuartil - firstQuartil;
+            var step = iqr * 1.5;
+            var upperWhisker = thirdQuartil + step;
+            upperWhisker = values.Where(v => v <= upperWhisker).Max();
+            var lowerWhisker = firstQuartil - step;
+            lowerWhisker = values.Where(v => v >= lowerWhisker).Min();
+            var outliers = values.Where(v => v > upperWhisker || v < lowerWhisker).ToList();
+
+            return new BoxPlotItem(
+                pX,
+                lowerWhisker,
+                firstQuartil,
+                median,
+                thirdQuartil,
+                upperWhisker)
+            {
+                Outliers = outliers,
+                
+            };
         }
     }
 }
