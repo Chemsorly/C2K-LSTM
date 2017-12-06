@@ -16,7 +16,7 @@ namespace Analyser
 {
     class Program
     {
-        const double BucketGranularity = 0.05; //creates a bucket every 0.05 of completion
+        const double BucketGranularity = 0.1; //creates a bucket every 0.05 of completion
         const double FmetricBeta = 1;
         private const int PlotModelWidth = 512;
         private const int PlotModelHeight = 512;
@@ -134,6 +134,7 @@ namespace Analyser
 
             #endregion
 
+            int counter = 0;
             foreach (var file in InFiles)
             {
                 using (TextFieldParser parser = new TextFieldParser(file.FullName))
@@ -223,24 +224,98 @@ namespace Analyser
                             DeviationsAbsoluteTS = new List<double>()
                         });
 
-                    //fill buckets
+                    //fill buckets (classic)
+                    //foreach (var line in output)
+                    //{
+                    //    //iterate until proper bucket found
+                    //    for (int i = 0; i * BucketGranularity <= 1; i++)
+                    //    {
+                    //        if (line.Completion >= i * BucketGranularity && line.Completion < (i + 1) * BucketGranularity)
+                    //        {
+                    //            BucketList[i].Prediction_SP.Add(line.SumPrevious);
+                    //            BucketList[i].Prediction_TS.Add(line.Timestamp);
+                    //            BucketList[i].ViolationStringsSP.Add(line.Violation_StringSP);
+                    //            BucketList[i].ViolationStringsTS.Add(line.Violation_StringTS);
+                    //            BucketList[i].PredictionAccuraciesSP.Add(line.AccuracySumprevious);
+                    //            BucketList[i].PredictionAccuraciesTS.Add(line.AccuracyTimestamp);
+                    //            BucketList[i].DeviationsAbsoluteSP.Add(line.DeviationAbsoluteSumprevious);
+                    //            BucketList[i].DeviationsAbsoluteTS.Add(line.DeviationAbsoluteTimestamp);
+                    //            break;
+                    //        }
+                    //    }
+                    //}
+
+                    //fill buckets (three ranged)
+                    var midbucket = BucketList.First(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5) < 0.001);
                     foreach (var line in output)
                     {
-                        //iterate until proper bucket found
-                        for (int i = 0; i * BucketGranularity <= 1; i++)
+                        //case prediction = 13 (50% marker)
+                        if (line.PredictedActivities[0] == '1' && line.PredictedActivities[0] == '3')
                         {
-                            if (line.Completion >= i * BucketGranularity && line.Completion < (i + 1) * BucketGranularity)
+                            line.Completion = 0.5d;
+                            midbucket.Prediction_SP.Add(line.SumPrevious);
+                            midbucket.Prediction_TS.Add(line.Timestamp);
+                            midbucket.ViolationStringsSP.Add(line.Violation_StringSP);
+                            midbucket.ViolationStringsTS.Add(line.Violation_StringTS);
+                            midbucket.PredictionAccuraciesSP.Add(line.AccuracySumprevious);
+                            midbucket.PredictionAccuraciesTS.Add(line.AccuracyTimestamp);
+                            midbucket.DeviationsAbsoluteSP.Add(line.DeviationAbsoluteSumprevious);
+                            midbucket.DeviationsAbsoluteTS.Add(line.DeviationAbsoluteTimestamp);
+                        }
+                        //case prediction (suffix) contains 13 and prefix does not (<50%)
+                        else if (line.PredictedActivities.Contains("13") && !line.PrefixActivities.Contains("13"))
+                        {
+                            var listout = line.PredictedActivities.Split(' ').ToList();
+                            var indexout = listout.IndexOf("13");
+                            var completion = (double)(line.Prefix) / (double)((line.Prefix + indexout) * 2);
+                            line.Completion = completion; //overwrite old values
+                            //iterate until proper bucket found
+                            for (int i = 0; i * BucketGranularity <= 1; i++)
                             {
-                                BucketList[i].Prediction_SP.Add(line.SumPrevious);
-                                BucketList[i].Prediction_TS.Add(line.Timestamp);
-                                BucketList[i].ViolationStringsSP.Add(line.Violation_StringSP);
-                                BucketList[i].ViolationStringsTS.Add(line.Violation_StringTS);
-                                BucketList[i].PredictionAccuraciesSP.Add(line.AccuracySumprevious);
-                                BucketList[i].PredictionAccuraciesTS.Add(line.AccuracyTimestamp);
-                                BucketList[i].DeviationsAbsoluteSP.Add(line.DeviationAbsoluteSumprevious);
-                                BucketList[i].DeviationsAbsoluteTS.Add(line.DeviationAbsoluteTimestamp);
-                                break;
+                                if (completion >= i * BucketGranularity && completion < (i + 1) * BucketGranularity)
+                                {
+                                    BucketList[i].Prediction_SP.Add(line.SumPrevious);
+                                    BucketList[i].Prediction_TS.Add(line.Timestamp);
+                                    BucketList[i].ViolationStringsSP.Add(line.Violation_StringSP);
+                                    BucketList[i].ViolationStringsTS.Add(line.Violation_StringTS);
+                                    BucketList[i].PredictionAccuraciesSP.Add(line.AccuracySumprevious);
+                                    BucketList[i].PredictionAccuraciesTS.Add(line.AccuracyTimestamp);
+                                    BucketList[i].DeviationsAbsoluteSP.Add(line.DeviationAbsoluteSumprevious);
+                                    BucketList[i].DeviationsAbsoluteTS.Add(line.DeviationAbsoluteTimestamp);
+                                    break;
+                                }
                             }
+                        }
+                        //case prediction (suffix) does not contain 13 and prefix does (>50%)
+                        else if (!line.PredictedActivities.Contains("13") && line.PrefixActivities.Contains("13"))
+                        {
+                            var listout = line.PrefixActivities.Split(' ').ToList();
+                            var indexout = listout.IndexOf("13");
+                            var completion = ((double) (line.Prefix - indexout) /
+                                              (double) ((line.Prefix - indexout +
+                                                         line.PredictedActivities.Split(' ').Length) * 2) + 0.5d);
+                            line.Completion = completion; //overwrite old values
+                            //iterate until proper bucket found
+                            for (int i = 0; i * BucketGranularity <= 1; i++)
+                            {
+                                if (completion >= i * BucketGranularity && completion < (i + 1) * BucketGranularity)
+                                {
+                                    BucketList[i].Prediction_SP.Add(line.SumPrevious);
+                                    BucketList[i].Prediction_TS.Add(line.Timestamp);
+                                    BucketList[i].ViolationStringsSP.Add(line.Violation_StringSP);
+                                    BucketList[i].ViolationStringsTS.Add(line.Violation_StringTS);
+                                    BucketList[i].PredictionAccuraciesSP.Add(line.AccuracySumprevious);
+                                    BucketList[i].PredictionAccuraciesTS.Add(line.AccuracyTimestamp);
+                                    BucketList[i].DeviationsAbsoluteSP.Add(line.DeviationAbsoluteSumprevious);
+                                    BucketList[i].DeviationsAbsoluteTS.Add(line.DeviationAbsoluteTimestamp);
+                                    break;
+                                }
+                            }
+                        } //else if case: not in range, ignore
+                        else
+                        {
+                            //invalid sequence
+                            line.Completion = -1d;
                         }
                     }
 
@@ -539,6 +614,9 @@ namespace Analyser
                     validSequences.Add(String.Join(" ", Parameters), output.Count(t => t.IsValidPrediction));
                     predictedSequences.Add(String.Join(" ", Parameters), output.Count);
                 }
+
+                counter++;
+                Console.WriteLine($"finished file {counter}");
             }
 
             #region print global
@@ -851,7 +929,7 @@ namespace Analyser
             public bool Violation_PredictedSP => SumPrevious > GT_Planned;
             public String Violation_StringTS => CalculateViolationString(Violation_Effective, Violation_PredictedTS);
             public String Violation_StringSP => CalculateViolationString(Violation_Effective, Violation_PredictedSP);
-            public bool IsValidPrediction => IsValidSequence(PredictedActivities);
+            public bool IsValidPrediction => IsValidSequence(PredictedActivities, PrefixActivities);
 
         }
 
@@ -927,10 +1005,10 @@ namespace Analyser
             return (ys[(int)(mid)] + ys[(int)(mid + 0.5)]) / 2;
         }
 
-        static bool IsValidSequence(String pSequence)
+        static bool IsValidSequence(String pPredictionSequence, String pPrefixSequence)
         {
             //split sequence by whitespace
-            List<int> sequence = pSequence.Split(' ').Select(int.Parse).ToList();
+            List<int> sequence = pPredictionSequence.Split(' ').Select(int.Parse).ToList();
 
             //iterate
             for (int i = 0; i < sequence.Count; i++)
@@ -954,6 +1032,11 @@ namespace Analyser
                     }
                 }
             }
+
+            //special case 13
+            List<int> prefixsequence = pPrefixSequence.Split(' ').Select(int.Parse).ToList();
+            if (sequence.Count(t => t == 13) + prefixsequence.Count(t => t == 13) != 1)
+                return false;
 
             return true;
         }
