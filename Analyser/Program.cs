@@ -16,10 +16,16 @@ namespace Analyser
 {
     class Program
     {
-        const double BucketGranularity = 0.1; //creates a bucket every 0.05 of completion
-        const double FmetricBeta = 1;
-        private const int PlotModelWidth = 512;
-        private const int PlotModelHeight = 512;
+        private static readonly double BucketGranularity = 0.1; //creates a bucket every 0.05 of completion
+        private static readonly double FmetricBeta = 1;
+
+        //bucketing type: defines how results are bucketet
+        //1 = normal bucketing over all results
+        //2 = triple ranged: 0% - 50%, 50%, 50% - 100%
+        private static readonly int BucketingType = 2;
+        
+        private static readonly int PlotModelWidth = 512;
+        private static readonly int PlotModelHeight = 512;
 
         static void Main(string[] args)
         {
@@ -224,55 +230,16 @@ namespace Analyser
                             DeviationsAbsoluteTS = new List<double>()
                         });
 
-                    //fill buckets (classic)
-                    //foreach (var line in output)
-                    //{
-                    //    //iterate until proper bucket found
-                    //    for (int i = 0; i * BucketGranularity <= 1; i++)
-                    //    {
-                    //        if (line.Completion >= i * BucketGranularity && line.Completion < (i + 1) * BucketGranularity)
-                    //        {
-                    //            BucketList[i].Prediction_SP.Add(line.SumPrevious);
-                    //            BucketList[i].Prediction_TS.Add(line.Timestamp);
-                    //            BucketList[i].ViolationStringsSP.Add(line.Violation_StringSP);
-                    //            BucketList[i].ViolationStringsTS.Add(line.Violation_StringTS);
-                    //            BucketList[i].PredictionAccuraciesSP.Add(line.AccuracySumprevious);
-                    //            BucketList[i].PredictionAccuraciesTS.Add(line.AccuracyTimestamp);
-                    //            BucketList[i].DeviationsAbsoluteSP.Add(line.DeviationAbsoluteSumprevious);
-                    //            BucketList[i].DeviationsAbsoluteTS.Add(line.DeviationAbsoluteTimestamp);
-                    //            break;
-                    //        }
-                    //    }
-                    //}
-
-                    //fill buckets (three ranged)
-                    var midbucket = BucketList.First(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5) < 0.001);
-                    foreach (var line in output)
+                    if (BucketingType == 1)
                     {
-                        //case prediction = 13 (50% marker)
-                        if (line.PredictedActivities[0] == '1' && line.PredictedActivities[0] == '3')
+                        //fill buckets (classic)
+                        foreach (var line in output)
                         {
-                            line.Completion = 0.5d;
-                            midbucket.Prediction_SP.Add(line.SumPrevious);
-                            midbucket.Prediction_TS.Add(line.Timestamp);
-                            midbucket.ViolationStringsSP.Add(line.Violation_StringSP);
-                            midbucket.ViolationStringsTS.Add(line.Violation_StringTS);
-                            midbucket.PredictionAccuraciesSP.Add(line.AccuracySumprevious);
-                            midbucket.PredictionAccuraciesTS.Add(line.AccuracyTimestamp);
-                            midbucket.DeviationsAbsoluteSP.Add(line.DeviationAbsoluteSumprevious);
-                            midbucket.DeviationsAbsoluteTS.Add(line.DeviationAbsoluteTimestamp);
-                        }
-                        //case prediction (suffix) contains 13 and prefix does not (<50%)
-                        else if (line.PredictedActivities.Contains("13") && !line.PrefixActivities.Contains("13"))
-                        {
-                            var listout = line.PredictedActivities.Split(' ').ToList();
-                            var indexout = listout.IndexOf("13");
-                            var completion = (double)(line.Prefix) / (double)((line.Prefix + indexout) * 2);
-                            line.Completion = completion; //overwrite old values
                             //iterate until proper bucket found
                             for (int i = 0; i * BucketGranularity <= 1; i++)
                             {
-                                if (completion >= i * BucketGranularity && completion < (i + 1) * BucketGranularity)
+                                if (line.Completion >= i * BucketGranularity &&
+                                    line.Completion < (i + 1) * BucketGranularity)
                                 {
                                     BucketList[i].Prediction_SP.Add(line.SumPrevious);
                                     BucketList[i].Prediction_TS.Add(line.Timestamp);
@@ -286,38 +253,85 @@ namespace Analyser
                                 }
                             }
                         }
-                        //case prediction (suffix) does not contain 13 and prefix does (>50%)
-                        else if (!line.PredictedActivities.Contains("13") && line.PrefixActivities.Contains("13"))
+                    }else if (BucketingType == 2)
+                    {
+                        //fill buckets (three ranged)
+                        var midbucket =
+                            BucketList.First(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5) < 0.001);
+                        foreach (var line in output)
                         {
-                            var listout = line.PrefixActivities.Split(' ').ToList();
-                            var indexout = listout.IndexOf("13");
-                            var completion = ((double) (line.Prefix - indexout) /
-                                              (double) ((line.Prefix - indexout +
-                                                         line.PredictedActivities.Split(' ').Length) * 2) + 0.5d);
-                            line.Completion = completion; //overwrite old values
-                            //iterate until proper bucket found
-                            for (int i = 0; i * BucketGranularity <= 1; i++)
+                            //case prediction = 13 (50% marker)
+                            if (line.PredictedActivities[0] == '1' && line.PredictedActivities[0] == '3')
                             {
-                                if (completion >= i * BucketGranularity && completion < (i + 1) * BucketGranularity)
+                                line.Completion = 0.5d;
+                                midbucket.Prediction_SP.Add(line.SumPrevious);
+                                midbucket.Prediction_TS.Add(line.Timestamp);
+                                midbucket.ViolationStringsSP.Add(line.Violation_StringSP);
+                                midbucket.ViolationStringsTS.Add(line.Violation_StringTS);
+                                midbucket.PredictionAccuraciesSP.Add(line.AccuracySumprevious);
+                                midbucket.PredictionAccuraciesTS.Add(line.AccuracyTimestamp);
+                                midbucket.DeviationsAbsoluteSP.Add(line.DeviationAbsoluteSumprevious);
+                                midbucket.DeviationsAbsoluteTS.Add(line.DeviationAbsoluteTimestamp);
+                            }
+                            //case prediction (suffix) contains 13 and prefix does not (<50%)
+                            else if (line.PredictedActivities.Contains("13") && !line.PrefixActivities.Contains("13"))
+                            {
+                                var listout = line.PredictedActivities.Split(' ').ToList();
+                                var indexout = listout.IndexOf("13");
+                                var completion = (double) (line.Prefix) / (double) ((line.Prefix + indexout) * 2);
+                                line.Completion = completion; //overwrite old values
+                                //iterate until proper bucket found
+                                for (int i = 0; i * BucketGranularity <= 1; i++)
                                 {
-                                    BucketList[i].Prediction_SP.Add(line.SumPrevious);
-                                    BucketList[i].Prediction_TS.Add(line.Timestamp);
-                                    BucketList[i].ViolationStringsSP.Add(line.Violation_StringSP);
-                                    BucketList[i].ViolationStringsTS.Add(line.Violation_StringTS);
-                                    BucketList[i].PredictionAccuraciesSP.Add(line.AccuracySumprevious);
-                                    BucketList[i].PredictionAccuraciesTS.Add(line.AccuracyTimestamp);
-                                    BucketList[i].DeviationsAbsoluteSP.Add(line.DeviationAbsoluteSumprevious);
-                                    BucketList[i].DeviationsAbsoluteTS.Add(line.DeviationAbsoluteTimestamp);
-                                    break;
+                                    if (completion >= i * BucketGranularity && completion < (i + 1) * BucketGranularity)
+                                    {
+                                        BucketList[i].Prediction_SP.Add(line.SumPrevious);
+                                        BucketList[i].Prediction_TS.Add(line.Timestamp);
+                                        BucketList[i].ViolationStringsSP.Add(line.Violation_StringSP);
+                                        BucketList[i].ViolationStringsTS.Add(line.Violation_StringTS);
+                                        BucketList[i].PredictionAccuraciesSP.Add(line.AccuracySumprevious);
+                                        BucketList[i].PredictionAccuraciesTS.Add(line.AccuracyTimestamp);
+                                        BucketList[i].DeviationsAbsoluteSP.Add(line.DeviationAbsoluteSumprevious);
+                                        BucketList[i].DeviationsAbsoluteTS.Add(line.DeviationAbsoluteTimestamp);
+                                        break;
+                                    }
                                 }
                             }
-                        } //else if case: not in range, ignore
-                        else
-                        {
-                            //invalid sequence
-                            line.Completion = -1d;
+                            //case prediction (suffix) does not contain 13 and prefix does (>50%)
+                            else if (!line.PredictedActivities.Contains("13") && line.PrefixActivities.Contains("13"))
+                            {
+                                var listout = line.PrefixActivities.Split(' ').ToList();
+                                var indexout = listout.IndexOf("13");
+                                var completion = ((double) (line.Prefix - indexout) /
+                                                  (double) ((line.Prefix - indexout +
+                                                             line.PredictedActivities.Split(' ').Length) * 2) + 0.5d);
+                                line.Completion = completion; //overwrite old values
+                                //iterate until proper bucket found
+                                for (int i = 0; i * BucketGranularity <= 1; i++)
+                                {
+                                    if (completion >= i * BucketGranularity && completion < (i + 1) * BucketGranularity)
+                                    {
+                                        BucketList[i].Prediction_SP.Add(line.SumPrevious);
+                                        BucketList[i].Prediction_TS.Add(line.Timestamp);
+                                        BucketList[i].ViolationStringsSP.Add(line.Violation_StringSP);
+                                        BucketList[i].ViolationStringsTS.Add(line.Violation_StringTS);
+                                        BucketList[i].PredictionAccuraciesSP.Add(line.AccuracySumprevious);
+                                        BucketList[i].PredictionAccuraciesTS.Add(line.AccuracyTimestamp);
+                                        BucketList[i].DeviationsAbsoluteSP.Add(line.DeviationAbsoluteSumprevious);
+                                        BucketList[i].DeviationsAbsoluteTS.Add(line.DeviationAbsoluteTimestamp);
+                                        break;
+                                    }
+                                }
+                            } //else if case: not in range, ignore
+                            else
+                            {
+                                //invalid sequence
+                                line.Completion = -1d;
+                            }
                         }
                     }
+                    else
+                        throw new Exception("unknown bucketing type defined");
 
                     //writelines
                     List<String> exportrows = new List<string>();
