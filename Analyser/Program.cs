@@ -16,7 +16,7 @@ namespace Analyser
 {
     class Program
     {
-        private static readonly double BucketGranularity = 0.1; //creates a bucket every 0.05 of completion
+        private static readonly double BucketGranularity = 0.05; //creates a bucket every 0.05 of completion
         private static readonly double FmetricBeta = 1;
 
         //bucketing type: defines how results are bucketet
@@ -33,10 +33,12 @@ namespace Analyser
             customCulture.NumberFormat.NumberDecimalSeparator = ".";
             System.Threading.Thread.CurrentThread.CurrentCulture = customCulture;
 
+            //target folders
             DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\raw");
             DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results");
             List<FileInfo> InFiles = InFolder.EnumerateFiles("*",SearchOption.AllDirectories).Where(t => t.Name.Contains(".csv") && !t.Name.Contains(".edited.csv")).ToList();
 
+            //globals
             int maxSequences = 0;
             List<Bucket> allBuckets = new List<Bucket>();
             List<String>[] allParameters = new List<String>[4];
@@ -633,6 +635,50 @@ namespace Analyser
                 Console.WriteLine($"finished file {counter}");
             }
 
+            //create global statistics
+            //create dictionary
+            Dictionary<String, List<String>> sortedbuckets = new Dictionary<String, List<String>>();
+            foreach (var bucket in allBuckets)
+                if(!sortedbuckets.ContainsKey(String.Join(" ",bucket.Parameters)))
+                    sortedbuckets.Add(String.Join(" ",bucket.Parameters),new List<String>());
+
+            //generate values
+            foreach (var entry in sortedbuckets)
+            {
+                var entrybuckets = allBuckets.Where(t => String.Join(" ", t.Parameters) == entry.Key);
+                entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity < 0.5d && !double.IsNaN(t.PrecisionSP)).Average(t => t.PrecisionSP).ToString());
+                entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity < 0.5d && !double.IsNaN(t.RecallSP)).Average(t => t.RecallSP).ToString());
+                entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity < 0.5d && !double.IsNaN(t.SpecificitySP)).Average(t => t.SpecificitySP).ToString());
+                entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity < 0.5d && !double.IsNaN(t.FalsePositiveRateSP)).Average(t => t.FalsePositiveRateSP).ToString());
+                entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity < 0.5d && !double.IsNaN(t.NegativePredictedValueSP)).Average(t => t.NegativePredictedValueSP).ToString());
+                entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity < 0.5d && !double.IsNaN(t.AccuracySP)).Average(t => t.AccuracySP).ToString());
+
+                entry.Value.Add(entrybuckets.Where(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5d) < 0.001 && !double.IsNaN(t.PrecisionSP)).Average(t => t.PrecisionSP).ToString());
+                entry.Value.Add(entrybuckets.Where(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5d) < 0.001 && !double.IsNaN(t.RecallSP)).Average(t => t.RecallSP).ToString());
+                entry.Value.Add(entrybuckets.Where(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5d) < 0.001 && !double.IsNaN(t.SpecificitySP)).Average(t => t.SpecificitySP).ToString());
+                entry.Value.Add(entrybuckets.Where(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5d) < 0.001 && !double.IsNaN(t.FalsePositiveRateSP)).Average(t => t.FalsePositiveRateSP).ToString());
+                entry.Value.Add(entrybuckets.Where(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5d) < 0.001 && !double.IsNaN(t.NegativePredictedValueSP)).Average(t => t.NegativePredictedValueSP).ToString());
+                entry.Value.Add(entrybuckets.Where(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5d) < 0.001 && !double.IsNaN(t.AccuracySP)).Average(t => t.AccuracySP).ToString());
+
+                entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity > 0.5d && !double.IsNaN(t.PrecisionSP)).Average(t => t.PrecisionSP).ToString());
+                entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity > 0.5d && !double.IsNaN(t.RecallSP)).Average(t => t.RecallSP).ToString());
+                entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity > 0.5d && !double.IsNaN(t.SpecificitySP)).Average(t => t.SpecificitySP).ToString());
+                entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity > 0.5d && !double.IsNaN(t.FalsePositiveRateSP)).Average(t => t.FalsePositiveRateSP).ToString());
+                entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity > 0.5d && !double.IsNaN(t.NegativePredictedValueSP)).Average(t => t.NegativePredictedValueSP).ToString());
+                entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity > 0.5d && !double.IsNaN(t.AccuracySP)).Average(t => t.AccuracySP).ToString());
+            }
+        
+            //print
+            List<String> sortedbucketsout = new List<string>();
+            sortedbucketsout.Add("Parameters," +
+                                 "precision<0.5,recall<0.5,speceficity<0.5,falsepositives<0.5,negativepredictions<0.5,accuracy<0.5," +
+                                 "precision=0.5,recall=0.5,speceficity=0.5,falsepositives=0.5,negativepredictions=0.5,accuracy=0.5," +
+                                 "precision>0.5,recall>0.5,speceficity>0.5,falsepositives>0.5,negativepredictions>0.5,accuracy>0.5,");
+            foreach(var entry in sortedbuckets)
+                sortedbucketsout.Add($"{entry.Key},{String.Join(",",entry.Value)}");
+
+            File.WriteAllLines($"{ResultsFolder.FullName}\\all_averages_threeranged.csv",sortedbucketsout);
+
             #region print global
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_precision_sp.pdf", FileMode.OpenOrCreate))
             {
@@ -707,7 +753,7 @@ namespace Analyser
             }
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_valid_sequences.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_validsequences, filestream, PlotModelWidth *3, PlotModelHeight);
+                OxyPlot.PdfExporter.Export(model_glob_validsequences, filestream, PlotModelWidth *6, PlotModelHeight);
                 filestream.Close();
             }
 
@@ -720,7 +766,7 @@ namespace Analyser
             }
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_predicted_sequences.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_predictedsequences, filestream, PlotModelWidth * 3, PlotModelHeight);
+                OxyPlot.PdfExporter.Export(model_glob_predictedsequences, filestream, PlotModelWidth * 6, PlotModelHeight);
                 filestream.Close();
             }
             #endregion
