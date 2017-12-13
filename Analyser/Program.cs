@@ -16,13 +16,13 @@ namespace Analyser
 {
     class Program
     {
-        private static readonly double BucketGranularity = 0.05; //creates a bucket every 0.05 of completion
+        private static readonly double BucketGranularity = 0.1; //creates a bucket every 0.05 of completion
         private static readonly double FmetricBeta = 1;
 
         //bucketing type: defines how results are bucketet
         //1 = normal bucketing over all results
         //2 = triple ranged: 0% - 50%, 50%, 50% - 100%
-        private static readonly int BucketingType = 2;
+        private static readonly int BucketingType = 1;
         
         private static readonly int PlotModelWidth = 512;
         private static readonly int PlotModelHeight = 512;
