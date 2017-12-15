@@ -229,7 +229,7 @@ divisor2 = np.mean([item for sublist in timeseqs2 for item in sublist]) #variabl
 print('divisor2: {}'.format(divisor2))
 divisor3 = np.mean([item for sublist in timeseqs3 for item in sublist]) #variable for lstm model
 print('divisor3: {}'.format(divisor3))
-divisor4 = np.mean([item[-1] for sublist in timeseqs4]) #variable for lstm model
+divisor4 = np.mean([item[-1] for item in timeseqs4]) #variable for lstm model
 print('divisor4: {}'.format(divisor4))
 
 elems_per_fold = int(round(numlines/3))
@@ -365,7 +365,7 @@ b2_1 = BatchNormalization()(l2_1)
 l2_2 = LSTM(par_neurons, consume_less='gpu', init='glorot_uniform', return_sequences=False, dropout_W=par_dropout)(b1) # the layer specialized in time prediction
 b2_2 = BatchNormalization()(l2_2)
 act_output = Dense(len(target_chars), activation='softmax', init='glorot_uniform', name='act_output')(b2_1)
-time_output = Dense(3, init='glorot_uniform', name='time_output')(b2_2)
+time_output = Dense(4, init='glorot_uniform', name='time_output')(b2_2)
 
 model = Model(input=[main_input], output=[act_output, time_output])
 
