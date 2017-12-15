@@ -16,7 +16,7 @@ namespace Analyser
 {
     class Program
     {
-        private static readonly double BucketGranularity = 0.1; //creates a bucket every 0.05 of completion
+        private static readonly double BucketGranularity = 0.2; //creates a bucket every 0.05 of completion
         private static readonly double FmetricBeta = 1;
 
         //bucketing type: defines how results are bucketet
@@ -34,8 +34,8 @@ namespace Analyser
             System.Threading.Thread.CurrentThread.CurrentCulture = customCulture;
 
             //target folders
-            DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\raw");
-            DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results");
+            DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Leg 4 only\raw");
+            DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Leg 4 only\");
             List<FileInfo> InFiles = InFolder.EnumerateFiles("*",SearchOption.AllDirectories).Where(t => t.Name.Contains(".csv") && !t.Name.Contains(".edited.csv")).ToList();
 
             //globals
