@@ -327,6 +327,11 @@ with open("output_files/folds/matrix.txt", "w") as text_file:
                 row+=str(X[i,j,k])
                 row+=','                    
             text_file.write(row+'\n')
+        row = ''
+        for k in range(0,num_features - 4):
+            row+=str(y_a[i,k])
+            row+=','
+        text_file.write(row+'\n')
         text_file.write('batch end\n')
 print('Matrix file has been created...')
             

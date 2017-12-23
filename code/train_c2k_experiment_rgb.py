@@ -146,6 +146,8 @@ lines = map(lambda x: x + ['!'],lines)
 
 maxlen = max(map(lambda x: len(x),lines)) #variable for lstm model
 
+#chars are concurrent activities e.g. 'AEI'
+#uniquechars are activities e.g. 'A'
 chars = map(lambda x : set(x),lines)
 chars = list(set().union(*chars))
 chars.sort()
@@ -173,8 +175,13 @@ target_indices_uchar = dict((i, c) for i, c in enumerate(target_uchars))
 
 print(char_indices)
 print(indices_char)
-print(target_char_indices)
-print(target_indices_char)
+print(target_char_indices) #does contain '!'
+print(target_indices_char) #does contain '!'
+
+print(uchar_indices)
+print(indices_uchar)
+print(target_uchar_indices) #does contain '!'
+print(target_indices_uchar) #does contain '!'
 
 ## end variables
 
@@ -335,7 +342,7 @@ for i, sentence in enumerate(sentences):
     y_t[i,2] = next_t3/divisor3
     np.set_printoptions(threshold=np.nan)
 
-# output first 3 batches of matrix [0-2,0-(maxlen-1),0-(num_features-1)]
+# output first n batches of matrix
 with open("output_files/folds/matrix.txt", "w") as text_file:
     for i in range(0,20):
         for j in range(0,maxlen):
@@ -344,6 +351,11 @@ with open("output_files/folds/matrix.txt", "w") as text_file:
                 row+=str(X[i,j,k])
                 row+=','                    
             text_file.write(row+'\n')
+        row = ''
+        for k in range(0,num_features - 4):
+            row+=str(y_a[i,k])
+            row+=','
+        text_file.write(row+'\n')
         text_file.write('batch end\n')
 print('Matrix file has been created...')
             
