@@ -74,7 +74,7 @@ shutil.rmtree('output_files/results')
 os.makedirs('output_files/results')        
 
 lastcase = ''
-line = ''
+line = [] #needs to be an array now for rgb encoding
 firstLine = True
 lines = []
 timeseqs = []
@@ -84,12 +84,11 @@ times2 = []
 numlines = 0
 casestarttime = None
 lasteventtime = None
-eventlog = "c2k_data_comma_lstmready.csv"
+eventlog = "c2k_data_comma_lstmready_multi.csv"
 
 csvfile = open('../data/%s' % eventlog, 'r')
 spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
 next(spamreader, None)  # skip the headers
-ascii_offset = 161
 
 for row in spamreader:
     t = int(row[2])
@@ -101,11 +100,11 @@ for row in spamreader:
             lines.append(line)
             timeseqs.append(times)
             timeseqs2.append(times2)
-        line = ''
+        line = []
         times = []
         times2 = []
         numlines+=1
-    line+=unichr(int(row[1])+ascii_offset)
+    line.append(row[1])
     timesincelastevent = int(row[3]) #3 is calculated time since last event
     timesincecasestart = int(row[4]) #4 is timestamp aka time since case start
     timediff = timesincelastevent
@@ -143,7 +142,8 @@ step = 1
 sentences = []
 softness = 0
 next_chars = []
-lines = map(lambda x: x+'!',lines)
+lines = map(lambda x: x + ['!'],lines)
+
 maxlen = max(map(lambda x: len(x),lines)) #variable for lstm model
 
 chars = map(lambda x : set(x),lines)
@@ -152,14 +152,30 @@ chars.sort()
 target_chars = copy.copy(chars)
 chars.remove('!')
 print('total chars: {}, target chars: {}'.format(len(chars), len(target_chars)))
+
+uniquechars = [l for word in chars for l in word]
+uniquechars.append('!')
+uniquechars = list(set(uniquechars))
+uniquechars.sort()
+target_uchars = copy.copy(uniquechars)
+uniquechars.remove('!')
+print('unique characters: {}', uniquechars)
+
 char_indices = dict((c, i) for i, c in enumerate(chars)) #dictionary<key,value> with <char, index> where char is unique symbol for activity
+uchar_indices = dict((c, i) for i, c in enumerate(uniquechars))
 indices_char = dict((i, c) for i, c in enumerate(chars)) #dictionary<key,value> with <index, char> where char is unique symbol for activity
+indices_uchar = dict((i, c) for i, c in enumerate(uniquechars))
+
 target_char_indices = dict((c, i) for i, c in enumerate(target_chars))
+target_uchar_indices = dict((c, i) for i, c in enumerate(target_uchars))
 target_indices_char = dict((i, c) for i, c in enumerate(target_chars))
+target_indices_uchar = dict((i, c) for i, c in enumerate(target_uchars))
+
 print(char_indices)
 print(indices_char)
 print(target_char_indices)
 print(target_indices_char)
+
 ## end variables
 
 ## prepare input matrix
@@ -167,7 +183,7 @@ csvfile = open('../data/%s' % eventlog, 'r')
 spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
 next(spamreader, None)  # skip the headers
 lastcase = ''
-line = ''
+line = []
 firstLine = True
 lines = []
 timeseqs = []
@@ -190,13 +206,13 @@ for row in spamreader:
             timeseqs.append(times)
             timeseqs2.append(times2)
             timeseqs3.append(times3)
-        line = ''
+        line = []
         times = []
         times2 = []
         times3 = []
         numlines+=1
     #line+=row[1]
-    line+=unichr(int(row[1])+ascii_offset)
+    line.append(row[1])
     timesincelastevent = int(row[3]) #4 is calculated time since last event
     timesincecasestart = int(row[4]) #5 is timestamp aka time since case start
     timediff = timesincelastevent
@@ -259,7 +275,7 @@ step = 1
 sentences = []
 softness = 0
 next_chars = []
-lines = map(lambda x: x+'!',lines)
+lines = map(lambda x: x+ ['!'],lines)
 
 sentences_t = []
 sentences_t2 = []
@@ -285,12 +301,13 @@ for line, line_t, line_t2, line_t3 in izip(lines, lines_t, lines_t2, lines_t3):
             next_chars_t2.append(line_t2[i])
             next_chars_t3.append(line_t3[i])
 print('nb sequences:', len(sentences))
+print('maxlen:', maxlen)
 
 print('Vectorization...')
-num_features = len(chars)+4
+num_features = len(uniquechars)+4
 print('num features: {}'.format(num_features))
 X = np.zeros((len(sentences), maxlen, num_features), dtype=np.float32)
-y_a = np.zeros((len(sentences), len(target_chars)), dtype=np.float32)
+y_a = np.zeros((len(sentences), len(target_uchars)), dtype=np.float32)
 y_t = np.zeros((len(sentences),3), dtype=np.float32)
 for i, sentence in enumerate(sentences):
     leftpad = maxlen-len(sentence)
@@ -301,18 +318,18 @@ for i, sentence in enumerate(sentences):
     sentence_t2 = sentences_t2[i]
     sentence_t3 = sentences_t3[i]
     for t, char in enumerate(sentence):
-        for c in chars:
-            if c==char:
-                X[i, t+leftpad, char_indices[c]] = 1
-        X[i, t+leftpad, len(chars)] = t+1
-        X[i, t+leftpad, len(chars)+1] = sentence_t[t]/divisor
-        X[i, t+leftpad, len(chars)+2] = sentence_t2[t]/divisor2
-        X[i, t+leftpad, len(chars)+3] = sentence_t3[t]/divisor3
-    for c in target_chars:
-        if c==next_chars[i]:
-            y_a[i, target_char_indices[c]] = 1-softness
+        for c in uniquechars:
+            if c in char:
+                X[i, t+leftpad, uchar_indices[c]] = 1
+        X[i, t+leftpad, len(uniquechars)] = t+1
+        X[i, t+leftpad, len(uniquechars)+1] = sentence_t[t]/divisor
+        X[i, t+leftpad, len(uniquechars)+2] = sentence_t2[t]/divisor2
+        X[i, t+leftpad, len(uniquechars)+3] = sentence_t3[t]/divisor3
+    for c in target_uchars:
+        if c in next_chars[i]:
+            y_a[i, target_uchar_indices[c]] = 1-softness
         else:
-            y_a[i, target_char_indices[c]] = softness/(len(target_chars)-1)
+            y_a[i, target_uchar_indices[c]] = softness/(len(target_uchars)-1)
     y_t[i,0] = next_t/divisor
     y_t[i,1] = next_t2/divisor2
     y_t[i,2] = next_t3/divisor3
@@ -340,7 +357,7 @@ l2_1 = LSTM(par_neurons, consume_less='gpu', init='glorot_uniform', return_seque
 b2_1 = BatchNormalization()(l2_1)
 l2_2 = LSTM(par_neurons, consume_less='gpu', init='glorot_uniform', return_sequences=False, dropout_W=par_dropout)(b1) # the layer specialized in time prediction
 b2_2 = BatchNormalization()(l2_2)
-act_output = Dense(len(target_chars), activation='softmax', init='glorot_uniform', name='act_output')(b2_1)
+act_output = Dense(len(target_uchars), activation='softmax', init='glorot_uniform', name='act_output')(b2_1)
 time_output = Dense(3, init='glorot_uniform', name='time_output')(b2_2)
 
 model = Model(input=[main_input], output=[act_output, time_output])
