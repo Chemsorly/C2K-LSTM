@@ -378,7 +378,7 @@ class ResetStatesCallback(Callback):
 resetstatescallback = ResetStatesCallback()
 
 model.compile(loss={'act_output':'categorical_crossentropy', 'time_output':'mae'}, optimizer=opt)
-early_stopping = EarlyStopping(monitor='val_loss', patience=42)
+early_stopping = EarlyStopping(monitor='val_loss', patience=par_patience)
 model_checkpoint = ModelCheckpoint('output_files/models/model-latest.h5', monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=False, mode='auto')
 lr_reducer = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=par_patience, verbose=0, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
 model.fit(X, {'act_output':y_a, 'time_output':y_t}, validation_split=0.2, verbose=2, callbacks=[early_stopping, model_checkpoint, lr_reducer, resetstatescallback], batch_size=1, nb_epoch=500)
