@@ -326,7 +326,12 @@ with open("output_files/folds/matrix.txt", "w") as text_file:
             for k in range(0,num_features):
                 row+=str(X[i,j,k])
                 row+=','                    
-                text_file.write(row+'\n')
+            text_file.write(row+'\n')
+        row = ''
+        for k in range(0,num_features - 4):
+            row+=str(y_a[i,k])
+            row+=','
+        text_file.write(row+'\n')
         text_file.write('batch end\n')
 print('Matrix file has been created...')
             
@@ -368,7 +373,7 @@ elif par_algorithm == 7:
     print('Optimizer: sgd')
 
 model.compile(loss={'act_output':'categorical_crossentropy', 'time_output':'mae'}, optimizer=opt)
-early_stopping = EarlyStopping(monitor='val_loss', patience=42)
+early_stopping = EarlyStopping(monitor='val_loss', patience=par_patience)
 model_checkpoint = ModelCheckpoint('output_files/models/model-latest.h5', monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=False, mode='auto')
 lr_reducer = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=par_patience, verbose=0, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
 

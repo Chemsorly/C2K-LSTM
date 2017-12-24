@@ -289,13 +289,18 @@ for i, sentence in enumerate(sentences):
 # output first 3 batches of matrix [0-2,0-(maxlen-1),0-(num_features-1)]
 with open("output_files/folds/matrix.txt", "w") as text_file:
     for i in range(0,20):
-		for j in range(0,maxlen):
-			row = ''
-			for k in range(0,num_features):
-				row+=str(X[i,j,k])
-				row+=','					
-	        	text_file.write(row+'\n')
-		text_file.write('batch end\n')
+        for j in range(0,maxlen):
+            row = ''
+            for k in range(0,num_features):
+                row+=str(X[i,j,k])
+                row+=','					
+	    text_file.write(row+'\n')
+        row = ''
+        for k in range(0,num_features - 5):
+            row+=str(y_a[i,k])
+            row+=','
+        text_file.write(row+'\n')
+        text_file.write('batch end\n')
 print('Matrix file has been created...')
 
 # build the model: 

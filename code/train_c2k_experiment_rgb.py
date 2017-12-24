@@ -74,7 +74,7 @@ shutil.rmtree('output_files/results')
 os.makedirs('output_files/results')        
 
 lastcase = ''
-line = ''
+line = [] #needs to be an array now for rgb encoding
 firstLine = True
 lines = []
 timeseqs = []
@@ -84,12 +84,11 @@ times2 = []
 numlines = 0
 casestarttime = None
 lasteventtime = None
-eventlog = "c2k_data_comma_lstmready.csv"
+eventlog = "c2k_data_comma_lstmready_multi.csv"
 
 csvfile = open('../data/%s' % eventlog, 'r')
 spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
 next(spamreader, None)  # skip the headers
-ascii_offset = 161
 
 for row in spamreader:
     t = int(row[2])
@@ -101,11 +100,11 @@ for row in spamreader:
             lines.append(line)
             timeseqs.append(times)
             timeseqs2.append(times2)
-        line = ''
+        line = []
         times = []
         times2 = []
         numlines+=1
-    line+=unichr(int(row[1])+ascii_offset)
+    line.append(row[1])
     timesincelastevent = int(row[3]) #3 is calculated time since last event
     timesincecasestart = int(row[4]) #4 is timestamp aka time since case start
     timediff = timesincelastevent
@@ -143,23 +142,47 @@ step = 1
 sentences = []
 softness = 0
 next_chars = []
-lines = map(lambda x: x+'!',lines)
+lines = map(lambda x: x + ['!'],lines)
+
 maxlen = max(map(lambda x: len(x),lines)) #variable for lstm model
 
+#chars are concurrent activities e.g. 'AEI'
+#uniquechars are activities e.g. 'A'
 chars = map(lambda x : set(x),lines)
 chars = list(set().union(*chars))
 chars.sort()
 target_chars = copy.copy(chars)
 chars.remove('!')
 print('total chars: {}, target chars: {}'.format(len(chars), len(target_chars)))
+
+uniquechars = [l for word in chars for l in word]
+uniquechars.append('!')
+uniquechars = list(set(uniquechars))
+uniquechars.sort()
+target_uchars = copy.copy(uniquechars)
+uniquechars.remove('!')
+print('unique characters: {}', uniquechars)
+
 char_indices = dict((c, i) for i, c in enumerate(chars)) #dictionary<key,value> with <char, index> where char is unique symbol for activity
+uchar_indices = dict((c, i) for i, c in enumerate(uniquechars))
 indices_char = dict((i, c) for i, c in enumerate(chars)) #dictionary<key,value> with <index, char> where char is unique symbol for activity
+indices_uchar = dict((i, c) for i, c in enumerate(uniquechars))
+
 target_char_indices = dict((c, i) for i, c in enumerate(target_chars))
+target_uchar_indices = dict((c, i) for i, c in enumerate(target_uchars))
 target_indices_char = dict((i, c) for i, c in enumerate(target_chars))
+target_indices_uchar = dict((i, c) for i, c in enumerate(target_uchars))
+
 print(char_indices)
 print(indices_char)
-print(target_char_indices)
-print(target_indices_char)
+print(target_char_indices) #does contain '!'
+print(target_indices_char) #does contain '!'
+
+print(uchar_indices)
+print(indices_uchar)
+print(target_uchar_indices) #does contain '!'
+print(target_indices_uchar) #does contain '!'
+
 ## end variables
 
 ## prepare input matrix
@@ -167,20 +190,17 @@ csvfile = open('../data/%s' % eventlog, 'r')
 spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
 next(spamreader, None)  # skip the headers
 lastcase = ''
-line = ''
+line = []
 firstLine = True
 lines = []
 timeseqs = []
 timeseqs2 = []
 timeseqs3 = []
-timeseqs4 = []
 times = []
 times2 = []
 times3 = []
-times4 = []
 numlines = 0
 casestarttime = None
-caseendtime = None
 lasteventtime = None
 for row in spamreader:
     t = int(row[2])
@@ -193,25 +213,21 @@ for row in spamreader:
             timeseqs.append(times)
             timeseqs2.append(times2)
             timeseqs3.append(times3)
-            timeseqs4.append(times4)
-        line = ''
+        line = []
         times = []
         times2 = []
         times3 = []
-        times4 = []
         numlines+=1
     #line+=row[1]
-    line+=unichr(int(row[1])+ascii_offset)
+    line.append(row[1])
     timesincelastevent = int(row[3]) #4 is calculated time since last event
     timesincecasestart = int(row[4]) #5 is timestamp aka time since case start
     timediff = timesincelastevent
     timediff2 = timesincecasestart
     timediff3 = int(row[2]) 
-    timediff4 = int(row[8]) 
     times.append(timediff)
     times2.append(timediff2)
     times3.append(timediff3)
-    times4.append(timediff4)
     lasteventtime = t
     firstLine = False
 
@@ -220,7 +236,6 @@ lines.append(line)
 timeseqs.append(times)
 timeseqs2.append(times2)
 timeseqs3.append(times3)
-timeseqs4.append(times4)
 numlines+=1
 
 divisor = np.mean([item for sublist in timeseqs for item in sublist]) #variable for lstm model
@@ -229,15 +244,12 @@ divisor2 = np.mean([item for sublist in timeseqs2 for item in sublist]) #variabl
 print('divisor2: {}'.format(divisor2))
 divisor3 = np.mean([item for sublist in timeseqs3 for item in sublist]) #variable for lstm model
 print('divisor3: {}'.format(divisor3))
-divisor4 = np.mean([item[-1] for item in timeseqs4]) #variable for lstm model
-print('divisor4: {}'.format(divisor4))
 
 elems_per_fold = int(round(numlines/3))
 fold1 = lines[:elems_per_fold]
 fold1_t = timeseqs[:elems_per_fold]
 fold1_t2 = timeseqs2[:elems_per_fold]
 fold1_t3 = timeseqs3[:elems_per_fold]
-fold1_t4 = timeseqs4[:elems_per_fold]
 with open('output_files/folds/fold1.csv', 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
     for row, timeseq in izip(fold1, fold1_t):    
@@ -247,7 +259,6 @@ fold2 = lines[elems_per_fold:2*elems_per_fold]
 fold2_t = timeseqs[elems_per_fold:2*elems_per_fold]
 fold2_t2 = timeseqs2[elems_per_fold:2*elems_per_fold]
 fold2_t3 = timeseqs3[elems_per_fold:2*elems_per_fold]
-fold2_t4 = timeseqs4[elems_per_fold:2*elems_per_fold]
 with open('output_files/folds/fold2.csv', 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
     for row, timeseq in izip(fold2, fold2_t):
@@ -257,7 +268,6 @@ fold3 = lines[2*elems_per_fold:]
 fold3_t = timeseqs[2*elems_per_fold:]
 fold3_t2 = timeseqs2[2*elems_per_fold:]
 fold3_t3 = timeseqs3[2*elems_per_fold:]
-fold3_t4 = timeseqs4[2*elems_per_fold:]
 with open('output_files/folds/fold3.csv', 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
     for row, timeseq in izip(fold3, fold3_t):
@@ -267,24 +277,20 @@ lines = fold1 + fold2
 lines_t = fold1_t + fold2_t
 lines_t2 = fold1_t2 + fold2_t2
 lines_t3 = fold1_t3 + fold2_t3
-lines_t4 = fold1_t4 + fold2_t4
-
 
 step = 1
 sentences = []
 softness = 0
 next_chars = []
-lines = map(lambda x: x+'!',lines)
+lines = map(lambda x: x+ ['!'],lines)
 
 sentences_t = []
 sentences_t2 = []
 sentences_t3 = []
-sentences_t4 = []
 next_chars_t = []
 next_chars_t2 = []
 next_chars_t3 = []
-next_chars_t4 = []
-for line, line_t, line_t2, line_t3, line_t4 in izip(lines, lines_t, lines_t2, lines_t3, lines_t4):
+for line, line_t, line_t2, line_t3 in izip(lines, lines_t, lines_t2, lines_t3):
     for i in range(0, len(line), step):
         if i==0:
             continue
@@ -292,57 +298,51 @@ for line, line_t, line_t2, line_t3, line_t4 in izip(lines, lines_t, lines_t2, li
         sentences_t.append(line_t[0:i])
         sentences_t2.append(line_t2[0:i])
         sentences_t3.append(line_t3[0:i])
-        sentences_t4.append(line_t4[0:i])
         next_chars.append(line[i])
         if i==len(line)-1: # special case to deal time of end character
             next_chars_t.append(0)
             next_chars_t2.append(0)
             next_chars_t3.append(0)
-            next_chars_t4.append(0)
         else:
             next_chars_t.append(line_t[i])
             next_chars_t2.append(line_t2[i])
             next_chars_t3.append(line_t3[i])
-            next_chars_t4.append(line_t4[i])
 print('nb sequences:', len(sentences))
+print('maxlen:', maxlen)
 
 print('Vectorization...')
-num_features = len(chars)+5
+num_features = len(uniquechars)+4
 print('num features: {}'.format(num_features))
 X = np.zeros((len(sentences), maxlen, num_features), dtype=np.float32)
-y_a = np.zeros((len(sentences), len(target_chars)), dtype=np.float32)
-y_t = np.zeros((len(sentences),4), dtype=np.float32)
+y_a = np.zeros((len(sentences), len(target_uchars)), dtype=np.float32)
+y_t = np.zeros((len(sentences),3), dtype=np.float32)
 for i, sentence in enumerate(sentences):
     leftpad = maxlen-len(sentence)
     next_t = next_chars_t[i]
     next_t2 = next_chars_t2[i]
     next_t3 = next_chars_t3[i]
-    next_t4 = next_chars_t4[i]
     sentence_t = sentences_t[i]
     sentence_t2 = sentences_t2[i]
     sentence_t3 = sentences_t3[i]
-    sentence_t4 = sentences_t4[i]
     for t, char in enumerate(sentence):
-        for c in chars:
-            if c==char:
-                X[i, t+leftpad, char_indices[c]] = 1
-        X[i, t+leftpad, len(chars)] = t+1
-        X[i, t+leftpad, len(chars)+1] = sentence_t[t]/divisor
-        X[i, t+leftpad, len(chars)+2] = sentence_t2[t]/divisor2
-        X[i, t+leftpad, len(chars)+3] = sentence_t3[t]/divisor3
-        X[i, t+leftpad, len(chars)+4] = sentence_t4[t]/divisor4
-    for c in target_chars:
-        if c==next_chars[i]:
-            y_a[i, target_char_indices[c]] = 1-softness
+        for c in uniquechars:
+            if c in char:
+                X[i, t+leftpad, uchar_indices[c]] = 1
+        X[i, t+leftpad, len(uniquechars)] = t+1
+        X[i, t+leftpad, len(uniquechars)+1] = sentence_t[t]/divisor
+        X[i, t+leftpad, len(uniquechars)+2] = sentence_t2[t]/divisor2
+        X[i, t+leftpad, len(uniquechars)+3] = sentence_t3[t]/divisor3
+    for c in target_uchars:
+        if c in next_chars[i]:
+            y_a[i, target_uchar_indices[c]] = 1-softness
         else:
-            y_a[i, target_char_indices[c]] = softness/(len(target_chars)-1)
+            y_a[i, target_uchar_indices[c]] = softness/(len(target_uchars)-1)
     y_t[i,0] = next_t/divisor
     y_t[i,1] = next_t2/divisor2
     y_t[i,2] = next_t3/divisor3
-    y_t[i,3] = next_t4/divisor4
     np.set_printoptions(threshold=np.nan)
 
-# output first 3 batches of matrix [0-2,0-(maxlen-1),0-(num_features-1)]
+# output first n batches of matrix
 with open("output_files/folds/matrix.txt", "w") as text_file:
     for i in range(0,20):
         for j in range(0,maxlen):
@@ -351,6 +351,11 @@ with open("output_files/folds/matrix.txt", "w") as text_file:
                 row+=str(X[i,j,k])
                 row+=','                    
             text_file.write(row+'\n')
+        row = ''
+        for k in range(0,num_features - 4):
+            row+=str(y_a[i,k])
+            row+=','
+        text_file.write(row+'\n')
         text_file.write('batch end\n')
 print('Matrix file has been created...')
             
@@ -364,8 +369,8 @@ l2_1 = LSTM(par_neurons, consume_less='gpu', init='glorot_uniform', return_seque
 b2_1 = BatchNormalization()(l2_1)
 l2_2 = LSTM(par_neurons, consume_less='gpu', init='glorot_uniform', return_sequences=False, dropout_W=par_dropout)(b1) # the layer specialized in time prediction
 b2_2 = BatchNormalization()(l2_2)
-act_output = Dense(len(target_chars), activation='softmax', init='glorot_uniform', name='act_output')(b2_1)
-time_output = Dense(4, init='glorot_uniform', name='time_output')(b2_2)
+act_output = Dense(len(target_uchars), activation='softmax', init='glorot_uniform', name='act_output')(b2_1)
+time_output = Dense(3, init='glorot_uniform', name='time_output')(b2_2)
 
 model = Model(input=[main_input], output=[act_output, time_output])
 
