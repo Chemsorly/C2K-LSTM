@@ -21,13 +21,13 @@ from math import sqrt
 import time
 from datetime import datetime, timedelta
 from collections import Counter
+from scipy import spatial
 
-eventlog = "c2k_data_comma_lstmready.csv"
+eventlog = "c2k_data_comma_lstmready_multi.csv"
 modelfile = ""
 csvfile = open('../data/%s' % eventlog, 'r')
 spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
 next(spamreader, None)  # skip the headers
-ascii_offset = 161
 
 if __name__ == "__main__":
     modelfile = sys.argv[1]
@@ -36,7 +36,7 @@ print('target eventlog: ' + eventlog)
 print('target model: ' + modelfile)
 
 lastcase = ''
-line = ''
+line = [] #needs to be an array now for rgb encoding
 firstLine = True
 lines = []
 timeseqs = []
@@ -56,11 +56,11 @@ for row in spamreader:
             lines.append(line)
             timeseqs.append(times)
             timeseqs2.append(times2)
-        line = ''
+        line = []
         times = []
         times2 = []
         numlines+=1
-    line+=unichr(int(row[1])+ascii_offset)
+    line.append(row[1])
     timesincelastevent = int(row[3]) #3 is calculated time since last event
     timesincecasestart = int(row[4]) #4 is timestamp aka time since case start
     timediff = timesincelastevent
@@ -93,23 +93,50 @@ step = 1
 sentences = []
 softness = 0
 next_chars = []
-lines = map(lambda x: x+'!',lines)
+lines = map(lambda x: x + ['!'],lines)
 maxlen = max(map(lambda x: len(x),lines))
 
+#chars are concurrent activities e.g. 'AEI'
+#uniquechars are activities e.g. 'A'
 chars = map(lambda x : set(x),lines)
 chars = list(set().union(*chars))
 chars.sort()
 target_chars = copy.copy(chars)
 chars.remove('!')
 print('total chars: {}, target chars: {}'.format(len(chars), len(target_chars)))
-char_indices = dict((c, i) for i, c in enumerate(chars))
-indices_char = dict((i, c) for i, c in enumerate(chars))
+
+uniquechars = [l for word in chars for l in word]
+uniquechars.append('!')
+uniquechars = list(set(uniquechars))
+uniquechars.sort()
+target_uchars = copy.copy(uniquechars)
+uniquechars.remove('!')
+print('unique characters: {}', uniquechars)
+
+char_indices = dict((c, i) for i, c in enumerate(chars)) #dictionary<key,value> with <char, index> where char is unique symbol for activity
+uchar_indices = dict((c, i) for i, c in enumerate(uniquechars))
+indices_char = dict((i, c) for i, c in enumerate(chars)) #dictionary<key,value> with <index, char> where char is unique symbol for activity
+indices_uchar = dict((i, c) for i, c in enumerate(uniquechars))
+
 target_char_indices = dict((c, i) for i, c in enumerate(target_chars))
+target_uchar_indices = dict((c, i) for i, c in enumerate(target_uchars))
 target_indices_char = dict((i, c) for i, c in enumerate(target_chars))
+target_indices_uchar = dict((i, c) for i, c in enumerate(target_uchars))
+
+print(char_indices)
 print(indices_char)
+print(target_char_indices) #does contain '!'
+print(target_indices_char) #does contain '!'
+
+print(uchar_indices)
+print(indices_uchar)
+print(target_uchar_indices) #does contain '!'
+print(target_indices_uchar) #does contain '!'
+
+## end variables
 
 lastcase = ''
-line = ''
+line = []
 firstLine = True
 lines = []
 timeseqs = []  # relative time since previous event
@@ -141,14 +168,14 @@ for row in spamreader:
             timeseqs3.append(times3)
             meta_plannedtimestamp.append(meta_tv1)
             meta_processid.append(meta_tv2)
-        line = ''
+        line = []
         times = []
         times2 = []
         times3 = []
         meta_tv1 = []
         meta_tv2 = []
         numlines+=1
-    line+=unichr(int(row[1])+ascii_offset)
+    line.append(row[1])
     timesincelastevent = int(row[3]) #3 is calculated time since last event
     timesincecasestart = int(row[4]) #4 is timestamp aka time since case start
     timediff = timesincelastevent
@@ -200,29 +227,47 @@ model = load_model('output_files/models/'+modelfile)
 
 # define helper functions
 def encode(sentence, times, times2, times3, maxlen=maxlen):
-    num_features = len(chars)+4
+    num_features = len(uniquechars)+4
     X = np.zeros((1, maxlen, num_features), dtype=np.float32)
     leftpad = maxlen-len(sentence)
     for t, char in enumerate(sentence):
-        for c in chars:
-            if c==char:
-                X[0, t+leftpad, char_indices[c]] = 1
-        X[0, t+leftpad, len(chars)] = t+1
-        X[0, t+leftpad, len(chars)+1] = times[t]/divisor
-        X[0, t+leftpad, len(chars)+2] = times2[t]/divisor2
-        X[0, t+leftpad, len(chars)+3] = times3[t]/divisor3
+        for c in uniquechars:
+            if c in char:
+                X[0, t+leftpad, uchar_indices[c]] = 1
+        X[0, t+leftpad, len(uniquechars)] = t+1
+        X[0, t+leftpad, len(uniquechars)+1] = times[t]/divisor
+        X[0, t+leftpad, len(uniquechars)+2] = times2[t]/divisor2
+        X[0, t+leftpad, len(uniquechars)+3] = times3[t]/divisor3
     return X
 
+# create kd tree
+A = []
+for line in lines:
+    for activity in line:
+        B = np.zeros(len(uniquechars) + 1)
+        for c in uniquechars:
+            if c in activity:
+                B[target_uchar_indices[c]] = 1
+        A.append(B)
+# '!' case
+B = np.zeros(len(uniquechars) + 1)
+B[target_uchar_indices['!']] = 1
+A.append(B)
+
+A = list(set(tuple(element) for element in A))
+tree = spatial.KDTree(A)
+print('tree size: {}'.format(len(A)))
+print(A)
+
 def getSymbol(predictions):
-    maxPrediction = 0
-    symbol = ''
-    i = 0;
-    for prediction in predictions:
-        if(prediction>=maxPrediction):
-            maxPrediction = prediction
-            symbol = target_indices_char[i]
-        i += 1
-    return symbol
+    closest = A[tree.query(predictions)[1]]
+    prediction = ''
+    for i in range(0,len(closest)):
+        if closest[i] == 1:
+            prediction += target_indices_uchar[i]
+#    print(prediction)
+#    print(closest)
+    return prediction
 
 # make predictions
 with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog, 'wb') as csvfile:
@@ -246,17 +291,17 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
 
         for prefix_size in range(1,sequencelength):
             print('prefix size: {}'.format(prefix_size))            
-            cropped_line = ''.join(line[:prefix_size])
+            cropped_line = line[:prefix_size]
             cropped_times = times[:prefix_size]
             cropped_times2 = times2[:prefix_size]
             cropped_times3 = times3[:prefix_size]
             if '!' in cropped_line:
                 break # make no prediction for this case, since this case has ended already
-            predicted = ''
+            predicted = []
             predicted_t = []
             predicted_t2 = []
             predicted_t3 = []            
-            prefix_activities = ''.join(line[:prefix_size])
+            prefix_activities = line[:prefix_size]
             #predict until ! found
             for i in range(100):
                 enc = encode(cropped_line, cropped_times, cropped_times2, cropped_times3)
@@ -269,7 +314,7 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
                 if prediction == '!': # end of case was just predicted, therefore, stop predicting further into the future
                     print('! predicted, end case')
                     break                
-                cropped_line += prediction
+                cropped_line.append(prediction)
                 if y_t<0:
                     y_t=0
                 if y_t2<0:
@@ -283,7 +328,7 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
                 y_t2 = y_t2 * divisor2
                 y_t3 = y_t3 * divisor3
 
-                predicted += prediction
+                predicted.append(prediction)
                 predicted_t.append(y_t)
                 predicted_t2.append(y_t2)
                 predicted_t3.append(y_t3)
@@ -303,8 +348,8 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
                 output.append(ground_truth_timestamp)
                 output.append(ground_truth_plannedtimestamp)
                 output.append(ground_truth_processid)
-                prefix_activities = ' '.join(map(lambda x : str(ord(x)- ascii_offset),prefix_activities))
-                predicted_activities = ' '.join(map(lambda x : str(ord(x)- ascii_offset),predicted))
+                prefix_activities = ' '.join(prefix_activities)
+                predicted_activities = ' '.join(predicted)
                 output.append(prefix_activities)   #prefix_activities.encode('utf-8'))
                 output.append(predicted_activities)   #predicted.encode('utf-8'))
                 spamwriter.writerow(output)
