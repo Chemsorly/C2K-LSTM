@@ -183,7 +183,7 @@ for row in spamreader:
     times.append(timediff)
     times2.append(timediff2)
     times3.append(timediff3)
-    times4.append(int(row[6]))
+    times4.append(timediff4)
     meta_tv1.append(int(row[6]))
     meta_tv2.append(int(row[7]))
     lasteventtime = t
