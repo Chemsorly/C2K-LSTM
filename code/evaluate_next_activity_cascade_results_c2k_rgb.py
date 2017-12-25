@@ -261,6 +261,7 @@ print(A)
 
 def getSymbol(predictions):
     closest = A[tree.query(predictions)[1]]
+#    closest = A[tree.query([i * len(predictions) for i in predictions])[1]]
     prediction = ''
     for i in range(0,len(closest)):
         if closest[i] == 1:
@@ -303,7 +304,7 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
             predicted_t3 = []            
             prefix_activities = line[:prefix_size]
             #predict until ! found
-            for i in range(100):
+            for i in range(maxlen):
                 enc = encode(cropped_line, cropped_times, cropped_times2, cropped_times3)
                 y = model.predict(enc, verbose=0)
                 y_char = y[0][0]
