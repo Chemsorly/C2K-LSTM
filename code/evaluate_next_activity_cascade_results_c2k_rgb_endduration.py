@@ -24,13 +24,10 @@ from collections import Counter
 from scipy import spatial
 
 eventlog = "c2k_data_comma_lstmready_multi.csv"
-modelfile = ""
+modelfile = "model-latest.h5"
 csvfile = open('../data/%s' % eventlog, 'r')
 spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
 next(spamreader, None)  # skip the headers
-
-if __name__ == "__main__":
-    modelfile = sys.argv[1]
 
 print('target eventlog: ' + eventlog)
 print('target model: ' + modelfile)
@@ -302,7 +299,7 @@ def getSymbol(predictions):
     return prediction
 
 # make predictions
-with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog, 'wb') as csvfile:
+with open('output_files/results/results.csv', 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
     spamwriter.writerow(["sequenceid","sequencelength", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp", "gt_planned", "gt_instance", "prefix_activities", "predicted_activities"])
     sequenceid = 0
@@ -322,7 +319,7 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
         ground_truth_processid = meta2[-1]
 
         for prefix_size in range(1,sequencelength):
-            print('prefix size: {}'.format(prefix_size))            
+#            print('prefix size: {}'.format(prefix_size))            
             cropped_line = line[:prefix_size]
             cropped_times = times[:prefix_size]
             cropped_times2 = times2[:prefix_size]
@@ -343,7 +340,7 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
             y_t = y[1][0][0]
             prediction = getSymbol(y_char)
             if prediction == '!': # end of case was just predicted, therefore, stop predicting further into the future
-                print('! predicted, end case')
+#                print('! predicted, end case')
                 break                
             cropped_line.append(prediction)
             if y_t<0:
