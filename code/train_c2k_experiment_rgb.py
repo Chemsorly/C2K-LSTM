@@ -369,7 +369,7 @@ l2_1 = LSTM(par_neurons, consume_less='gpu', init='glorot_uniform', return_seque
 b2_1 = BatchNormalization()(l2_1)
 l2_2 = LSTM(par_neurons, consume_less='gpu', init='glorot_uniform', return_sequences=False, dropout_W=par_dropout)(b1) # the layer specialized in time prediction
 b2_2 = BatchNormalization()(l2_2)
-act_output = Dense(len(target_uchars), activation='softmax', init='glorot_uniform', name='act_output')(b2_1)
+act_output = Dense(len(target_uchars), activation='sigmoid', init='glorot_uniform', name='act_output')(b2_1)
 time_output = Dense(3, init='glorot_uniform', name='time_output')(b2_2)
 
 model = Model(input=[main_input], output=[act_output, time_output])
