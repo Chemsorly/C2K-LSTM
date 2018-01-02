@@ -10,6 +10,7 @@ Author: Niek Tax
 '''
 
 from __future__ import print_function, division
+from keras.models import load_model
 from keras.models import Sequential, Model
 from keras.layers.core import Dense
 from keras.layers.recurrent import LSTM, GRU, SimpleRNN
@@ -380,6 +381,7 @@ lr_reducer = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=par_pati
 model.fit(X, {'act_output':y_a, 'time_output':y_t, 'violation_output':y_v}, validation_split=0.2, verbose=2, callbacks=[early_stopping, model_checkpoint, lr_reducer], batch_size=maxlen, nb_epoch=500)
 
 #prediction:
+model = load_model('output_files/models/model-latest.h5')
 
 lines = fold3
 lines_t = fold3_t

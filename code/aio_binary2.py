@@ -10,6 +10,7 @@ Author: Niek Tax
 '''
 
 from __future__ import print_function, division
+from keras.models import load_model
 from keras.models import Sequential, Model
 from keras.layers.core import Dense
 from keras.layers.recurrent import LSTM, GRU, SimpleRNN
@@ -181,7 +182,7 @@ fold1_t2 = timeseqs2[:elems_per_fold]
 fold1_t3 = timeseqs3[:elems_per_fold]
 fold1_t4 = timeseqs4[:elems_per_fold]
 fold1_t5 = timeseqs5[:elems_per_fold]
-fold1_t6 = timeseqs5[:elems_per_fold]
+fold1_t6 = timeseqs6[:elems_per_fold]
 with open('output_files/folds/fold1.csv', 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
     for row, timeseq in izip(fold1, fold1_t):    
@@ -193,7 +194,7 @@ fold2_t2 = timeseqs2[elems_per_fold:2*elems_per_fold]
 fold2_t3 = timeseqs3[elems_per_fold:2*elems_per_fold]
 fold2_t4 = timeseqs4[elems_per_fold:2*elems_per_fold]
 fold2_t5 = timeseqs5[elems_per_fold:2*elems_per_fold]
-fold2_t6 = timeseqs5[elems_per_fold:2*elems_per_fold]
+fold2_t6 = timeseqs6[elems_per_fold:2*elems_per_fold]
 with open('output_files/folds/fold2.csv', 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
     for row, timeseq in izip(fold2, fold2_t):
@@ -205,7 +206,7 @@ fold3_t2 = timeseqs2[2*elems_per_fold:]
 fold3_t3 = timeseqs3[2*elems_per_fold:]
 fold3_t4 = timeseqs4[2*elems_per_fold:]
 fold3_t5 = timeseqs5[2*elems_per_fold:]
-fold3_t6 = timeseqs5[2*elems_per_fold:]
+fold3_t6 = timeseqs6[2*elems_per_fold:]
 fold3_m1 = meta_plannedtimestamp[2*elems_per_fold:]
 fold3_m2 = meta_processid[2*elems_per_fold:]
 with open('output_files/folds/fold3.csv', 'wb') as csvfile:
@@ -412,6 +413,7 @@ lr_reducer = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=par_pati
 model.fit(X, {'act_output':y_a, 'time_output':y_t, 'violation_output':y_v}, validation_split=0.2, verbose=2, callbacks=[early_stopping, model_checkpoint, lr_reducer], batch_size=maxlen, nb_epoch=500)
 
 #prediction:
+model = load_model('output_files/models/model-latest.h5')
 
 lines = fold3
 lines_t = fold3_t
@@ -457,7 +459,7 @@ def getViolationPrediction(predictions):
 
 with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog, 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    spamwriter.writerow(["sequenceid","sequencelength", "prefix", "completion", "gt_sumprevious", "gt_timestamp", "gt_planned", "gt_instance", "prefix_activities", "predicted_activities", "violation"])
+    spamwriter.writerow(["sequenceid","sequencelength", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp", "gt_planned", "gt_instance", "prefix_activities", "predicted_activities", "violation"])
     sequenceid = 0
     print('sequences: {}'.format(len(lines)))    
     for line, times, times2, times3,times4, times5, meta1, meta2 in izip(lines, lines_t, lines_t2, lines_t3, lines_t4, lines_t5, lines_m1, lines_m2):
@@ -467,7 +469,7 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
         #times3 = sequence of durations
         #calculate max line length
         sequencelength = len(line)
-        print('sequence length: {}'.format(sequencelength))
+#        print('sequence length: {}'.format(sequencelength))
         #calculate ground truth
         ground_truth_sumprevious = sum(times)
         ground_truth_timestamp = times2[-1]
@@ -475,7 +477,7 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
         ground_truth_processid = meta2[-1]
 
         for prefix_size in range(1,sequencelength):
-            print('prefix size: {}'.format(prefix_size))            
+#            print('prefix size: {}'.format(prefix_size))            
             cropped_line = ''.join(line[:prefix_size])
             cropped_times = times[:prefix_size]
             cropped_times2 = times2[:prefix_size]
@@ -520,7 +522,7 @@ with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog
 #            cropped_times3.append(y_t3)
 #            cropped_times4.append(y_t4)
 #            cropped_times5.append(y_t5)
-            y_t = y_t * divisor
+            y_t = y_t * divisor6
 #            y_t2 = y_t2 * divisor2
 #            y_t3 = y_t3 * divisor3
 #            y_t4 = y_t4 * divisor4

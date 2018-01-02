@@ -10,6 +10,7 @@ Author: Niek Tax
 '''
 
 from __future__ import print_function, division
+from keras.models import load_model
 from keras.models import Sequential, Model
 from keras.layers.core import Dense
 from keras.layers.recurrent import LSTM, GRU, SimpleRNN
