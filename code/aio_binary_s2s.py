@@ -26,6 +26,7 @@ import numpy as np
 import random
 import sys
 import os
+from os.path import basename
 import copy
 import csv
 import time
@@ -34,6 +35,7 @@ from itertools import izip
 from datetime import datetime
 from math import log
 
+filename = os.path.splitext(basename(os.path.realpath(__file__)))[0]
 eventlog = "c2k_data_comma_lstmready.csv"
 ascii_offset = 161
 predict_size = 1
@@ -374,14 +376,14 @@ elif par_algorithm == 7:
 
 model.compile(loss={'act_output':'categorical_crossentropy', 'time_output':'mae', 'violation_output':'categorical_crossentropy'}, optimizer=opt)
 early_stopping = EarlyStopping(monitor='val_loss', patience=par_patience)
-model_checkpoint = ModelCheckpoint('output_files/models/model-latest.h5', monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=False, mode='auto')
+model_checkpoint = ModelCheckpoint('output_files/models/model-latest-{}.h5'.format(filename), monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=False, mode='auto')
 lr_reducer = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=par_patience, verbose=0, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
 
 #train
 model.fit(X, {'act_output':y_a, 'time_output':y_t, 'violation_output':y_v}, validation_split=0.2, verbose=2, callbacks=[early_stopping, model_checkpoint, lr_reducer], batch_size=maxlen, nb_epoch=500)
 
 #prediction:
-model = load_model('output_files/models/model-latest.h5')
+model = load_model('output_files/models/model-latest-{}.h5'.format(filename))
 
 lines = fold3
 lines_t = fold3_t
@@ -435,7 +437,7 @@ def getViolationPrediction(predictions):
     else:
         return 'undefined'
 
-with open('output_files/results/next_activity_and_cascade_results_%s' % eventlog, 'wb') as csvfile:
+with open('output_files/results/results-{}'.format(filename), 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
     spamwriter.writerow(["sequenceid","sequencelength", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp", "gt_planned", "gt_instance", "prefix_activities", "predicted_activities", "violation"])
     sequenceid = 0
