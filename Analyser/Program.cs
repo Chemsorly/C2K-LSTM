@@ -76,6 +76,16 @@ namespace Analyser
             model_glob_accuracy_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
             model_glob_accuracy_sp.IsLegendVisible = true;
 
+            OxyPlot.PlotModel model_glob_fmetric_sp = new PlotModel() { Title = "Results: F-Metric SP" };
+            model_glob_fmetric_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_fmetric_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_fmetric_sp.IsLegendVisible = true;
+
+            OxyPlot.PlotModel model_glob_mcc_sp = new PlotModel() { Title = "Results: MCC SP" };
+            model_glob_mcc_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_mcc_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_mcc_sp.IsLegendVisible = true;
+
             //TS
             OxyPlot.PlotModel model_glob_precision_ts = new PlotModel() { Title = "Results: Precision TS" };
             model_glob_precision_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
@@ -106,6 +116,16 @@ namespace Analyser
             model_glob_accuracy_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
             model_glob_accuracy_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
             model_glob_accuracy_ts.IsLegendVisible = true;
+
+            OxyPlot.PlotModel model_glob_fmetric_ts = new PlotModel() { Title = "Results: F-Metric TS" };
+            model_glob_fmetric_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_fmetric_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_fmetric_ts.IsLegendVisible = true;
+
+            OxyPlot.PlotModel model_glob_mcc_ts = new PlotModel() { Title = "Results: MCC TS" };
+            model_glob_mcc_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_mcc_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_mcc_ts.IsLegendVisible = true;
 
             OxyPlot.PlotModel model_glob_predictedsequences = new PlotModel() { Title = "Predicted sequences" };
             var model_glob_predictedsequences_cataxis = new CategoryAxis() {Position = AxisPosition.Bottom, Title = "Parameters", Angle = 45, FontSize = 8};
@@ -410,6 +430,7 @@ namespace Analyser
                                    "NegativePredictedValue_SP," +
                                    "Accuracy_SP," +
                                    "F-Measure_SP," +
+                                   "MCC_SP," +
                                    "MSE_TS," +
                                    "RMSE_TS," +
                                    "MAE_TS," +
@@ -422,6 +443,7 @@ namespace Analyser
                                    "FalsePositiveRate_TS," +
                                    "NegativePredictedValue_TS," +
                                    "Accuracy_TS," +
+                                   "MCC_TS," +
                                    "F-Measure_TS"
                                    );
                     foreach (var bucket in BucketList)
@@ -452,6 +474,7 @@ namespace Analyser
                                            $"{bucket.NegativePredictedValueSP}," +
                                            $"{bucket.AccuracySP}," +
                                            $"{bucket.FMeasureSP}," +
+                                           $"{bucket.MCC_SP}," +
                                            $"{bucket.MSE_TS}," +
                                            $"{bucket.RMSE_TS}," +
                                            $"{bucket.MAE_TS}," +
@@ -464,7 +487,8 @@ namespace Analyser
                                            $"{bucket.FalsePositiveRateTS}," +
                                            $"{bucket.NegativePredictedValueTS}," +
                                            $"{bucket.AccuracyTS}," +
-                                           $"{bucket.FMeasureTS}"
+                                           $"{bucket.FMeasureTS}," +
+                                           $"{bucket.MCC_TS}"
                                            );
                     exportrows.Add($"Total," +
                                    $"{BucketList.Sum(t => t.ViolationStringsSP.Count)}," +
@@ -492,6 +516,7 @@ namespace Analyser
                                    $"{BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.NegativePredictedValueSP)}," +
                                    $"{BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.AccuracySP)}," +
                                    $"{BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.FMeasureSP)}," +
+                                   $"{BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.MCC_SP)}," +
                                    $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.MSE_TS)}," +
                                    $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.RMSE_TS)}," +
                                    $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.MAE_TS)}," +
@@ -504,7 +529,8 @@ namespace Analyser
                                    $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.FalsePositiveRateTS)}," +
                                    $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.NegativePredictedValueTS)}," +
                                    $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.AccuracyTS)}," +
-                                   $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.FMeasureTS)}"
+                                   $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.FMeasureTS)}," +
+                                   $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.MCC_TS)}"
                                    );
 
                     ////export as csv to match LSTM input examples
@@ -523,6 +549,8 @@ namespace Analyser
                     var falsepositivesSeries_sp = new LineSeries() { Title = "False Positives_sp" };
                     var negativepredictedSeries_sp = new LineSeries() { Title = "Negative Predictions_sp" };
                     var accuracySeries_sp = new LineSeries() { Title = "Accuracy_sp" };
+                    var fmetricSeries_sp = new LineSeries() { Title = "Fmetric_sp" };
+                    var MCCSeries_sp = new LineSeries() { Title = "MCC_sp" };
 
                     var precisionSeries_sp_global = new LineSeries() { Title = String.Join(" ", Parameters)};
                     var recallSeries_sp_global = new LineSeries() { Title = String.Join(" ", Parameters) };
@@ -530,6 +558,8 @@ namespace Analyser
                     var falsepositivesSeries_sp_global = new LineSeries() { Title = String.Join(" ", Parameters) };
                     var negativepredictedSeries_sp_global = new LineSeries() { Title = String.Join(" ", Parameters) };
                     var accuracySeries_sp_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+                    var fmetricSeries_sp_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+                    var MCCSeries_sp_global = new LineSeries() { Title = String.Join(" ", Parameters) };
 
                     foreach (var bucket in BucketList)
                     {
@@ -542,6 +572,8 @@ namespace Analyser
                         falsepositivesSeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.FalsePositiveRateSP));
                         negativepredictedSeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.NegativePredictedValueSP));
                         accuracySeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.AccuracySP));
+                        fmetricSeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.FMeasureSP));
+                        MCCSeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC_SP));
 
                         precisionSeries_sp_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.PrecisionSP));
                         recallSeries_sp_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.RecallSP));
@@ -549,6 +581,8 @@ namespace Analyser
                         falsepositivesSeries_sp_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.FalsePositiveRateSP));
                         negativepredictedSeries_sp_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.NegativePredictedValueSP));
                         accuracySeries_sp_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.AccuracySP));
+                        fmetricSeries_sp_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.FMeasureSP));
+                        MCCSeries_sp_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC_SP));
                     }
 
                     model_sp.Series.Add(precisionSeries_sp);
@@ -557,6 +591,8 @@ namespace Analyser
                     model_sp.Series.Add(falsepositivesSeries_sp);
                     model_sp.Series.Add(negativepredictedSeries_sp);
                     model_sp.Series.Add(accuracySeries_sp);
+                    model_sp.Series.Add(fmetricSeries_sp);
+                    model_sp.Series.Add(MCCSeries_sp);
                     using (var filestream = new FileStream($"{file.FullName.Replace(".csv", "")}.plot_sp.pdf", FileMode.OpenOrCreate))
                     {
                         OxyPlot.PdfExporter.Export(model_sp, filestream, PlotModelWidth, PlotModelHeight);
@@ -569,6 +605,8 @@ namespace Analyser
                     model_glob_falsepositives_sp.Series.Add(falsepositivesSeries_sp_global);
                     model_glob_negativepredictions_sp.Series.Add(negativepredictedSeries_sp_global);
                     model_glob_accuracy_sp.Series.Add(accuracySeries_sp_global);
+                    model_glob_fmetric_sp.Series.Add(fmetricSeries_sp_global);
+                    model_glob_mcc_sp.Series.Add(MCCSeries_sp_global);
 
                     //TS series
                     OxyPlot.PlotModel model_ts = new PlotModel() { Title = "Results" };
@@ -582,6 +620,8 @@ namespace Analyser
                     var falsepositivesSeries_ts = new LineSeries() { Title = "False Positives_ts" };
                     var negativepredictedSeries_ts = new LineSeries() { Title = "Negative Predictions_ts" };
                     var accuracySeries_ts = new LineSeries() { Title = "Accuracy_ts" };
+                    var fmetricSeries_ts = new LineSeries() { Title = "Fmetric_ts" };
+                    var MCCSeries_ts = new LineSeries() { Title = "MCC_ts" };
 
                     var precisionSeries_ts_global = new LineSeries() { Title = String.Join(" ", Parameters) };
                     var recallSeries_ts_global = new LineSeries() { Title = String.Join(" ", Parameters) };
@@ -589,6 +629,8 @@ namespace Analyser
                     var falsepositivesSeries_ts_global = new LineSeries() { Title = String.Join(" ", Parameters) };
                     var negativepredictedSeries_ts_global = new LineSeries() { Title = String.Join(" ", Parameters) };
                     var accuracySeries_ts_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+                    var fmetricSeries_ts_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+                    var MCCSeries_ts_global = new LineSeries() { Title = String.Join(" ", Parameters) };
 
                     foreach (var bucket in BucketList)
                     {
@@ -598,6 +640,8 @@ namespace Analyser
                         falsepositivesSeries_ts.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.FalsePositiveRateTS));
                         negativepredictedSeries_ts.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.NegativePredictedValueTS));
                         accuracySeries_ts.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.AccuracyTS));
+                        fmetricSeries_ts.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.FMeasureTS));
+                        MCCSeries_ts.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC_TS));
 
                         precisionSeries_ts_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.PrecisionTS));
                         recallSeries_ts_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.RecallTS));
@@ -605,6 +649,8 @@ namespace Analyser
                         falsepositivesSeries_ts_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.FalsePositiveRateTS));
                         negativepredictedSeries_ts_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.NegativePredictedValueTS));
                         accuracySeries_ts_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.AccuracyTS));
+                        fmetricSeries_ts_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.FMeasureTS));
+                        MCCSeries_ts_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC_TS));
                     }
 
                     model_ts.Series.Add(precisionSeries_ts);
@@ -613,6 +659,8 @@ namespace Analyser
                     model_ts.Series.Add(falsepositivesSeries_ts);
                     model_ts.Series.Add(negativepredictedSeries_ts);
                     model_ts.Series.Add(accuracySeries_ts);
+                    model_ts.Series.Add(fmetricSeries_ts);
+                    model_ts.Series.Add(MCCSeries_ts);
                     using (var filestream = new FileStream($"{file.FullName.Replace(".csv", "")}.plot_ts.pdf", FileMode.OpenOrCreate))
                     {
                         OxyPlot.PdfExporter.Export(model_ts, filestream, PlotModelWidth, PlotModelHeight);
@@ -625,6 +673,8 @@ namespace Analyser
                     model_glob_falsepositives_ts.Series.Add(falsepositivesSeries_ts_global);
                     model_glob_negativepredictions_ts.Series.Add(negativepredictedSeries_ts_global);
                     model_glob_accuracy_ts.Series.Add(accuracySeries_ts_global);
+                    model_glob_fmetric_ts.Series.Add(fmetricSeries_ts_global);
+                    model_glob_mcc_ts.Series.Add(MCCSeries_ts_global);
 
                     //get valid/predicted sequences
                     validSequences.Add(String.Join(" ", Parameters), output.Count(t => t.IsValidPrediction));
@@ -652,6 +702,8 @@ namespace Analyser
                 entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity < 0.5d && !double.IsNaN(t.FalsePositiveRateSP)).Average(t => t.FalsePositiveRateSP).ToString());
                 entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity < 0.5d && !double.IsNaN(t.NegativePredictedValueSP)).Average(t => t.NegativePredictedValueSP).ToString());
                 entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity < 0.5d && !double.IsNaN(t.AccuracySP)).Average(t => t.AccuracySP).ToString());
+                entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity < 0.5d && !double.IsNaN(t.FMeasureSP)).Average(t => t.FMeasureSP).ToString());
+                entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity < 0.5d && !double.IsNaN(t.MCC_SP)).Average(t => t.MCC_SP).ToString());
 
                 entry.Value.Add(entrybuckets.Where(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5d) < 0.001 && !double.IsNaN(t.PrecisionSP)).Average(t => t.PrecisionSP).ToString());
                 entry.Value.Add(entrybuckets.Where(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5d) < 0.001 && !double.IsNaN(t.RecallSP)).Average(t => t.RecallSP).ToString());
@@ -659,6 +711,8 @@ namespace Analyser
                 entry.Value.Add(entrybuckets.Where(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5d) < 0.001 && !double.IsNaN(t.FalsePositiveRateSP)).Average(t => t.FalsePositiveRateSP).ToString());
                 entry.Value.Add(entrybuckets.Where(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5d) < 0.001 && !double.IsNaN(t.NegativePredictedValueSP)).Average(t => t.NegativePredictedValueSP).ToString());
                 entry.Value.Add(entrybuckets.Where(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5d) < 0.001 && !double.IsNaN(t.AccuracySP)).Average(t => t.AccuracySP).ToString());
+                entry.Value.Add(entrybuckets.Where(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5d) < 0.001 && !double.IsNaN(t.FMeasureSP)).Average(t => t.FMeasureSP).ToString());
+                entry.Value.Add(entrybuckets.Where(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5d) < 0.001 && !double.IsNaN(t.MCC_SP)).Average(t => t.MCC_SP).ToString());
 
                 entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity > 0.5d && !double.IsNaN(t.PrecisionSP)).Average(t => t.PrecisionSP).ToString());
                 entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity > 0.5d && !double.IsNaN(t.RecallSP)).Average(t => t.RecallSP).ToString());
@@ -666,14 +720,16 @@ namespace Analyser
                 entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity > 0.5d && !double.IsNaN(t.FalsePositiveRateSP)).Average(t => t.FalsePositiveRateSP).ToString());
                 entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity > 0.5d && !double.IsNaN(t.NegativePredictedValueSP)).Average(t => t.NegativePredictedValueSP).ToString());
                 entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity > 0.5d && !double.IsNaN(t.AccuracySP)).Average(t => t.AccuracySP).ToString());
+                entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity > 0.5d && !double.IsNaN(t.FMeasureSP)).Average(t => t.FMeasureSP).ToString());
+                entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity > 0.5d && !double.IsNaN(t.MCC_SP)).Average(t => t.MCC_SP).ToString());
             }
         
             //print
             List<String> sortedbucketsout = new List<string>();
             sortedbucketsout.Add("Parameters," +
-                                 "precision<0.5,recall<0.5,speceficity<0.5,falsepositives<0.5,negativepredictions<0.5,accuracy<0.5," +
-                                 "precision=0.5,recall=0.5,speceficity=0.5,falsepositives=0.5,negativepredictions=0.5,accuracy=0.5," +
-                                 "precision>0.5,recall>0.5,speceficity>0.5,falsepositives>0.5,negativepredictions>0.5,accuracy>0.5,");
+                                 "precision<0.5,recall<0.5,speceficity<0.5,falsepositives<0.5,negativepredictions<0.5,accuracy<0.5,fmetric<0.5,mcc<0.5," +
+                                 "precision=0.5,recall=0.5,speceficity=0.5,falsepositives=0.5,negativepredictions=0.5,accuracy=0.5,fmetric=0.5,mcc=0.5," +
+                                 "precision>0.5,recall>0.5,speceficity>0.5,falsepositives>0.5,negativepredictions>0.5,accuracy>0.5,fmetric>0.5,mcc>0.5,");
             foreach(var entry in sortedbuckets)
                 sortedbucketsout.Add($"{entry.Key},{String.Join(",",entry.Value)}");
 
@@ -710,6 +766,16 @@ namespace Analyser
                 OxyPlot.PdfExporter.Export(model_glob_accuracy_sp, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
             }
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_fmetric_sp.pdf", FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_fmetric_sp, filestream, PlotModelWidth, PlotModelHeight);
+                filestream.Close();
+            }
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_mcc_sp.pdf", FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_mcc_sp, filestream, PlotModelWidth, PlotModelHeight);
+                filestream.Close();
+            }
 
             //ts
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_precision_ts.pdf", FileMode.OpenOrCreate))
@@ -740,6 +806,16 @@ namespace Analyser
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_accuracy_ts.pdf", FileMode.OpenOrCreate))
             {
                 OxyPlot.PdfExporter.Export(model_glob_accuracy_ts, filestream, PlotModelWidth, PlotModelHeight);
+                filestream.Close();
+            }
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_fmetric_ts.pdf", FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_fmetric_ts, filestream, PlotModelWidth, PlotModelHeight);
+                filestream.Close();
+            }
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_mcc_ts.pdf", FileMode.OpenOrCreate))
+            {
+                OxyPlot.PdfExporter.Export(model_glob_mcc_ts, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
             }
 
@@ -806,6 +882,16 @@ namespace Analyser
                 model_glob_boxplot_neurons_sp_cataxis.ActualLabels.Add($"Accuracy {parameters[i]}");
                 boxplotSeries_sp_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.AccuracySP).ToList(), i + (parameters.Count * 5)));
             }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_neurons_sp_cataxis.ActualLabels.Add($"Fmetric {parameters[i]}");
+                boxplotSeries_sp_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.FMeasureSP).ToList(), i + (parameters.Count * 5)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_neurons_sp_cataxis.ActualLabels.Add($"MCC {parameters[i]}");
+                boxplotSeries_sp_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.MCC_SP).ToList(), i + (parameters.Count * 5)));
+            }
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_neurons.pdf",FileMode.OpenOrCreate))
             {
                 OxyPlot.PdfExporter.Export(model_glob_boxplot_neurons_sp, filestream, PlotModelWidth * 3, PlotModelHeight);
@@ -845,6 +931,16 @@ namespace Analyser
             {
                 model_glob_boxplot_dropout_sp_cataxis.ActualLabels.Add($"Accuracy {parameters[i]}");
                 boxplotSeries_sp_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.AccuracySP).ToList(), i + (parameters.Count * 5)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_dropout_sp_cataxis.ActualLabels.Add($"Fmetric {parameters[i]}");
+                boxplotSeries_sp_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.FMeasureSP).ToList(), i + (parameters.Count * 5)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_dropout_sp_cataxis.ActualLabels.Add($"MCC {parameters[i]}");
+                boxplotSeries_sp_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.MCC_SP).ToList(), i + (parameters.Count * 5)));
             }
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_dropout.pdf", FileMode.OpenOrCreate))
             {
@@ -886,6 +982,16 @@ namespace Analyser
                 model_glob_boxplot_patience_sp_cataxis.ActualLabels.Add($"Accuracy {parameters[i]}");
                 boxplotSeries_sp_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.AccuracySP).ToList(), i + (parameters.Count * 5)));
             }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_patience_sp_cataxis.ActualLabels.Add($"Fmetric {parameters[i]}");
+                boxplotSeries_sp_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.FMeasureSP).ToList(), i + (parameters.Count * 5)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_patience_sp_cataxis.ActualLabels.Add($"MCC {parameters[i]}");
+                boxplotSeries_sp_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.MCC_SP).ToList(), i + (parameters.Count * 5)));
+            }
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_patience.pdf", FileMode.OpenOrCreate))
             {
                 OxyPlot.PdfExporter.Export(model_glob_boxplot_patience_sp, filestream, PlotModelWidth * 3, PlotModelHeight);
@@ -925,6 +1031,16 @@ namespace Analyser
             {
                 model_glob_boxplot_algorithm_sp_cataxis.ActualLabels.Add($"Accuracy {parameters[i]}");
                 boxplotSeries_sp_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.AccuracySP).ToList(), i + (parameters.Count * 5)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_algorithm_sp_cataxis.ActualLabels.Add($"Fmetric {parameters[i]}");
+                boxplotSeries_sp_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.FMeasureSP).ToList(), i + (parameters.Count * 5)));
+            }
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                model_glob_boxplot_algorithm_sp_cataxis.ActualLabels.Add($"MCC {parameters[i]}");
+                boxplotSeries_sp_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.MCC_SP).ToList(), i + (parameters.Count * 5)));
             }
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_algorithm.pdf", FileMode.OpenOrCreate))
             {
@@ -1025,6 +1141,8 @@ namespace Analyser
             public double NegativePredictedValueSP => (double)ViolationStringsSP.Count(t => t == "TN") / (double)ViolationStringsSP.Count(t => t == "TN" || t == "FP");
             public double AccuracySP => (double)ViolationStringsSP.Count(t => t == "TN" || t == "TP") / (double)ViolationStringsSP.Count;
             public double FMeasureSP => ((1 + Math.Pow(FmetricBeta, 2)) * PrecisionSP * RecallSP) / ((Math.Pow(FmetricBeta, 2) * PrecisionSP) + RecallSP);
+            public double MCC_SP => ((TPcountSP * TNcountSP) - (FPcountSP * FNcountSP)) / Math.Sqrt((TPcountSP + FPcountSP) * (TPcountSP + FNcountSP) * (TNcountSP + FPcountSP) * (TNcountSP + FNcountSP));
+
             public double PrecisionTS => (double)ViolationStringsTS.Count(t => t == "TP") / (double)ViolationStringsTS.Count(t => t == "TP" || t == "FP");
             public double RecallTS => (double)ViolationStringsTS.Count(t => t == "TP") / (double)ViolationStringsTS.Count(t => t == "TP" || t == "FN");
             public double SpecificityTS => (double)ViolationStringsTS.Count(t => t == "TN") / (double)ViolationStringsTS.Count(t => t == "TN" || t == "FP");
@@ -1032,7 +1150,7 @@ namespace Analyser
             public double NegativePredictedValueTS => (double)ViolationStringsTS.Count(t => t == "TN") / (double)ViolationStringsTS.Count(t => t == "TN" || t == "FP");
             public double AccuracyTS => (double)ViolationStringsTS.Count(t => t == "TN" || t == "TP") / (double)ViolationStringsTS.Count;
             public double FMeasureTS => ((1 + Math.Pow(FmetricBeta, 2)) * PrecisionTS * RecallTS) / ((Math.Pow(FmetricBeta, 2) * PrecisionTS) + RecallTS);
-
+            public double MCC_TS => ((TPcountTS * TNcountTS) - (FPcountTS * FNcountTS)) / Math.Sqrt((TPcountTS + FPcountTS) * (TPcountTS + FNcountTS) * (TNcountTS + FPcountTS) * (TNcountTS + FNcountTS));
 
             //regression prediction
             public double PredictionMedianSP => Median(PredictionAccuraciesSP.ToArray());
