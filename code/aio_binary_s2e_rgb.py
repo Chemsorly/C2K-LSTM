@@ -34,6 +34,7 @@ import shutil
 from itertools import izip
 from datetime import datetime
 from math import log
+from scipy import spatial
 
 filename = os.path.splitext(basename(os.path.realpath(__file__)))[0]
 eventlog = "c2k_data_comma_lstmready_multi.csv"
@@ -532,7 +533,7 @@ with open('output_files/results/results-{}'.format(filename), 'wb') as csvfile:
         ground_truth_processid = meta2[-1]
 
         for prefix_size in range(1,sequencelength):
-            cropped_line = ''.join(line[:prefix_size])
+            cropped_line = line[:prefix_size]
             cropped_times = times[:prefix_size]
             cropped_times2 = times2[:prefix_size]
             cropped_times3 = times3[:prefix_size]
