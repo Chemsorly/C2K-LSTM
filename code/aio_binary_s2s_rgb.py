@@ -34,10 +34,10 @@ import shutil
 from itertools import izip
 from datetime import datetime
 from math import log
+from scipy import spatial
 
 filename = os.path.splitext(basename(os.path.realpath(__file__)))[0]
-eventlog = "c2k_data_comma_lstmready.csv"
-ascii_offset = 161
+eventlog = "c2k_data_comma_lstmready_multi.csv"
 predict_size = 1
 
 #parameters
@@ -85,7 +85,7 @@ csvfile = open('../data/%s' % eventlog, 'r')
 spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
 next(spamreader, None)  # skip the headers
 lastcase = ''
-line = ''
+line = []
 firstLine = True
 lines = []
 timeseqs = []
@@ -93,11 +93,15 @@ timeseqs2 = []
 timeseqs3 = []
 timeseqs4 = []
 timeseqs5 = []
+timeseqs6 = []
+timeseqs7 = []
 times = []
 times2 = []
 times3 = []
 times4 = []
 times5 = []
+times6 = []
+times7 = []
 meta_tv1 = []
 meta_tv2 = []
 meta_plannedtimestamp = []
@@ -118,29 +122,37 @@ for row in spamreader:
             timeseqs3.append(times3)
             timeseqs4.append(times4)
             timeseqs5.append(times5)
+            timeseqs6.append(times6)
+            timeseqs7.append(times7)
             meta_plannedtimestamp.append(meta_tv1)
             meta_processid.append(meta_tv2)
-        line = ''
+        line = []
         times = []
         times2 = []
         times3 = []
         times4 = []
         times5 = []
+        times6 = []
+        times7 = []
         meta_tv1 = []
         meta_tv2 = []
         numlines+=1
     #line+=row[1]
-    line+=unichr(int(row[1])+ascii_offset)
+    line.append(row[1])
     timediff = int(row[3]) #col 4 is calculated time since last event
     timediff2 = int(row[4]) #col 5 is timestamp aka time since case start
     timediff3 = int(row[2]) #col 3 is duration
     timediff4 = int(row[5]) #col 6 is planned duration
     timediff5 = int(row[6]) #col 7 is planned timestamp
+    timediff6 = int(row[8]) #col 9 is end timestamp
+    timediff7 = int(row[11]) #col 12 is planned end timestamp
     times.append(timediff)
     times2.append(timediff2)
     times3.append(timediff3)
     times4.append(timediff4)
     times5.append(timediff5)
+    times6.append(timediff6)
+    times7.append(timediff7)
     meta_tv1.append(int(row[6]))
     meta_tv2.append(int(row[7]))
     lasteventtime = t
@@ -153,6 +165,8 @@ timeseqs2.append(times2)
 timeseqs3.append(times3)
 timeseqs4.append(times4)
 timeseqs5.append(times5)
+timeseqs6.append(times6)
+timeseqs7.append(times7)
 meta_plannedtimestamp.append(meta_tv1)
 meta_processid.append(meta_tv2)
 numlines+=1
@@ -167,6 +181,10 @@ divisor4 = np.mean([item for sublist in timeseqs4 for item in sublist]) #variabl
 print('divisor4: {}'.format(divisor4))
 divisor5 = np.mean([item for sublist in timeseqs5 for item in sublist]) #variable for lstm model
 print('divisor5: {}'.format(divisor5))
+divisor6 = np.mean([item for sublist in timeseqs6 for item in sublist]) #variable for lstm model
+print('divisor6: {}'.format(divisor6))
+divisor7 = np.mean([item for sublist in timeseqs7 for item in sublist]) #variable for lstm model
+print('divisor7: {}'.format(divisor7))
 
 elems_per_fold = int(round(numlines/3))
 fold1 = lines[:elems_per_fold]
@@ -175,6 +193,8 @@ fold1_t2 = timeseqs2[:elems_per_fold]
 fold1_t3 = timeseqs3[:elems_per_fold]
 fold1_t4 = timeseqs4[:elems_per_fold]
 fold1_t5 = timeseqs5[:elems_per_fold]
+fold1_t6 = timeseqs6[:elems_per_fold]
+fold1_t7 = timeseqs7[:elems_per_fold]
 with open('output_files/folds/fold1.csv', 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
     for row, timeseq in izip(fold1, fold1_t):    
@@ -186,6 +206,8 @@ fold2_t2 = timeseqs2[elems_per_fold:2*elems_per_fold]
 fold2_t3 = timeseqs3[elems_per_fold:2*elems_per_fold]
 fold2_t4 = timeseqs4[elems_per_fold:2*elems_per_fold]
 fold2_t5 = timeseqs5[elems_per_fold:2*elems_per_fold]
+fold2_t6 = timeseqs6[elems_per_fold:2*elems_per_fold]
+fold2_t7 = timeseqs7[elems_per_fold:2*elems_per_fold]
 with open('output_files/folds/fold2.csv', 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
     for row, timeseq in izip(fold2, fold2_t):
@@ -197,6 +219,8 @@ fold3_t2 = timeseqs2[2*elems_per_fold:]
 fold3_t3 = timeseqs3[2*elems_per_fold:]
 fold3_t4 = timeseqs4[2*elems_per_fold:]
 fold3_t5 = timeseqs5[2*elems_per_fold:]
+fold3_t6 = timeseqs6[2*elems_per_fold:]
+fold3_t7 = timeseqs7[2*elems_per_fold:]
 fold3_m1 = meta_plannedtimestamp[2*elems_per_fold:]
 fold3_m2 = meta_processid[2*elems_per_fold:]
 with open('output_files/folds/fold3.csv', 'wb') as csvfile:
@@ -210,41 +234,71 @@ lines_t2 = fold1_t2 + fold2_t2
 lines_t3 = fold1_t3 + fold2_t3
 lines_t4 = fold1_t4 + fold2_t4
 lines_t5 = fold1_t5 + fold2_t5
+lines_t6 = fold1_t6 + fold2_t6
+lines_t7 = fold1_t7 + fold2_t7
 
 step = 1
 sentences = []
 softness = 0
 next_chars = []
-lines = map(lambda x: x+'!',lines)
+lines = map(lambda x: x + ['!'],lines)
 maxlen = max(map(lambda x: len(x),lines)) #variable for lstm model
 
+#chars are concurrent activities e.g. 'AEI'
+#uniquechars are activities e.g. 'A'
 chars = map(lambda x : set(x),lines)
 chars = list(set().union(*chars))
 chars.sort()
 target_chars = copy.copy(chars)
 chars.remove('!')
 print('total chars: {}, target chars: {}'.format(len(chars), len(target_chars)))
+
+uniquechars = [l for word in chars for l in word]
+uniquechars.append('!')
+uniquechars = list(set(uniquechars))
+uniquechars.sort()
+target_uchars = copy.copy(uniquechars)
+uniquechars.remove('!')
+print('unique characters: {}', uniquechars)
+
 char_indices = dict((c, i) for i, c in enumerate(chars)) #dictionary<key,value> with <char, index> where char is unique symbol for activity
+uchar_indices = dict((c, i) for i, c in enumerate(uniquechars))
 indices_char = dict((i, c) for i, c in enumerate(chars)) #dictionary<key,value> with <index, char> where char is unique symbol for activity
+indices_uchar = dict((i, c) for i, c in enumerate(uniquechars))
+
 target_char_indices = dict((c, i) for i, c in enumerate(target_chars))
+target_uchar_indices = dict((c, i) for i, c in enumerate(target_uchars))
 target_indices_char = dict((i, c) for i, c in enumerate(target_chars))
+target_indices_uchar = dict((i, c) for i, c in enumerate(target_uchars))
+
 print(char_indices)
 print(indices_char)
-print(target_char_indices)
-print(target_indices_char)
+print(target_char_indices) #does contain '!'
+print(target_indices_char) #does contain '!'
+
+print(uchar_indices)
+print(indices_uchar)
+print(target_uchar_indices) #does contain '!'
+print(target_indices_uchar) #does contain '!'
+
 ## end variables
+
 
 sentences_t = []
 sentences_t2 = []
 sentences_t3 = []
 sentences_t4 = []
 sentences_t5 = []
+sentences_t6 = []
+sentences_t7 = []
 next_chars_t = []
 next_chars_t2 = []
 next_chars_t3 = []
 next_chars_t4 = []
 next_chars_t5 = []
-for line, line_t, line_t2, line_t3, line_t4, line_t5 in izip(lines, lines_t, lines_t2, lines_t3, lines_t4, lines_t5):
+next_chars_t6 = []
+next_chars_t7 = []
+for line, line_t, line_t2, line_t3, line_t4, line_t5, line_t6, line_t7 in izip(lines, lines_t, lines_t2, lines_t3, lines_t4, lines_t5, lines_t6, lines_t7):
     for i in range(0, len(line), step):
         if i==0:
             continue
@@ -254,6 +308,8 @@ for line, line_t, line_t2, line_t3, line_t4, line_t5 in izip(lines, lines_t, lin
         sentences_t3.append(line_t3[0:i])
         sentences_t4.append(line_t4[0:i])
         sentences_t5.append(line_t5[0:i])
+        sentences_t6.append(line_t6[0:i])
+        sentences_t7.append(line_t7[0:i])
         next_chars.append(line[i])
         if i==len(line)-1: # special case to deal time of end character
             next_chars_t.append(0)
@@ -261,19 +317,24 @@ for line, line_t, line_t2, line_t3, line_t4, line_t5 in izip(lines, lines_t, lin
             next_chars_t3.append(0)
             next_chars_t4.append(0)
             next_chars_t5.append(0)
+            next_chars_t6.append(0)
+            next_chars_t7.append(0)
         else:
             next_chars_t.append(line_t[i])
             next_chars_t2.append(line_t2[i])
             next_chars_t3.append(line_t3[i])
             next_chars_t4.append(line_t2[i])
             next_chars_t5.append(line_t3[i])
+            next_chars_t6.append(line_t6[i])
+            next_chars_t7.append(line_t7[i])
 print('nb sequences:', len(sentences))
+print('maxlen:', maxlen)
 
 print('Vectorization...')
-num_features = len(chars)+6
+num_features = len(uniquechars)+6
 print('num features: {}'.format(num_features))
 X = np.zeros((len(sentences), maxlen, num_features), dtype=np.float32)
-y_a = np.zeros((len(sentences), len(target_chars)), dtype=np.float32)
+y_a = np.zeros((len(sentences), len(target_uchars)), dtype=np.float32)
 y_t = np.zeros((len(sentences),5), dtype=np.float32)
 y_v = np.zeros((len(sentences),2), dtype=np.float32)
 for i, sentence in enumerate(sentences):
@@ -283,26 +344,30 @@ for i, sentence in enumerate(sentences):
     next_t3 = next_chars_t3[i]
     next_t4 = next_chars_t4[i]
     next_t5 = next_chars_t5[i]
+    next_t6 = next_chars_t6[i]
+    next_t7 = next_chars_t7[i]
     sentence_t = sentences_t[i]
     sentence_t2 = sentences_t2[i]
     sentence_t3 = sentences_t3[i]
     sentence_t4 = sentences_t4[i]
     sentence_t5 = sentences_t5[i]
+    sentence_t6 = sentences_t6[i]
+    sentence_t7 = sentences_t7[i]
     for t, char in enumerate(sentence):
-        for c in chars:
-            if c==char:
-                X[i, t+leftpad, char_indices[c]] = 1
-        X[i, t+leftpad, len(chars)] = t+1
-        X[i, t+leftpad, len(chars)+1] = sentence_t[t]/divisor
-        X[i, t+leftpad, len(chars)+2] = sentence_t2[t]/divisor2
-        X[i, t+leftpad, len(chars)+3] = sentence_t3[t]/divisor3
-        X[i, t+leftpad, len(chars)+4] = sentence_t4[t]/divisor4
-        X[i, t+leftpad, len(chars)+5] = sentence_t5[t]/divisor5
-    for c in target_chars:
-        if c==next_chars[i]:
-            y_a[i, target_char_indices[c]] = 1-softness
+        for c in uniquechars:
+            if c in char:
+                X[i, t+leftpad, uchar_indices[c]] = 1
+        X[i, t+leftpad, len(uniquechars)] = t+1
+        X[i, t+leftpad, len(uniquechars)+1] = sentence_t[t]/divisor
+        X[i, t+leftpad, len(uniquechars)+2] = sentence_t2[t]/divisor2
+        X[i, t+leftpad, len(uniquechars)+3] = sentence_t3[t]/divisor3
+        X[i, t+leftpad, len(uniquechars)+4] = sentence_t4[t]/divisor4
+        X[i, t+leftpad, len(uniquechars)+5] = sentence_t5[t]/divisor5
+    for c in target_uchars:
+        if c in next_chars[i]:
+            y_a[i, target_uchar_indices[c]] = 1-softness
         else:
-            y_a[i, target_char_indices[c]] = softness/(len(target_chars)-1)
+            y_a[i, target_uchar_indices[c]] = softness/(len(target_uchars)-1)
     y_t[i,0] = next_t/divisor
     y_t[i,1] = next_t2/divisor2
     y_t[i,2] = next_t3/divisor3
@@ -346,7 +411,7 @@ b2_2 = BatchNormalization()(l2_2)
 l2_3 = LSTM(par_neurons, consume_less='gpu', init='glorot_uniform', return_sequences=False, dropout_W=par_dropout)(b1) # the layer specialized in violation prediction
 b2_3 = BatchNormalization()(l2_3)
 
-act_output = Dense(len(target_chars), activation='softmax', init='glorot_uniform', name='act_output')(b2_1)
+act_output = Dense(len(target_uchars), activation='softmax', init='glorot_uniform', name='act_output')(b2_1)
 time_output = Dense(5, init='glorot_uniform', name='time_output')(b2_2)
 violation_output = Dense(2, activation='sigmoid', init='glorot_uniform', name='violation_output')(b2_3)
 
@@ -399,43 +464,48 @@ def encodePrediction(sentence, times, times2, times3, times4, times5, maxlen=max
     X = np.zeros((1, maxlen, num_features), dtype=np.float32)
     leftpad = maxlen-len(sentence)
     for t, char in enumerate(sentence):
-        for c in chars:
-            if c==char:
-                X[0, t+leftpad, char_indices[c]] = 1
-        X[0, t+leftpad, len(chars)] = t+1
-        X[0, t+leftpad, len(chars)+1] = times[t]/divisor
-        X[0, t+leftpad, len(chars)+2] = times2[t]/divisor2
-        X[0, t+leftpad, len(chars)+3] = times3[t]/divisor3
-        X[0, t+leftpad, len(chars)+4] = times4[t]/divisor4
-        X[0, t+leftpad, len(chars)+5] = times5[t]/divisor5
+        for c in uniquechars:
+            if c in char:
+                X[0, t+leftpad, uchar_indices[c]] = 1
+        X[0, t+leftpad, len(uniquechars)] = t+1
+        X[0, t+leftpad, len(uniquechars)+1] = times[t]/divisor
+        X[0, t+leftpad, len(uniquechars)+2] = times2[t]/divisor2
+        X[0, t+leftpad, len(uniquechars)+3] = times3[t]/divisor3
+        X[0, t+leftpad, len(uniquechars)+4] = times4[t]/divisor4
+        X[0, t+leftpad, len(uniquechars)+5] = times5[t]/divisor5
     return X
 
 def getSymbolPrediction(predictions):
-    maxPrediction = 0
-    symbol = ''
-    i = 0;
-    for prediction in predictions:
-        if(prediction>=maxPrediction):
-            maxPrediction = prediction
-            symbol = target_indices_char[i]
-        i += 1
-    return symbol
+    closest = A[tree.query(predictions)[1]]
+    prediction = ''
+    for i in range(0,len(closest)):
+        if closest[i] == 1:
+            prediction += target_indices_uchar[i]
+    return prediction
+
+# create kd tree
+A = []
+for line in lines:
+    for activity in line:
+        B = np.zeros(len(uniquechars) + 1)
+        for c in uniquechars:
+            if c in activity:
+                B[target_uchar_indices[c]] = 1
+        A.append(B)
+# '!' case
+B = np.zeros(len(uniquechars) + 1)
+B[target_uchar_indices['!']] = 1
+A.append(B)
+
+A = list(set(tuple(element) for element in A))
+tree = spatial.KDTree(A)
+#end kdtree
 
 def getViolationPrediction(predictions):
-    maxPrediction = 0
-    i = 0;
-    index = -1;
-    for prediction in predictions:
-        if(prediction>=maxPrediction):
-            maxPrediction = prediction
-            index = i;
-        i += 1
-    if index == 0:
-        return true
-    elif index == 1:
-        return false
+    if predictions[0] > predictions[1]:
+        return 'true'
     else:
-        return 'undefined'
+        return 'false'
 
 with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -457,8 +527,7 @@ with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfi
         ground_truth_processid = meta2[-1]
 
         for prefix_size in range(1,sequencelength):
-            print('prefix size: {}'.format(prefix_size))            
-            cropped_line = ''.join(line[:prefix_size])
+            cropped_line = line[:prefix_size]
             cropped_times = times[:prefix_size]
             cropped_times2 = times2[:prefix_size]
             cropped_times3 = times3[:prefix_size]
@@ -466,17 +535,17 @@ with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfi
             cropped_times5 = times5[:prefix_size]
             if '!' in cropped_line:
                 break # make no prediction for this case, since this case has ended already
-            predicted = ''
+            predicted = []
             predicted_t = []
             predicted_t2 = []
             predicted_t3 = []     
             predicted_t4 = []
             predicted_t5 = []        
-            prefix_activities = ''.join(line[:prefix_size])
+            prefix_activities = line[:prefix_size]
             predicted_violations = []
             #predict until ! found
-            for i in range(100):
-                enc = encodePrediction(cropped_line, cropped_times, cropped_times2, cropped_times3)
+            for i in range(maxlen):
+                enc = encodePrediction(cropped_line, cropped_times, cropped_times2, cropped_times3, cropped_times4, cropped_times5)
                 y = model.predict(enc, verbose=0)
                 y_char = y[0][0]
                 y_t = y[1][0][0]
@@ -484,11 +553,10 @@ with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfi
                 y_t3 = y[1][0][2]
                 y_t4 = y[1][0][3]
                 y_t5 = y[1][0][4]
-                y_v = y[2][0]
+                y_v = y[2][0] 
                 prediction = getSymbolPrediction(y_char)
                 violation = getViolationPrediction(y_v)
                 if prediction == '!': # end of case was just predicted, therefore, stop predicting further into the future
-                    print('! predicted, end case')
                     break                
                 cropped_line += prediction
                 if y_t<0:
@@ -512,7 +580,7 @@ with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfi
                 y_t4 = y_t4 * divisor4
                 y_t5 = y_t5 * divisor5
 
-                predicted += prediction
+                predicted.append(prediction)
                 predicted_t.append(y_t)
                 predicted_t2.append(y_t2)
                 predicted_t3.append(y_t3)
@@ -535,11 +603,11 @@ with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfi
                 output.append(ground_truth_timestamp)
                 output.append(ground_truth_plannedtimestamp)
                 output.append(ground_truth_processid)
-                prefix_activities = ' '.join(map(lambda x : str(ord(x)- ascii_offset),prefix_activities))
-                predicted_activities = ' '.join(map(lambda x : str(ord(x)- ascii_offset),predicted))
+                prefix_activities = ' '.join(prefix_activities)
+                predicted_activities = ' '.join(predicted)
                 output.append(prefix_activities)   #prefix_activities.encode('utf-8'))
                 output.append(predicted_activities)   #predicted.encode('utf-8'))
-                output.append(violation[-1])
+                output.append(predicted_violations[-1])
                 spamwriter.writerow(output)
             #end prefix loop
         sequenceid += 1
