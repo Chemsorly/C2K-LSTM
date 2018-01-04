@@ -145,7 +145,7 @@ for row in spamreader:
     timediff4 = int(row[5]) #col 6 is planned duration
     timediff5 = int(row[6]) #col 7 is planned timestamp
     timediff6 = int(row[8]) #col 9 is end timestamp
-    timediff7 = int(row[9]) #col 10 is planned end timestamp
+    timediff7 = int(row[11]) #col 12 is planned end timestamp
     times.append(timediff)
     times2.append(timediff2)
     times3.append(timediff3)
@@ -514,7 +514,7 @@ def getViolationPrediction(predictions):
     else:
         return 'false'
 
-with open('output_files/results/results-{}'.format(filename), 'wb') as csvfile:
+with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
     spamwriter.writerow(["sequenceid","sequencelength", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp", "gt_planned", "gt_instance", "prefix_activities", "predicted_activities", "violation"])
     sequenceid = 0

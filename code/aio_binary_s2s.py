@@ -437,7 +437,7 @@ def getViolationPrediction(predictions):
     else:
         return 'undefined'
 
-with open('output_files/results/results-{}'.format(filename), 'wb') as csvfile:
+with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
     spamwriter.writerow(["sequenceid","sequencelength", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp", "gt_planned", "gt_instance", "prefix_activities", "predicted_activities", "violation"])
     sequenceid = 0
