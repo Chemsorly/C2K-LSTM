@@ -348,7 +348,7 @@ b2_3 = BatchNormalization()(l2_3)
 
 act_output = Dense(len(target_chars), activation='softmax', init='glorot_uniform', name='act_output')(b2_1)
 time_output = Dense(5, init='glorot_uniform', name='time_output')(b2_2)
-violation_output = Dense(2, activation='sigmoid', init='glorot_uniform', name='violation_output')(b2_3)
+violation_output = Dense(2, activation='softmax', init='glorot_uniform', name='violation_output')(b2_3)
 
 model = Model(input=[main_input], output=[act_output, time_output, violation_output])
 
@@ -374,7 +374,7 @@ elif par_algorithm == 7:
     opt = optimizers.SGD(lr=0.01, momentum=0.0, decay=0.0, nesterov=False)
     print('Optimizer: sgd')
 
-model.compile(loss={'act_output':'categorical_crossentropy', 'time_output':'mae', 'violation_output':'binary_crossentropy'}, optimizer=opt)
+model.compile(loss={'act_output':'categorical_crossentropy', 'time_output':'mae', 'violation_output':'categorical_crossentropy'}, optimizer=opt)
 early_stopping = EarlyStopping(monitor='val_loss', patience=par_patience)
 model_checkpoint = ModelCheckpoint('output_files/models/model-latest-{}.h5'.format(filename), monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=False, mode='auto')
 lr_reducer = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=par_patience, verbose=0, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)

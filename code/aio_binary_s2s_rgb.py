@@ -412,7 +412,7 @@ b2_3 = BatchNormalization()(l2_3)
 
 act_output = Dense(len(target_uchars), activation='softmax', init='glorot_uniform', name='act_output')(b2_1)
 time_output = Dense(5, init='glorot_uniform', name='time_output')(b2_2)
-violation_output = Dense(2, activation='sigmoid', init='glorot_uniform', name='violation_output')(b2_3)
+violation_output = Dense(2, activation='softmax', init='glorot_uniform', name='violation_output')(b2_3)
 
 model = Model(input=[main_input], output=[act_output, time_output, violation_output])
 
