@@ -38,7 +38,6 @@ from scipy import spatial
 
 filename = os.path.splitext(basename(os.path.realpath(__file__)))[0]
 eventlog = "c2k_data_comma_lstmready_multi.csv"
-predict_size = 1
 
 #parameters
 #int architecture: 1,2,3

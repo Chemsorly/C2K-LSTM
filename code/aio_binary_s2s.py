@@ -265,8 +265,8 @@ for line, line_t, line_t2, line_t3, line_t4, line_t5 in izip(lines, lines_t, lin
             next_chars_t.append(line_t[i])
             next_chars_t2.append(line_t2[i])
             next_chars_t3.append(line_t3[i])
-            next_chars_t4.append(line_t2[i])
-            next_chars_t5.append(line_t3[i])
+            next_chars_t4.append(line_t4[i])
+            next_chars_t5.append(line_t5[i])
 print('nb sequences:', len(sentences))
 
 print('Vectorization...')
@@ -374,7 +374,7 @@ elif par_algorithm == 7:
     opt = optimizers.SGD(lr=0.01, momentum=0.0, decay=0.0, nesterov=False)
     print('Optimizer: sgd')
 
-model.compile(loss={'act_output':'categorical_crossentropy', 'time_output':'mae', 'violation_output':'categorical_crossentropy'}, optimizer=opt)
+model.compile(loss={'act_output':'categorical_crossentropy', 'time_output':'mae', 'violation_output':'binary_crossentropy'}, optimizer=opt)
 early_stopping = EarlyStopping(monitor='val_loss', patience=par_patience)
 model_checkpoint = ModelCheckpoint('output_files/models/model-latest-{}.h5'.format(filename), monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=False, mode='auto')
 lr_reducer = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=par_patience, verbose=0, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
@@ -422,20 +422,10 @@ def getSymbolPrediction(predictions):
     return symbol
 
 def getViolationPrediction(predictions):
-    maxPrediction = 0
-    i = 0;
-    index = -1;
-    for prediction in predictions:
-        if(prediction>=maxPrediction):
-            maxPrediction = prediction
-            index = i;
-        i += 1
-    if index == 0:
-        return true
-    elif index == 1:
-        return false
+    if predictions[0] > predictions[1]:
+        return 'true'
     else:
-        return 'undefined'
+        return 'false'
 
 with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -475,7 +465,7 @@ with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfi
             prefix_activities = ''.join(line[:prefix_size])
             predicted_violations = []
             #predict until ! found
-            for i in range(100):
+            for i in range(maxlen):
                 enc = encodePrediction(cropped_line, cropped_times, cropped_times2, cropped_times3)
                 y = model.predict(enc, verbose=0)
                 y_char = y[0][0]
@@ -539,7 +529,7 @@ with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfi
                 predicted_activities = ' '.join(map(lambda x : str(ord(x)- ascii_offset),predicted))
                 output.append(prefix_activities)   #prefix_activities.encode('utf-8'))
                 output.append(predicted_activities)   #predicted.encode('utf-8'))
-                output.append(violation[-1])
+                output.append(predicted_violations[-1])
                 spamwriter.writerow(output)
             #end prefix loop
         sequenceid += 1

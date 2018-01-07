@@ -84,7 +84,7 @@ csvfile = open('../data/%s' % eventlog, 'r')
 spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
 next(spamreader, None)  # skip the headers
 lastcase = ''
-line = []
+line = [] #needs to be an array now for rgb encoding
 firstLine = True
 lines = []
 timeseqs = []
@@ -144,7 +144,7 @@ for row in spamreader:
     timediff4 = int(row[5]) #col 6 is planned duration
     timediff5 = int(row[6]) #col 7 is planned timestamp
     timediff6 = int(row[8]) #col 9 is end timestamp
-    timediff7 = int(row[11]) #col 12 is planned end timestamp
+    timediff7 = int(row[9]) #col 10 is planned end timestamp
     times.append(timediff)
     times2.append(timediff2)
     times3.append(timediff3)
@@ -282,7 +282,6 @@ print(target_indices_uchar) #does contain '!'
 
 ## end variables
 
-
 sentences_t = []
 sentences_t2 = []
 sentences_t3 = []
@@ -327,15 +326,13 @@ for line, line_t, line_t2, line_t3, line_t4, line_t5, line_t6, line_t7 in izip(l
             next_chars_t6.append(line_t6[i])
             next_chars_t7.append(line_t7[i])
 print('nb sequences:', len(sentences))
-print('maxlen:', maxlen)
 
 print('Vectorization...')
 num_features = len(uniquechars)+6
 print('num features: {}'.format(num_features))
 X = np.zeros((len(sentences), maxlen, num_features), dtype=np.float32)
 y_a = np.zeros((len(sentences), len(target_uchars)), dtype=np.float32)
-y_t = np.zeros((len(sentences),5), dtype=np.float32)
-y_v = np.zeros((len(sentences),2), dtype=np.float32)
+y_t = np.zeros((len(sentences),1), dtype=np.float32)
 for i, sentence in enumerate(sentences):
     leftpad = maxlen-len(sentence)
     next_t = next_chars_t[i]
@@ -367,22 +364,13 @@ for i, sentence in enumerate(sentences):
             y_a[i, target_uchar_indices[c]] = 1-softness
         else:
             y_a[i, target_uchar_indices[c]] = softness/(len(target_uchars)-1)
-    y_t[i,0] = next_t/divisor
-    y_t[i,1] = next_t2/divisor2
-    y_t[i,2] = next_t3/divisor3
-    y_t[i,3] = next_t4/divisor4
-    y_t[i,4] = next_t5/divisor5
-
-    #target violation (timestamp > planned timestamp)
-    if next_t2 > next_t5:
-        y_v[i,0] = 1
-    else:
-        y_v[i,1] = 1
+    y_t[i,0] = next_t6/divisor6
     np.set_printoptions(threshold=np.nan)
 
 # output first 3 batches of matrix [0-2,0-(maxlen-1),0-(num_features-1)]
 with open("output_files/folds/matrix.txt", "w") as text_file:
     for i in range(0,20):
+        #classic matrix
         for j in range(0,maxlen):
             row = ''
             for k in range(0,num_features):
@@ -390,9 +378,20 @@ with open("output_files/folds/matrix.txt", "w") as text_file:
                 row+=','                    
             text_file.write(row+'\n')
         row = ''
+        #target activity matrix
         for k in range(0,num_features - 5):
             row+=str(y_a[i,k])
             row+=','
+        text_file.write(row+'\n')
+        #target violation
+        row = ''
+        for k in range(0, len(y_v[i])):
+            row+=str(y_v[i,k])
+            row+=','
+        if y_v[i,0] == 1:
+            row+='true'
+        else:
+            row+='false'
         text_file.write(row+'\n')
         text_file.write('batch end\n')
 print('Matrix file has been created...')
@@ -407,14 +406,11 @@ l2_1 = LSTM(par_neurons, consume_less='gpu', init='glorot_uniform', return_seque
 b2_1 = BatchNormalization()(l2_1)
 l2_2 = LSTM(par_neurons, consume_less='gpu', init='glorot_uniform', return_sequences=False, dropout_W=par_dropout)(b1) # the layer specialized in time prediction
 b2_2 = BatchNormalization()(l2_2)
-l2_3 = LSTM(par_neurons, consume_less='gpu', init='glorot_uniform', return_sequences=False, dropout_W=par_dropout)(b1) # the layer specialized in violation prediction
-b2_3 = BatchNormalization()(l2_3)
 
 act_output = Dense(len(target_uchars), activation='softmax', init='glorot_uniform', name='act_output')(b2_1)
-time_output = Dense(5, init='glorot_uniform', name='time_output')(b2_2)
-violation_output = Dense(2, activation='sigmoid', init='glorot_uniform', name='violation_output')(b2_3)
+time_output = Dense(1, init='glorot_uniform', name='time_output')(b2_2)
 
-model = Model(input=[main_input], output=[act_output, time_output, violation_output])
+model = Model(input=[main_input], output=[act_output, time_output])
 
 if par_algorithm == 1:
     opt = Nadam(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=1e-08, schedule_decay=0.004, clipvalue=3)
@@ -438,13 +434,13 @@ elif par_algorithm == 7:
     opt = optimizers.SGD(lr=0.01, momentum=0.0, decay=0.0, nesterov=False)
     print('Optimizer: sgd')
 
-model.compile(loss={'act_output':'categorical_crossentropy', 'time_output':'mae', 'violation_output':'categorical_crossentropy'}, optimizer=opt)
+model.compile(loss={'act_output':'categorical_crossentropy', 'time_output':'mae'}, optimizer=opt)
 early_stopping = EarlyStopping(monitor='val_loss', patience=par_patience)
 model_checkpoint = ModelCheckpoint('output_files/models/model-latest-{}.h5'.format(filename), monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=False, mode='auto')
 lr_reducer = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=par_patience, verbose=0, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
 
 #train
-model.fit(X, {'act_output':y_a, 'time_output':y_t, 'violation_output':y_v}, validation_split=0.2, verbose=2, callbacks=[early_stopping, model_checkpoint, lr_reducer], batch_size=maxlen, nb_epoch=500)
+model.fit(X, {'act_output':y_a, 'time_output':y_t}, validation_split=0.2, verbose=2, callbacks=[early_stopping, model_checkpoint, lr_reducer], batch_size=maxlen, nb_epoch=500)
 
 #prediction:
 model = load_model('output_files/models/model-latest-{}.h5'.format(filename))
@@ -500,15 +496,9 @@ A = list(set(tuple(element) for element in A))
 tree = spatial.KDTree(A)
 #end kdtree
 
-def getViolationPrediction(predictions):
-    if predictions[0] > predictions[1]:
-        return 'true'
-    else:
-        return 'false'
-
 with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    spamwriter.writerow(["sequenceid","sequencelength", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp", "gt_planned", "gt_instance", "prefix_activities", "predicted_activities", "violation"])
+    spamwriter.writerow(["sequenceid","sequencelength", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp", "gt_planned", "gt_instance", "prefix_activities", "predicted_activities"])
     sequenceid = 0
     print('sequences: {}'.format(len(lines)))    
     for line, times, times2, times3,times4, times5, meta1, meta2 in izip(lines, lines_t, lines_t2, lines_t3, lines_t4, lines_t5, lines_m1, lines_m2):
@@ -518,7 +508,7 @@ with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfi
         #times3 = sequence of durations
         #calculate max line length
         sequencelength = len(line)
-        print('sequence length: {}'.format(sequencelength))
+#        print('sequence length: {}'.format(sequencelength))
         #calculate ground truth
         ground_truth_sumprevious = sum(times)
         ground_truth_timestamp = times2[-1]
@@ -526,6 +516,7 @@ with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfi
         ground_truth_processid = meta2[-1]
 
         for prefix_size in range(1,sequencelength):
+#            print('prefix size: {}'.format(prefix_size))            
             cropped_line = line[:prefix_size]
             cropped_times = times[:prefix_size]
             cropped_times2 = times2[:prefix_size]
@@ -541,52 +532,45 @@ with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfi
             predicted_t4 = []
             predicted_t5 = []        
             prefix_activities = line[:prefix_size]
-            predicted_violations = []
-            #predict until ! found
-            for i in range(maxlen):
-                enc = encodePrediction(cropped_line, cropped_times, cropped_times2, cropped_times3, cropped_times4, cropped_times5)
-                y = model.predict(enc, verbose=0)
-                y_char = y[0][0]
-                y_t = y[1][0][0]
-                y_t2 = y[1][0][1]
-                y_t3 = y[1][0][2]
-                y_t4 = y[1][0][3]
-                y_t5 = y[1][0][4]
-                y_v = y[2][0] 
-                prediction = getSymbolPrediction(y_char)
-                violation = getViolationPrediction(y_v)
-                if prediction == '!': # end of case was just predicted, therefore, stop predicting further into the future
-                    break                
-                cropped_line += prediction
-                if y_t<0:
-                    y_t=0
-                if y_t2<0:
-                    y_t2=0
-                if y_t3<0:
-                    y_t3=0
-                if y_t4<0:
-                    y_t4=0
-                if y_t5<0:
-                    y_t5=0
-                cropped_times.append(y_t)
-                cropped_times2.append(y_t2)
-                cropped_times3.append(y_t3)
-                cropped_times4.append(y_t4)
-                cropped_times5.append(y_t5)
-                y_t = y_t * divisor
-                y_t2 = y_t2 * divisor2
-                y_t3 = y_t3 * divisor3
-                y_t4 = y_t4 * divisor4
-                y_t5 = y_t5 * divisor5
-
-                predicted.append(prediction)
-                predicted_t.append(y_t)
-                predicted_t2.append(y_t2)
-                predicted_t3.append(y_t3)
-                predicted_t4.append(y_t4)
-                predicted_t5.append(y_t5)
-                predicted_violations.append(violation)
-                #end prediction loop
+            suffix_activities = line[prefix_size:]
+            #predict once
+            enc = encodePrediction(cropped_line, cropped_times, cropped_times2, cropped_times3, cropped_times4, cropped_times5)
+            y = model.predict(enc, verbose=0)
+            y_char = y[0][0]
+            y_t = y[1][0][0]
+#            y_t2 = y[1][0][1]
+#            y_t3 = y[1][0][2]
+#            y_t4 = y[1][0][3]
+#            y_t5 = y[1][0][4]
+            prediction = getSymbolPrediction(y_char)
+            cropped_line += prediction
+            if y_t<0:
+                y_t=0
+#            if y_t2<0:
+#                y_t2=0
+#            if y_t3<0:
+#                y_t3=0
+#            if y_t4<0:
+#                y_t4=0
+#            if y_t5<0:
+#                y_t5=0
+            cropped_times.append(y_t)
+#            cropped_times2.append(y_t2)
+#            cropped_times3.append(y_t3)
+#            cropped_times4.append(y_t4)
+#            cropped_times5.append(y_t5)
+            y_t = y_t * divisor6
+#            y_t2 = y_t2 * divisor2
+#            y_t3 = y_t3 * divisor3
+#            y_t4 = y_t4 * divisor4
+#            y_t5 = y_t5 * divisor5
+            predicted.append(prediction)
+            predicted_t.append(y_t)
+#            predicted_t2.append(y_t2)
+#            predicted_t3.append(y_t3)
+#            predicted_t4.append(y_t4)
+#            predicted_t5.append(y_t5)
+            #end prediction loop
 
             #output stuff (sequence, prefix)
             if len(predicted) > 0:
@@ -595,7 +579,7 @@ with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfi
                 output.append(sequencelength)
                 output.append(prefix_size)
                 output.append(sum(times[:prefix_size]) + sum(predicted_t))
-                output.append(predicted_t2[-1])
+                output.append(predicted_t[-1])
                 #output.append(sum(predicted_t3)) #remove duration because process is parallel and therefore sum is useless
                 output.append(prefix_size / sequencelength)
                 output.append(ground_truth_sumprevious)
@@ -603,10 +587,9 @@ with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfi
                 output.append(ground_truth_plannedtimestamp)
                 output.append(ground_truth_processid)
                 prefix_activities = ' '.join(prefix_activities)
-                predicted_activities = ' '.join(predicted)
+                predicted_activities = ' '.join(suffix_activities)
                 output.append(prefix_activities)   #prefix_activities.encode('utf-8'))
                 output.append(predicted_activities)   #predicted.encode('utf-8'))
-                output.append(predicted_violations[-1])
                 spamwriter.writerow(output)
             #end prefix loop
         sequenceid += 1
