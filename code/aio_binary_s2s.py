@@ -466,7 +466,7 @@ with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfi
             predicted_violations = []
             #predict until ! found
             for i in range(maxlen):
-                enc = encodePrediction(cropped_line, cropped_times, cropped_times2, cropped_times3)
+                enc = encodePrediction(cropped_line, cropped_times, cropped_times2, cropped_times3, cropped_times4, cropped_times5)
                 y = model.predict(enc, verbose=0)
                 y_char = y[0][0]
                 y_t = y[1][0][0]
