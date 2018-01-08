@@ -557,7 +557,7 @@ with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfi
                 predicted_activities = ' '.join(map(lambda x : str(ord(x)- ascii_offset),suffix_activities))
                 output.append(prefix_activities)   #prefix_activities.encode('utf-8'))
                 output.append(predicted_activities)   #predicted.encode('utf-8'))
-                 spamwriter.writerow(output)
+                spamwriter.writerow(output)
             #end prefix loop
         sequenceid += 1
         #end sequence loop
