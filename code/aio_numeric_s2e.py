@@ -365,16 +365,6 @@ with open("output_files/folds/matrix.txt", "w") as text_file:
             row+=str(y_a[i,k])
             row+=','
         text_file.write(row+'\n')
-        #target violation
-        row = ''
-        for k in range(0, len(y_v[i])):
-            row+=str(y_v[i,k])
-            row+=','
-        if y_v[i,0] == 1:
-            row+='true'
-        else:
-            row+='false'
-        text_file.write(row+'\n')
         text_file.write('batch end\n')
 print('Matrix file has been created...')
             
