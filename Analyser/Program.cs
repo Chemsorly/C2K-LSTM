@@ -283,7 +283,7 @@ namespace Analyser
                         foreach (var line in output)
                         {
                             //case prediction = 13 (50% marker)
-                            if (line.PredictedActivities[0] == '1' && line.PredictedActivities[0] == '3')
+                            if (line.PredictedActivities[0] == '1' && line.PredictedActivities[1] == '3')
                             {
                                 line.Completion = 0.5d;
                                 midbucket.Prediction_SP.Add(line.SumPrevious);
@@ -333,6 +333,9 @@ namespace Analyser
                                 {
                                     if (completion >= i * BucketGranularity && completion < (i + 1) * BucketGranularity)
                                     {
+                                        if (BucketList[i] == midbucket)
+                                            i++;
+
                                         BucketList[i].Prediction_SP.Add(line.SumPrevious);
                                         BucketList[i].Prediction_TS.Add(line.Timestamp);
                                         BucketList[i].ViolationStringsSP.Add(line.Violation_StringSP);
