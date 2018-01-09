@@ -1146,7 +1146,7 @@ namespace Analyser
             public double NegativePredictedValueSP => (double)ViolationStringsSP.Count(t => t == "TN") / (double)ViolationStringsSP.Count(t => t == "TN" || t == "FP");
             public double AccuracySP => (double)ViolationStringsSP.Count(t => t == "TN" || t == "TP") / (double)ViolationStringsSP.Count;
             public double FMeasureSP => ((1 + Math.Pow(FmetricBeta, 2)) * PrecisionSP * RecallSP) / ((Math.Pow(FmetricBeta, 2) * PrecisionSP) + RecallSP);
-            public double MCC_SP => ((TPcountSP * TNcountSP) - (FPcountSP * FNcountSP)) / Math.Sqrt((TPcountSP + FPcountSP) * (TPcountSP + FNcountSP) * (TNcountSP + FPcountSP) * (TNcountSP + FNcountSP));
+            public double MCC_SP => (double)((TPcountSP * TNcountSP) - (FPcountSP * FNcountSP)) / Math.Sqrt((double)(TPcountSP + FPcountSP) * (TPcountSP + FNcountSP) * (TNcountSP + FPcountSP) * (TNcountSP + FNcountSP));
 
             public double PrecisionTS => (double)ViolationStringsTS.Count(t => t == "TP") / (double)ViolationStringsTS.Count(t => t == "TP" || t == "FP");
             public double RecallTS => (double)ViolationStringsTS.Count(t => t == "TP") / (double)ViolationStringsTS.Count(t => t == "TP" || t == "FN");
@@ -1155,7 +1155,7 @@ namespace Analyser
             public double NegativePredictedValueTS => (double)ViolationStringsTS.Count(t => t == "TN") / (double)ViolationStringsTS.Count(t => t == "TN" || t == "FP");
             public double AccuracyTS => (double)ViolationStringsTS.Count(t => t == "TN" || t == "TP") / (double)ViolationStringsTS.Count;
             public double FMeasureTS => ((1 + Math.Pow(FmetricBeta, 2)) * PrecisionTS * RecallTS) / ((Math.Pow(FmetricBeta, 2) * PrecisionTS) + RecallTS);
-            public double MCC_TS => ((TPcountTS * TNcountTS) - (FPcountTS * FNcountTS)) / Math.Sqrt((TPcountTS + FPcountTS) * (TPcountTS + FNcountTS) * (TNcountTS + FPcountTS) * (TNcountTS + FNcountTS));
+            public double MCC_TS => (double)((TPcountTS * TNcountTS) - (FPcountTS * FNcountTS)) / Math.Sqrt((double)(TPcountTS + FPcountTS) * (TPcountTS + FNcountTS) * (TNcountTS + FPcountTS) * (TNcountTS + FNcountTS));
 
             //regression prediction
             public double PredictionMedianSP => Median(PredictionAccuraciesSP.ToArray());
