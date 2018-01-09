@@ -34,8 +34,8 @@ namespace Analyser
             System.Threading.Thread.CurrentThread.CurrentCulture = customCulture;
 
             //target folders
-            DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\EndPrediction 2\raw");
-            DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\EndPrediction 2\");
+            DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Numeric S2S\raw");
+            DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Numeric S2S\");
             List<FileInfo> InFiles = InFolder.EnumerateFiles("*",SearchOption.AllDirectories).Where(t => t.Name.Contains(".csv") && !t.Name.Contains(".edited.csv")).ToList();
 
             //globals
@@ -225,6 +225,7 @@ namespace Analyser
                             GT_InstanceID = int.Parse(fields[9]),
                             PrefixActivities = fields[10],
                             PredictedActivities = fields[11]
+                            //Predicted_Violations = fields[12] == "true"
                         };
                         output.Add(line);
 
@@ -446,8 +447,8 @@ namespace Analyser
                                    "FalsePositiveRate_TS," +
                                    "NegativePredictedValue_TS," +
                                    "Accuracy_TS," +
-                                   "MCC_TS," +
-                                   "F-Measure_TS"
+                                   "F-Measure_TS," +
+                                   "MCC_TS"
                                    );
                     foreach (var bucket in BucketList)
                         if (bucket.ViolationStringsTS.Any())
@@ -1097,6 +1098,7 @@ namespace Analyser
             public int GT_InstanceID { get; set; }
             public String PrefixActivities { get; set; }
             public String PredictedActivities { get; set; }
+            public bool Predicted_Violations { get; set; }
 
             //output
             public double AccuracySumprevious { get; set; }
