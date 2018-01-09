@@ -34,8 +34,8 @@ namespace Analyser
             System.Threading.Thread.CurrentThread.CurrentCulture = customCulture;
 
             //target folders
-            DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Durchlauf 2\raw");
-            DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Durchlauf 2\");
+            DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Reversed\raw");
+            DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Reversed\");
             List<FileInfo> InFiles = InFolder.EnumerateFiles("*",SearchOption.AllDirectories).Where(t => t.Name.Contains(".csv") && !t.Name.Contains(".edited.csv")).ToList();
 
             //globals
@@ -305,7 +305,7 @@ namespace Analyser
                         foreach (var line in output)
                         {
                             //case prediction = 13 (50% marker)
-                            if (line.PredictedActivities[0] == 'M')
+                            if (line.PredictedActivities[0] == '1' && line.PredictedActivities[1] == '3')
                             {
                                 line.Completion = 0.5d;
                                 midbucket.Prediction_SP.Add(line.SumPrevious);
@@ -318,10 +318,10 @@ namespace Analyser
                                 midbucket.DeviationsAbsoluteTS.Add(line.DeviationAbsoluteTimestamp);
                             }
                             //case prediction (suffix) contains 13 and prefix does not (<50%)
-                            else if (line.PredictedActivities.Contains("M") && !line.PrefixActivities.Contains("M"))
+                            else if (line.PredictedActivities.Contains("13") && !line.PrefixActivities.Contains("13"))
                             {
                                 var listout = line.PredictedActivities.Split(' ').ToList();
-                                var indexout = listout.IndexOf("M");
+                                var indexout = listout.IndexOf("13");
                                 var completion = (double) (line.Prefix) / (double) ((line.Prefix + indexout) * 2);
                                 line.Completion = completion; //overwrite old values
                                 //iterate until proper bucket found
@@ -342,10 +342,10 @@ namespace Analyser
                                 }
                             }
                             //case prediction (suffix) does not contain 13 and prefix does (>50%)
-                            else if (!line.PredictedActivities.Contains("M") && line.PrefixActivities.Contains("M"))
+                            else if (!line.PredictedActivities.Contains("13") && line.PrefixActivities.Contains("13"))
                             {
                                 var listout = line.PrefixActivities.Split(' ').ToList();
-                                var indexout = listout.IndexOf("M");
+                                var indexout = listout.IndexOf("13");
                                 var completion = ((double) (line.Prefix - indexout) /
                                                   (double) ((line.Prefix - indexout +
                                                              line.PredictedActivities.Split(' ').Length) * 2) + 0.5d);
