@@ -24,6 +24,11 @@ namespace Analyser
         //2 = triple ranged: 0% - 50%, 50%, 50% - 100%
         private static readonly int BucketingType = 2;
         
+        //numeric or binary
+        private static bool IsBinaryPrediction = false;
+        //rgb encoding
+        private static bool IsRGBencoding = false;
+
         private static readonly int PlotModelWidth = 512;
         private static readonly int PlotModelHeight = 512;
 
@@ -246,8 +251,10 @@ namespace Analyser
                             GT_InstanceID = int.Parse(fields[9]),
                             PrefixActivities = fields[10],
                             PredictedActivities = fields[11]
-                            //Predicted_Violations = fields[12] == "true"
                         };
+                        if (IsBinaryPrediction)
+                            line.Predicted_Violations = fields[12] == "true";
+
                         output.Add(line);
 
                         //calculate accuracy values
@@ -305,7 +312,7 @@ namespace Analyser
                         foreach (var line in output)
                         {
                             //case prediction = 13 (50% marker)
-                            if (line.PredictedActivities[0] == '1' && line.PredictedActivities[1] == '3')
+                            if (IsRGBencoding ? (line.PredictedActivities[0] == 'M') : (line.PredictedActivities[0] == '1' && line.PredictedActivities[1] == '3'))
                             {
                                 line.Completion = 0.5d;
                                 midbucket.Prediction_SP.Add(line.SumPrevious);
@@ -318,10 +325,14 @@ namespace Analyser
                                 midbucket.DeviationsAbsoluteTS.Add(line.DeviationAbsoluteTimestamp);
                             }
                             //case prediction (suffix) contains 13 and prefix does not (<50%)
-                            else if (line.PredictedActivities.Contains("13") && !line.PrefixActivities.Contains("13"))
+                            else if (IsRGBencoding ? line.PredictedActivities.Contains("M") && !line.PrefixActivities.Contains("M") : (line.PredictedActivities.Contains("13") && !line.PrefixActivities.Contains("13")))
                             {
                                 var listout = line.PredictedActivities.Split(' ').ToList();
-                                var indexout = listout.IndexOf("13");
+                                var indexout = -1;
+                                if (IsRGBencoding)
+                                    indexout = listout.IndexOf("M");
+                                else
+                                    indexout = listout.IndexOf("13");
                                 var completion = (double) (line.Prefix) / (double) ((line.Prefix + indexout) * 2);
                                 line.Completion = completion; //overwrite old values
                                 //iterate until proper bucket found
@@ -342,10 +353,14 @@ namespace Analyser
                                 }
                             }
                             //case prediction (suffix) does not contain 13 and prefix does (>50%)
-                            else if (!line.PredictedActivities.Contains("13") && line.PrefixActivities.Contains("13"))
+                            else if (IsRGBencoding ? (!line.PredictedActivities.Contains("M") && line.PrefixActivities.Contains("M")) : (!line.PredictedActivities.Contains("13") && line.PrefixActivities.Contains("13")))
                             {
                                 var listout = line.PrefixActivities.Split(' ').ToList();
-                                var indexout = listout.IndexOf("13");
+                                var indexout = -1;
+                                if (IsRGBencoding)
+                                    indexout = listout.IndexOf("M");
+                                else
+                                    indexout = listout.IndexOf("13");
                                 var completion = ((double) (line.Prefix - indexout) /
                                                   (double) ((line.Prefix - indexout +
                                                              line.PredictedActivities.Split(' ').Length) * 2) + 0.5d);
@@ -1332,7 +1347,7 @@ namespace Analyser
             public bool Violation_PredictedTS => Timestamp > GT_Planned;
             public bool Violation_PredictedSP => SumPrevious > GT_Planned;
             public String Violation_StringTS => CalculateViolationString(Violation_Effective, Violation_PredictedTS);
-            public String Violation_StringSP => CalculateViolationString(Violation_Effective, Violation_PredictedSP);
+            public String Violation_StringSP => CalculateViolationString(Violation_Effective, IsBinaryPrediction ? Predicted_Violations : Violation_PredictedSP);
             public bool IsValidPrediction => IsValidSequence(PredictedActivities, PrefixActivities);
 
         }
@@ -1413,7 +1428,9 @@ namespace Analyser
 
         static bool IsValidSequence(String pPredictionSequence, String pPrefixSequence)
         {
-            return true;
+            //in case of rgb encoding, automatically assume valid sequence
+            if (IsRGBencoding)
+                return true;
 
             //split sequence by whitespace
             List<int> sequence = pPredictionSequence.Split(' ').Select(int.Parse).ToList();
