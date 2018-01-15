@@ -499,7 +499,7 @@ with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfi
                 if prediction == '!': # end of case was just predicted, therefore, stop predicting further into the future
                     print('! predicted, end case')
                     break                
-                cropped_line += prediction
+                cropped_line.append(prediction)
                 if y_t<0:
                     y_t=0
                 if y_t2<0:

@@ -72,12 +72,12 @@ if not os.path.exists('output_files/results'):
     os.makedirs('output_files/results')
 
 #clear folders
-shutil.rmtree('output_files/folds')
-os.makedirs('output_files/folds')
-shutil.rmtree('output_files/models')
-os.makedirs('output_files/models')
-shutil.rmtree('output_files/results')
-os.makedirs('output_files/results')        
+#shutil.rmtree('output_files/folds')
+#os.makedirs('output_files/folds')
+#shutil.rmtree('output_files/models')
+#os.makedirs('output_files/models')
+#shutil.rmtree('output_files/results')
+#os.makedirs('output_files/results')        
 
 ## prepare input matrix
 csvfile = open('../data/%s' % eventlog, 'r')
@@ -480,7 +480,7 @@ with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfi
                 if prediction == '!': # end of case was just predicted, therefore, stop predicting further into the future
                     print('! predicted, end case')
                     break                
-                cropped_line += prediction
+                cropped_line.append(prediction)
                 if y_t<0:
                     y_t=0
                 if y_t2<0:
