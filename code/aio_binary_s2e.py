@@ -481,7 +481,7 @@ def getViolationPrediction(predictions):
 
 with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    spamwriter.writerow(["sequenceid","sequencelength", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp", "gt_planned", "gt_instance", "prefix_activities", "predicted_activities", "violation"])
+    spamwriter.writerow(["sequenceid","sequencelength", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp", "gt_planned", "gt_instance", "prefix_activities", "predicted_activities", "violation", "p_violation"])
     sequenceid = 0
     print('sequences: {}'.format(len(lines)))    
     for line, times, times2, times3,times4, times5, meta1, meta2 in izip(lines, lines_t, lines_t2, lines_t3, lines_t4, lines_t5, lines_m1, lines_m2):
@@ -517,6 +517,7 @@ with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfi
             prefix_activities = ''.join(line[:prefix_size])
             suffix_activities = ''.join(line[prefix_size:])
             predicted_violations = []
+            p_violations = []
             #predict once
             enc = encodePrediction(cropped_line, cropped_times, cropped_times2, cropped_times3, cropped_times4, cropped_times5)
             y = model.predict(enc, verbose=0)
@@ -557,6 +558,7 @@ with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfi
 #            predicted_t4.append(y_t4)
 #            predicted_t5.append(y_t5)
             predicted_violations.append(violation);
+            p_violations.append(y_v[0])
             #end prediction loop
 
             #output stuff (sequence, prefix)
@@ -578,6 +580,7 @@ with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfi
                 output.append(prefix_activities)   #prefix_activities.encode('utf-8'))
                 output.append(predicted_activities)   #predicted.encode('utf-8'))
                 output.append(predicted_violations[-1])
+                output.append(p_violations[-1])
                 spamwriter.writerow(output)
             #end prefix loop
         sequenceid += 1
