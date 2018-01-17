@@ -475,8 +475,8 @@ with open('output_files/results/results-{}.csv'.format(filename), 'wb') as csvfi
                 cropped_times.append(y_t)
                 cropped_times2.append(y_t2)
                 cropped_times3.append(y_t3)
-                cropped_times4.append(y_t4)
-                cropped_times5.append(y_t5)
+#                cropped_times4.append(y_t4)
+#                cropped_times5.append(y_t5)
                 y_t = y_t * divisor
                 y_t2 = y_t2 * divisor2
                 y_t3 = y_t3 * divisor3
