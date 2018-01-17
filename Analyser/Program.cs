@@ -25,9 +25,11 @@ namespace Analyser
         private static readonly int BucketingType = 2;
         
         //numeric or binary
-        private static bool IsBinaryPrediction = false;
+        private static bool IsBinaryPrediction = true;
         //rgb encoding
         private static bool IsRGBencoding = false;
+        //no path encoding
+        private static bool IsNopathEncoding = true;
 
         private static readonly int PlotModelWidth = 512;
         private static readonly int PlotModelHeight = 512;
@@ -39,8 +41,8 @@ namespace Analyser
             System.Threading.Thread.CurrentThread.CurrentCulture = customCulture;
 
             //target folders
-            DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Reversed\raw");
-            DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Reversed\");
+            DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\No Path No Planned\Binary S2E\raw");
+            DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\No Path No Planned\Binary S2E\");
             List<FileInfo> InFiles = InFolder.EnumerateFiles("*",SearchOption.AllDirectories).Where(t => t.Name.Contains(".csv") && !t.Name.Contains(".edited.csv")).ToList();
 
             //globals
@@ -311,8 +313,21 @@ namespace Analyser
                             BucketList.First(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5) < 0.001);
                         foreach (var line in output)
                         {
+                            //get index of 50% point
+                            var listout = (line.PrefixActivities + ' ' + line.PredictedActivities).Split(' ').ToList();
+                            var indexout = -1;
+                            if (IsRGBencoding)
+                                indexout = listout.IndexOf("M");
+                            else if (IsNopathEncoding)
+                                indexout = listout.LastIndexOf("1");
+                            else
+                                indexout = listout.IndexOf("13");
+
+                            if (indexout == -1)
+                                throw new Exception("indexing failed");
+
                             //case prediction = 13 (50% marker)
-                            if (IsRGBencoding ? (line.PredictedActivities[0] == 'M') : (line.PredictedActivities[0] == '1' && line.PredictedActivities[1] == '3'))
+                            if (indexout == line.Prefix)
                             {
                                 line.Completion = 0.5d;
                                 midbucket.Prediction_SP.Add(line.SumPrevious);
@@ -325,15 +340,9 @@ namespace Analyser
                                 midbucket.DeviationsAbsoluteTS.Add(line.DeviationAbsoluteTimestamp);
                             }
                             //case prediction (suffix) contains 13 and prefix does not (<50%)
-                            else if (IsRGBencoding ? line.PredictedActivities.Contains("M") && !line.PrefixActivities.Contains("M") : (line.PredictedActivities.Contains("13") && !line.PrefixActivities.Contains("13")))
+                            else if (indexout > line.Prefix)
                             {
-                                var listout = line.PredictedActivities.Split(' ').ToList();
-                                var indexout = -1;
-                                if (IsRGBencoding)
-                                    indexout = listout.IndexOf("M");
-                                else
-                                    indexout = listout.IndexOf("13");
-                                var completion = (double) (line.Prefix) / (double) ((line.Prefix + indexout) * 2);
+                                var completion = ((double) ((line.Prefix) / (double)(indexout)) / 2);
                                 line.Completion = completion; //overwrite old values
                                 //iterate until proper bucket found
                                 for (int i = 0; i * BucketGranularity <= 1; i++)
@@ -353,17 +362,10 @@ namespace Analyser
                                 }
                             }
                             //case prediction (suffix) does not contain 13 and prefix does (>50%)
-                            else if (IsRGBencoding ? (!line.PredictedActivities.Contains("M") && line.PrefixActivities.Contains("M")) : (!line.PredictedActivities.Contains("13") && line.PrefixActivities.Contains("13")))
+                            else if (indexout < line.Prefix)
                             {
-                                var listout = line.PrefixActivities.Split(' ').ToList();
-                                var indexout = -1;
-                                if (IsRGBencoding)
-                                    indexout = listout.IndexOf("M");
-                                else
-                                    indexout = listout.IndexOf("13");
-                                var completion = ((double) (line.Prefix - indexout) /
-                                                  (double) ((line.Prefix - indexout +
-                                                             line.PredictedActivities.Split(' ').Length) * 2) + 0.5d);
+                                var completion = (((double) (line.Prefix - indexout) /
+                                                  (double) (line.SequenceLength - indexout)) / 2) + 0.5d;
                                 line.Completion = completion; //overwrite old values
                                 //iterate until proper bucket found
                                 for (int i = 0; i * BucketGranularity <= 1; i++)
