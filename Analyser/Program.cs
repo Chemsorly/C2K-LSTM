@@ -1422,6 +1422,9 @@ namespace Analyser
 
         static double Median(double[] xs)
         {
+            if (xs.Length == 0)
+                return 0;
+
             //https://stackoverflow.com/questions/4140719/calculate-median-in-c-sharp
             var ys = xs.OrderBy(x => x).ToList();
             double mid = (ys.Count - 1) / 2.0;
