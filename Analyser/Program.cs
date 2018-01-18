@@ -25,11 +25,11 @@ namespace Analyser
         private static readonly int BucketingType = 2;
         
         //numeric or binary
-        private static bool IsBinaryPrediction = true;
+        private static bool IsBinaryPrediction = false;
         //rgb encoding
         private static bool IsRGBencoding = false;
         //no path encoding
-        private static bool IsNopathEncoding = true;
+        private static bool IsNopathEncoding = false;
 
         private static readonly int PlotModelWidth = 512;
         private static readonly int PlotModelHeight = 512;
@@ -41,14 +41,14 @@ namespace Analyser
             System.Threading.Thread.CurrentThread.CurrentCulture = customCulture;
 
             //target folders
-            DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\No Path No Planned\Binary S2E\raw");
-            DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\No Path No Planned\Binary S2E\");
+            DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Abweichungen (Num S2E)\raw");
+            DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Abweichungen (Num S2E)\");
             List<FileInfo> InFiles = InFolder.EnumerateFiles("*",SearchOption.AllDirectories).Where(t => t.Name.Contains(".csv") && !t.Name.Contains(".edited.csv")).ToList();
 
             //globals
             int maxSequences = 0;
             List<Bucket> allBuckets = new List<Bucket>();
-            List<String>[] allParameters = new List<String>[4];
+            List<String>[] allParameters = new List<String>[5];
             for(int i = 0; i < allParameters.Length; i++)
                 allParameters[i] = new List<string>();
 
@@ -892,7 +892,7 @@ namespace Analyser
             #region boxplots
             var boxplotSeries_sp_neurons = new BoxPlotSeries() {};
             model_glob_boxplot_neurons_sp.Series.Add(boxplotSeries_sp_neurons);
-            var parameters = allParameters[0].Distinct().Select(t => Double.Parse(t)).ToList();
+            var parameters = allParameters[1].Distinct().Select(t => Double.Parse(t)).ToList();
             parameters.Sort();
             for (int i = 0; i < parameters.Count; i++)
             {
@@ -942,7 +942,7 @@ namespace Analyser
 
             var boxplotSeries_sp_dropout = new BoxPlotSeries() { };
             model_glob_boxplot_dropout_sp.Series.Add(boxplotSeries_sp_dropout);
-            parameters = allParameters[1].Distinct().Select(t => Double.Parse(t)).ToList();
+            parameters = allParameters[2].Distinct().Select(t => Double.Parse(t)).ToList();
             parameters.Sort();
             for (int i = 0; i < parameters.Count; i++)
             {
@@ -992,7 +992,7 @@ namespace Analyser
 
             var boxplotSeries_sp_patience = new BoxPlotSeries() { };
             model_glob_boxplot_patience_sp.Series.Add(boxplotSeries_sp_patience);
-            parameters = allParameters[2].Distinct().Select(t => Double.Parse(t)).ToList();
+            parameters = allParameters[3].Distinct().Select(t => Double.Parse(t)).ToList();
             parameters.Sort();
             for (int i = 0; i < parameters.Count; i++)
             {
@@ -1042,7 +1042,7 @@ namespace Analyser
 
             var boxplotSeries_sp_algorithm = new BoxPlotSeries() { };
             model_glob_boxplot_algorithm_sp.Series.Add(boxplotSeries_sp_algorithm);
-            parameters = allParameters[3].Distinct().Select(t => Double.Parse(t)).ToList();
+            parameters = allParameters[4].Distinct().Select(t => Double.Parse(t)).ToList();
             parameters.Sort();
             for (int i = 0; i < parameters.Count; i++)
             {
@@ -1093,7 +1093,7 @@ namespace Analyser
             //ts
             var boxplotSeries_ts_neurons = new BoxPlotSeries() { };
             model_glob_boxplot_neurons_ts.Series.Add(boxplotSeries_ts_neurons);
-            parameters = allParameters[0].Distinct().Select(t => Double.Parse(t)).ToList();
+            parameters = allParameters[1].Distinct().Select(t => Double.Parse(t)).ToList();
             parameters.Sort();
             for (int i = 0; i < parameters.Count; i++)
             {
@@ -1143,7 +1143,7 @@ namespace Analyser
 
             var boxplotSeries_ts_dropout = new BoxPlotSeries() { };
             model_glob_boxplot_dropout_ts.Series.Add(boxplotSeries_ts_dropout);
-            parameters = allParameters[1].Distinct().Select(t => Double.Parse(t)).ToList();
+            parameters = allParameters[2].Distinct().Select(t => Double.Parse(t)).ToList();
             parameters.Sort();
             for (int i = 0; i < parameters.Count; i++)
             {
@@ -1193,7 +1193,7 @@ namespace Analyser
 
             var boxplotSeries_ts_patience = new BoxPlotSeries() { };
             model_glob_boxplot_patience_ts.Series.Add(boxplotSeries_ts_patience);
-            parameters = allParameters[2].Distinct().Select(t => Double.Parse(t)).ToList();
+            parameters = allParameters[3].Distinct().Select(t => Double.Parse(t)).ToList();
             parameters.Sort();
             for (int i = 0; i < parameters.Count; i++)
             {
@@ -1243,7 +1243,7 @@ namespace Analyser
 
             var boxplotSeries_ts_algorithm = new BoxPlotSeries() { };
             model_glob_boxplot_algorithm_ts.Series.Add(boxplotSeries_ts_algorithm);
-            parameters = allParameters[3].Distinct().Select(t => Double.Parse(t)).ToList();
+            parameters = allParameters[4].Distinct().Select(t => Double.Parse(t)).ToList();
             parameters.Sort();
             for (int i = 0; i < parameters.Count; i++)
             {
@@ -1320,7 +1320,7 @@ namespace Analyser
             var paras = pParameterString.Split(' ');
 
             //we only want 1,2,3; neurons, dropout, patience, algorithm
-            return new List<string>() {paras[1], paras[2] , paras[3], paras[4] };
+            return new List<string>() { paras[0], paras[1], paras[2] , paras[3], paras[4] };
         }
 
         class Line
