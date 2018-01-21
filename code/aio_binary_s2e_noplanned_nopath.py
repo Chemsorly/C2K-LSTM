@@ -428,7 +428,7 @@ elif par_algorithm == 7:
 
 model.compile(loss={'act_output':'categorical_crossentropy', 'time_output':'mae', 'violation_output':'categorical_crossentropy'}, optimizer=opt)
 early_stopping = EarlyStopping(monitor='val_loss', patience=par_patience)
-model_checkpoint = ModelCheckpoint('output_files/models/model-latest.h5'., monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=False, mode='auto')
+model_checkpoint = ModelCheckpoint('output_files/models/model-latest.h5', monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=False, mode='auto')
 lr_reducer = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=par_patience, verbose=0, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
 
 #train
