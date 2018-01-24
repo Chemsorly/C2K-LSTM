@@ -216,6 +216,11 @@ namespace Analyser
                     else
                         IsRGBencoding = false;
 
+                    if (Parameters.Any(t => t.Contains("nopath")))
+                        IsNopathEncoding = true;
+                    else
+                        IsNopathEncoding = false;
+
                     //add to global
                     for (int i = 0; i < allParameters.Length; i++)
                     allParameters[i].Add(Parameters[i]);
