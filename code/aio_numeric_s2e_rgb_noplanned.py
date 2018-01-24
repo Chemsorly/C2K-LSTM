@@ -488,7 +488,7 @@ tree = spatial.KDTree(A)
 
 with open('output_files/results/results.csv', 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    spamwriter.writerow(["sequenceid","sequencelength", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp", "gt_planned", "gt_instance", "prefix_activities", "predicted_activities"])
+    spamwriter.writerow(["sequenceid","sequencelength", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp", "gt_planned", "gt_instance", "prefix_activities", "predicted_activities","suffix_activities"])
     sequenceid = 0
     print('sequences: {}'.format(len(lines)))    
     for line, times, times2, times3,times4, times5, meta1, meta2 in izip(lines, lines_t, lines_t2, lines_t3, lines_t4, lines_t5, lines_m1, lines_m2):
@@ -579,6 +579,7 @@ with open('output_files/results/results.csv', 'wb') as csvfile:
                 prefix_activities = ' '.join(prefix_activities)
                 predicted_activities = ' '.join(suffix_activities)
                 output.append(prefix_activities)   #prefix_activities.encode('utf-8'))
+                output.append(predicted_activities)   #predicted.encode('utf-8'))
                 output.append(predicted_activities)   #predicted.encode('utf-8'))
                 spamwriter.writerow(output)
             #end prefix loop

@@ -42,8 +42,8 @@ namespace Analyser
             System.Threading.Thread.CurrentThread.CurrentCulture = customCulture;
 
             //target folders
-            DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Abweichungen (Num S2E)\raw");
-            DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Abweichungen (Num S2E)\");
+            DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Durchlauf 3\raw");
+            DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Durchlauf 3\");
             List<FileInfo> InFiles = InFolder.EnumerateFiles("*",SearchOption.AllDirectories).Where(t => t.Name.Contains(".csv") && !t.Name.Contains(".edited.csv")).ToList();
 
             //globals
@@ -211,7 +211,7 @@ namespace Analyser
                     else if (Parameters.Any(t => t.Contains("numeric")))
                         IsBinaryPrediction = false;
 
-                    if (Parameters.Any(t => t.Contains("RGB")))
+                    if (Parameters.Any(t => t.Contains("rgb")))
                         IsRGBencoding = true;
                     else
                         IsRGBencoding = false;
@@ -273,10 +273,11 @@ namespace Analyser
                             GT_Planned = int.Parse(fields[8]),
                             GT_InstanceID = int.Parse(fields[9]),
                             PrefixActivities = fields[10],
-                            PredictedActivities = fields[11]
+                            PredictedActivities = fields[11],
+                            SuffixActivities = fields[12]
                         };
                         if (IsBinaryPrediction)
-                            line.Predicted_Violations = fields[12] == "true";
+                            line.Predicted_Violations = fields[13] == "true";
 
                         output.Add(line);
 
@@ -335,7 +336,7 @@ namespace Analyser
                         foreach (var line in output)
                         {
                             //get index of 50% point
-                            var listout = (line.PrefixActivities + ' ' + line.PredictedActivities).Split(' ').ToList();
+                            var listout = (line.PrefixActivities + ' ' + line.SuffixActivities).Split(' ').ToList();
                             var indexout = -1;
                             if (IsRGBencoding)
                                 indexout = listout.IndexOf("M");
@@ -430,6 +431,7 @@ namespace Analyser
                                    "gt_instance," +
                                    "prefix_activities," +
                                    "predicted_activities," +
+                                   "suffix_activities," +
                                    "accuracy_sumprevious," +
                                    "accuracy_timestamp," +
                                    "violation_effective," +
@@ -454,6 +456,7 @@ namespace Analyser
                                        $"{line.GT_InstanceID}," +
                                        $"{line.PrefixActivities}," +
                                        $"{line.PredictedActivities}," +
+                                       $"{line.SuffixActivities}," +
                                        $"{line.AccuracySumprevious}," +
                                        $"{line.AccuracyTimestamp}," +
                                        $"{line.Violation_Effective}," +
@@ -1359,6 +1362,7 @@ namespace Analyser
             public int GT_InstanceID { get; set; }
             public String PrefixActivities { get; set; }
             public String PredictedActivities { get; set; }
+            public String SuffixActivities { get; set; }
             public bool Predicted_Violations { get; set; }
 
             //output

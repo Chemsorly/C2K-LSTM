@@ -413,7 +413,7 @@ def getSymbolPrediction(predictions):
 
 with open('output_files/results/results.csv', 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    spamwriter.writerow(["sequenceid","sequencelength", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp", "gt_planned", "gt_instance", "prefix_activities", "predicted_activities"])
+    spamwriter.writerow(["sequenceid","sequencelength", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp", "gt_planned", "gt_instance", "prefix_activities", "predicted_activities","suffix_activities"])
     sequenceid = 0
     print('sequences: {}'.format(len(lines)))    
     for line, times, times2, times3,times4, times5, meta1, meta2 in izip(lines, lines_t, lines_t2, lines_t3, lines_t4, lines_t5, lines_m1, lines_m2):
@@ -447,6 +447,7 @@ with open('output_files/results/results.csv', 'wb') as csvfile:
             predicted_t4 = []
             predicted_t5 = []        
             prefix_activities = ''.join(line[:prefix_size])
+            suffix_activities = ''.join(line[prefix_size:])
             #predict until ! found
             for i in range(maxlen):
                 enc = encodePrediction(cropped_line, cropped_times, cropped_times2, cropped_times3, cropped_times4, cropped_times5)
@@ -507,8 +508,10 @@ with open('output_files/results/results.csv', 'wb') as csvfile:
                 output.append(ground_truth_processid)
                 prefix_activities = ' '.join(map(lambda x : str(ord(x)- ascii_offset),prefix_activities))
                 predicted_activities = ' '.join(map(lambda x : str(ord(x)- ascii_offset),predicted))
+                suffix_activities = ' '.join(map(lambda x : str(ord(x)- ascii_offset),suffix_activities))
                 output.append(prefix_activities)   #prefix_activities.encode('utf-8'))
                 output.append(predicted_activities)   #predicted.encode('utf-8'))
+                output.append(suffix_activities)   #predicted.encode('utf-8'))
                 spamwriter.writerow(output)
             #end prefix loop
         sequenceid += 1

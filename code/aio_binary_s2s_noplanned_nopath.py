@@ -429,7 +429,7 @@ def getViolationPrediction(predictions):
 
 with open('output_files/results/results.csv', 'wb') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    spamwriter.writerow(["sequenceid","sequencelength", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp", "gt_planned", "gt_instance", "prefix_activities", "predicted_activities", "violation", "p_violation"])
+    spamwriter.writerow(["sequenceid","sequencelength", "prefix", "sumprevious", "timestamp", "completion", "gt_sumprevious", "gt_timestamp", "gt_planned", "gt_instance", "prefix_activities", "predicted_activities","suffix_activities", "violation", "p_violation"])
     sequenceid = 0
     print('sequences: {}'.format(len(lines)))    
     for line, times, times2, times3,times4, times5, meta1, meta2 in izip(lines, lines_t, lines_t2, lines_t3, lines_t4, lines_t5, lines_m1, lines_m2):
@@ -463,6 +463,7 @@ with open('output_files/results/results.csv', 'wb') as csvfile:
             predicted_t4 = []
             predicted_t5 = []        
             prefix_activities = ''.join(line[:prefix_size])
+            suffix_activities = ''.join(line[prefix_size:])
             predicted_violations = []
             p_violations = []
             #predict until ! found
@@ -527,10 +528,12 @@ with open('output_files/results/results.csv', 'wb') as csvfile:
                 output.append(ground_truth_timestamp)
                 output.append(ground_truth_plannedtimestamp)
                 output.append(ground_truth_processid)
-                prefix_activities = ' '.join(map(lambda x : str(ord(x)- ascii_offset),prefix_activities))
+                prefix = ' '.join(map(lambda x : str(ord(x)- ascii_offset),prefix_activities))
                 predicted_activities = ' '.join(map(lambda x : str(ord(x)- ascii_offset),predicted))
-                output.append(prefix_activities)   #prefix_activities.encode('utf-8'))
+                suffix = ' '.join(map(lambda x : str(ord(x)- ascii_offset),suffix_activities))
+                output.append(prefix)   #prefix_activities.encode('utf-8'))
                 output.append(predicted_activities)   #predicted.encode('utf-8'))
+                output.append(suffix)   #predicted.encode('utf-8'))
                 output.append(predicted_violations[-1])
                 output.append(p_violations[-1])
                 spamwriter.writerow(output)
