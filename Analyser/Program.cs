@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.ServiceModel.Channels;
 using System.Text;
 using System.Threading.Tasks;
 using OxyPlot;
@@ -201,10 +202,25 @@ namespace Analyser
                     parser.SetDelimiters(",");
                     bool firstline = true;
                     int rows = 0;
-                    List<String> Parameters = ExtractParams(file.Name.Replace("results-", String.Empty).Replace(".csv", String.Empty));
+
+                    
+                    //List<String> Parameters = ExtractParams(file.Name.Replace("results-", String.Empty).Replace(".csv", String.Empty));
+                    List<String> Parameters = ExtractParams(file.Directory.Name);
+                    if (Parameters.Any(t => t.Contains("binary")))
+                        IsBinaryPrediction = true;
+                    else if (Parameters.Any(t => t.Contains("numeric")))
+                        IsBinaryPrediction = false;
+
+                    if (Parameters.Any(t => t.Contains("RGB")))
+                        IsRGBencoding = true;
+                    else
+                        IsRGBencoding = false;
+
                     //add to global
                     for (int i = 0; i < allParameters.Length; i++)
-                        allParameters[i].Add(Parameters[i]);
+                    allParameters[i].Add(Parameters[i]);
+
+                    //check parameters for 
 
                     while (!parser.EndOfData)
                     {
