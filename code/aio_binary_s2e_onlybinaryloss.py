@@ -562,27 +562,26 @@ with open('output_files/results/results.csv', 'wb') as csvfile:
             #end prediction loop
 
             #output stuff (sequence, prefix)
-            if len(predicted) > 0:
-                output = []
-                output.append(sequenceid)
-                output.append(sequencelength)
-                output.append(prefix_size)
-                output.append(0)
-                output.append(0)
-                #output.append(sum(predicted_t3)) #remove duration because process is parallel and therefore sum is useless
-                output.append(prefix_size / sequencelength)
-                output.append(ground_truth_sumprevious)
-                output.append(ground_truth_timestamp)
-                output.append(ground_truth_plannedtimestamp)
-                output.append(ground_truth_processid)
-                prefix_activities = ' '.join(map(lambda x : str(ord(x)- ascii_offset),prefix_activities))
-                predicted_activities = ' '.join(map(lambda x : str(ord(x)- ascii_offset),suffix_activities))
-                output.append(prefix_activities)   #prefix_activities.encode('utf-8'))
-                output.append(predicted_activities)   #predicted.encode('utf-8'))
-                output.append(predicted_activities)   #predicted.encode('utf-8'))
-                output.append(predicted_violations[-1])
-                output.append(p_violations[-1])
-                spamwriter.writerow(output)
+            output = []
+            output.append(sequenceid)
+            output.append(sequencelength)
+            output.append(prefix_size)
+            output.append(0)
+            output.append(0)
+            #output.append(sum(predicted_t3)) #remove duration because process is parallel and therefore sum is useless
+            output.append(prefix_size / sequencelength)
+            output.append(ground_truth_sumprevious)
+            output.append(ground_truth_timestamp)
+            output.append(ground_truth_plannedtimestamp)
+            output.append(ground_truth_processid)
+            prefix_activities = ' '.join(map(lambda x : str(ord(x)- ascii_offset),prefix_activities))
+            predicted_activities = ' '.join(map(lambda x : str(ord(x)- ascii_offset),suffix_activities))
+            output.append(prefix_activities)   #prefix_activities.encode('utf-8'))
+            output.append(predicted_activities)   #predicted.encode('utf-8'))
+            output.append(predicted_activities)   #predicted.encode('utf-8'))
+            output.append(predicted_violations[-1])
+            output.append(p_violations[-1])
+            spamwriter.writerow(output)
             #end prefix loop
         sequenceid += 1
         #end sequence loop

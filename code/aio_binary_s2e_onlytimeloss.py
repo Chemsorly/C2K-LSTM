@@ -402,7 +402,7 @@ act_output = Dense(len(target_chars), activation='softmax', init='glorot_uniform
 time_output = Dense(1, init='glorot_uniform', name='time_output')(b2_2)
 violation_output = Dense(2, activation='softmax', init='glorot_uniform', name='violation_output')(b2_3)
 
-model = Model(input=[main_input], output=[violation_output])
+model = Model(input=[main_input], output=[time_output])
 
 if par_algorithm == 1:
     opt = Nadam(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=1e-08, schedule_decay=0.004, clipvalue=3)
@@ -522,7 +522,7 @@ with open('output_files/results/results.csv', 'wb') as csvfile:
             enc = encodePrediction(cropped_line, cropped_times, cropped_times2, cropped_times3, cropped_times4, cropped_times5)
             y = model.predict(enc, verbose=0)
 #            y_char = y[0][0]
-            y_t = y[0][0][0]
+            y_t = y[0][0]
 #            y_t2 = y[1][0][1]
 #            y_t3 = y[1][0][2]
 #            y_t4 = y[1][0][3]
@@ -562,25 +562,24 @@ with open('output_files/results/results.csv', 'wb') as csvfile:
             #end prediction loop
 
             #output stuff (sequence, prefix)
-            if len(predicted) > 0:
-                output = []
-                output.append(sequenceid)
-                output.append(sequencelength)
-                output.append(prefix_size)
-                output.append(sum(times[:prefix_size]) + sum(predicted_t))
-                output.append(predicted_t[-1])
-                #output.append(sum(predicted_t3)) #remove duration because process is parallel and therefore sum is useless
-                output.append(prefix_size / sequencelength)
-                output.append(ground_truth_sumprevious)
-                output.append(ground_truth_timestamp)
-                output.append(ground_truth_plannedtimestamp)
-                output.append(ground_truth_processid)
-                prefix_activities = ' '.join(map(lambda x : str(ord(x)- ascii_offset),prefix_activities))
-                predicted_activities = ' '.join(map(lambda x : str(ord(x)- ascii_offset),suffix_activities))
-                output.append(prefix_activities)   #prefix_activities.encode('utf-8'))
-                output.append(predicted_activities)   #predicted.encode('utf-8'))
-                output.append(predicted_activities)   #predicted.encode('utf-8'))
-                spamwriter.writerow(output)
+            output = []
+            output.append(sequenceid)
+            output.append(sequencelength)
+            output.append(prefix_size)
+            output.append(sum(times[:prefix_size]) + sum(predicted_t))
+            output.append(predicted_t[-1])
+            #output.append(sum(predicted_t3)) #remove duration because process is parallel and therefore sum is useless
+            output.append(prefix_size / sequencelength)
+            output.append(ground_truth_sumprevious)
+            output.append(ground_truth_timestamp)
+            output.append(ground_truth_plannedtimestamp)
+            output.append(ground_truth_processid)
+            prefix_activities = ' '.join(map(lambda x : str(ord(x)- ascii_offset),prefix_activities))
+            predicted_activities = ' '.join(map(lambda x : str(ord(x)- ascii_offset),suffix_activities))
+            output.append(prefix_activities)   #prefix_activities.encode('utf-8'))
+            output.append(predicted_activities)   #predicted.encode('utf-8'))
+            output.append(predicted_activities)   #predicted.encode('utf-8'))
+            spamwriter.writerow(output)
             #end prefix loop
         sequenceid += 1
         #end sequence loop
