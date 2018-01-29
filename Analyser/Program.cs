@@ -1418,34 +1418,59 @@ namespace Analyser
             }
             #endregion
             #region groupings
+            //create grouping model
             OxyPlot.PlotModel model_groupings0 = new PlotModel() { Title = "Results: Avg MCC grouped by parameter 0" };
             model_groupings0.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
             model_groupings0.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
             model_groupings0.IsLegendVisible = true;
+
+            //get and sort parameters
             parameters = allParameters[0].Distinct().ToList();
             parameters.Sort();
+
+            //set up output lines
             var grouping0out = new List<String>();
             List<String> grouping0header = new List<String>() { "groupingname" };
             for (int j = 0; j * BucketGranularity < 1; j++)
                 grouping0header.Add((j * BucketGranularity).ToString());
             grouping0out.Add(String.Join(",", grouping0header));
 
+            //iterate through first level grouping (file name)
             for (int i = 0; i < parameters.Count; i++)
             {
                 var grouping0line = new List<String>();
                 grouping0line.Add(parameters[i]);
                 var groupingSeries = new LineSeries() { Title = parameters[i] };
+
+                //create boxplot model for each first level grouping
+                OxyPlot.PlotModel groupingboxplotmodel = new PlotModel() { Title = $"Grouping Boxplots for {parameters[i]}" };
+                groupingboxplotmodel.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+                groupingboxplotmodel.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (Percentage)" });
+                var groupingBoxPlotSeries = new BoxPlotSeries() { BoxWidth = 0.025 };
+                groupingboxplotmodel.Series.Add(groupingBoxPlotSeries);
+
+                //iterate through each bucket
                 for (int j = 0; j * BucketGranularity < 1; j++)
                 {
                     var tbuckets = allBuckets.Where(t => t.BucketLevel == j && t.Parameters[0] == parameters[i].ToString());
                     var val = 0d;
                     if (tbuckets.Where(t => !double.IsNaN(t.MCC_Target)).Any())
+                    {
                         val = tbuckets.Where(t => !double.IsNaN(t.MCC_Target)).Average(t => t.MCC_Target);
+                        groupingBoxPlotSeries.Items.Add(CreateBoxplot(tbuckets.Where(t => !double.IsNaN(t.MCC_Target)).Select(t => t.MCC_Target).ToList(), j * BucketGranularity));
+                    }
                     groupingSeries.Points.Add(new DataPoint(j * BucketGranularity, val));
                     grouping0line.Add(val.ToString());
+                    
                 }
                 model_groupings0.Series.Add(groupingSeries);
                 grouping0out.Add(String.Join(",", grouping0line));
+                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping0_boxplot_{parameters[i]}.pdf", FileMode.OpenOrCreate))
+                {
+                    OxyPlot.PdfExporter.Export(groupingboxplotmodel, filestream, PlotModelWidth, PlotModelHeight);
+                    filestream.Close();
+                }
+
             }
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping0.pdf", FileMode.OpenOrCreate))
             {
@@ -1453,6 +1478,7 @@ namespace Analyser
                 filestream.Close();
             }
             File.WriteAllLines($"{ResultsFolder.FullName}\\grouping0.csv", grouping0out);
+
             #endregion
         }
 
