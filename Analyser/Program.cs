@@ -37,8 +37,8 @@ namespace Analyser
             System.Threading.Thread.CurrentThread.CurrentCulture = customCulture;
 
             //target folders
-            DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Durchlauf 3\raw");
-            DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Durchlauf 3\");
+            DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Numeric S2S Neuron Variation\raw");
+            DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Numeric S2S Neuron Variation\");
             List<FileInfo> InFiles = InFolder.EnumerateFiles("*", SearchOption.AllDirectories).Where(t => t.Name.Contains(".csv") && !t.Name.Contains(".edited.csv")).ToList();
 
             //globals
@@ -1418,66 +1418,70 @@ namespace Analyser
             }
             #endregion
             #region groupings
-            //create grouping model
-            OxyPlot.PlotModel model_groupings0 = new PlotModel() { Title = "Results: Avg MCC grouped by parameter 0" };
-            model_groupings0.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
-            model_groupings0.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
-            model_groupings0.IsLegendVisible = true;
-
             //get and sort parameters
-            parameters = allParameters[0].Distinct().ToList();
-            parameters.Sort();
-
-            //set up output lines
-            var grouping0out = new List<String>();
-            List<String> grouping0header = new List<String>() { "groupingname" };
-            for (int j = 0; j * BucketGranularity < 1; j++)
-                grouping0header.Add((j * BucketGranularity).ToString());
-            grouping0out.Add(String.Join(",", grouping0header));
-
-            //iterate through first level grouping (file name)
-            for (int i = 0; i < parameters.Count; i++)
+            for (int group = 0; group < allParameters.Length; group++)
             {
-                var grouping0line = new List<String>();
-                grouping0line.Add(parameters[i]);
-                var groupingSeries = new LineSeries() { Title = parameters[i] };
+                //create grouping model
+                OxyPlot.PlotModel model_groupings0 = new PlotModel() { Title = "Results: Avg MCC grouped by parameter 0" };
+                model_groupings0.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+                model_groupings0.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+                model_groupings0.IsLegendVisible = true;
 
-                //create boxplot model for each first level grouping
-                OxyPlot.PlotModel groupingboxplotmodel = new PlotModel() { Title = $"Grouping Boxplots for {parameters[i]}" };
-                groupingboxplotmodel.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
-                groupingboxplotmodel.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (Percentage)" });
-                var groupingBoxPlotSeries = new BoxPlotSeries() { BoxWidth = 0.025 };
-                groupingboxplotmodel.Series.Add(groupingBoxPlotSeries);
+                parameters = allParameters[group].Distinct().ToList();
+                parameters.Sort();
 
-                //iterate through each bucket
+                //set up output lines
+                var grouping0out = new List<String>();
+                List<String> grouping0header = new List<String>() { "groupingname" };
                 for (int j = 0; j * BucketGranularity < 1; j++)
+                    grouping0header.Add((j * BucketGranularity).ToString());
+                grouping0out.Add(String.Join(",", grouping0header));
+
+                //iterate through first level grouping (file name)
+                for (int i = 0; i < parameters.Count; i++)
                 {
-                    var tbuckets = allBuckets.Where(t => t.BucketLevel == j && t.Parameters[0] == parameters[i].ToString());
-                    var val = 0d;
-                    if (tbuckets.Where(t => !double.IsNaN(t.MCC_Target)).Any())
+                    var grouping0line = new List<String>();
+                    grouping0line.Add(parameters[i]);
+                    var groupingSeries = new LineSeries() { Title = parameters[i] };
+
+                    //create boxplot model for each first level grouping
+                    OxyPlot.PlotModel groupingboxplotmodel = new PlotModel() { Title = $"Grouping Boxplots for {parameters[i]}" };
+                    groupingboxplotmodel.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+                    groupingboxplotmodel.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (MCC)" });
+                    var groupingBoxPlotSeries = new BoxPlotSeries() { BoxWidth = 0.025 };
+                    groupingboxplotmodel.Series.Add(groupingBoxPlotSeries);
+
+                    //iterate through each bucket
+                    for (int j = 0; j * BucketGranularity < 1; j++)
                     {
-                        val = tbuckets.Where(t => !double.IsNaN(t.MCC_Target)).Average(t => t.MCC_Target);
-                        groupingBoxPlotSeries.Items.Add(CreateBoxplot(tbuckets.Where(t => !double.IsNaN(t.MCC_Target)).Select(t => t.MCC_Target).ToList(), j * BucketGranularity));
+                        var tbuckets = allBuckets.Where(t => t.BucketLevel == j && t.Parameters[group] == parameters[i].ToString());
+                        var val = 0d;
+                        if (tbuckets.Where(t => !double.IsNaN(t.MCC_Target)).Any())
+                        {
+                            val = tbuckets.Where(t => !double.IsNaN(t.MCC_Target)).Average(t => t.MCC_Target);
+                            groupingBoxPlotSeries.Items.Add(CreateBoxplot(tbuckets.Where(t => !double.IsNaN(t.MCC_Target)).Select(t => t.MCC_Target).ToList(), j * BucketGranularity));
+                        }
+                        groupingSeries.Points.Add(new DataPoint(j * BucketGranularity, val));
+                        grouping0line.Add(val.ToString());
+
                     }
-                    groupingSeries.Points.Add(new DataPoint(j * BucketGranularity, val));
-                    grouping0line.Add(val.ToString());
-                    
+                    model_groupings0.Series.Add(groupingSeries);
+                    grouping0out.Add(String.Join(",", grouping0line));
+                    using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}.pdf", FileMode.OpenOrCreate))
+                    {
+                        OxyPlot.PdfExporter.Export(groupingboxplotmodel, filestream, PlotModelWidth, PlotModelHeight);
+                        filestream.Close();
+                    }
+
                 }
-                model_groupings0.Series.Add(groupingSeries);
-                grouping0out.Add(String.Join(",", grouping0line));
-                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping0_boxplot_{parameters[i]}.pdf", FileMode.OpenOrCreate))
+                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}.pdf", FileMode.OpenOrCreate))
                 {
-                    OxyPlot.PdfExporter.Export(groupingboxplotmodel, filestream, PlotModelWidth, PlotModelHeight);
+                    OxyPlot.PdfExporter.Export(model_groupings0, filestream, PlotModelWidth, PlotModelHeight);
                     filestream.Close();
                 }
+                File.WriteAllLines($"{ResultsFolder.FullName}\\grouping{group}.csv", grouping0out);
 
             }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping0.pdf", FileMode.OpenOrCreate))
-            {
-                OxyPlot.PdfExporter.Export(model_groupings0, filestream, PlotModelWidth, PlotModelHeight);
-                filestream.Close();
-            }
-            File.WriteAllLines($"{ResultsFolder.FullName}\\grouping0.csv", grouping0out);
 
             #endregion
         }
@@ -1508,7 +1512,7 @@ namespace Analyser
             var paras = pParameterString.Split(' ');
 
             //we only want 1,2,3; neurons, dropout, patience, algorithm
-            return new List<string>() { paras[0], paras[1], paras[2], paras[3], paras[4] };
+            return new List<string>() { paras[0], paras[1], paras[2], paras[3], paras[4], paras[5] };
         }
 
         class Line
@@ -1764,7 +1768,7 @@ namespace Analyser
 
         static BoxPlotItem CreateBoxplot(List<double> pValues, double pX)
         {
-            if (!pValues.Any())
+            if (!pValues.Any() || pValues.Count(t => !double.IsNaN(t)) == 0)
                 return null;
 
             //https://searchcode.com/codesearch/view/28446375/
