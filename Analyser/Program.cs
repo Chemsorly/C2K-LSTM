@@ -28,10 +28,9 @@ namespace Analyser
         private static readonly int PlotModelWidth = 512;
         private static readonly int PlotModelHeight = 512;
 
-        object GlobalLock = new object();
-
         static void Main(string[] args)
         {
+            //enforce decimal encoding
             System.Globalization.CultureInfo customCulture = (System.Globalization.CultureInfo)System.Threading.Thread.CurrentThread.CurrentCulture.Clone();
             customCulture.NumberFormat.NumberDecimalSeparator = ".";
             System.Threading.Thread.CurrentThread.CurrentCulture = customCulture;
