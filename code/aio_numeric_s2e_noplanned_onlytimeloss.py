@@ -306,7 +306,7 @@ for line, line_t, line_t2, line_t3, line_t4, line_t5, line_t6, line_t7 in izip(l
 print('nb sequences:', len(sentences))
 
 print('Vectorization...')
-num_features = len(chars)+6
+num_features = len(chars)+4
 print('num features: {}'.format(num_features))
 X = np.zeros((len(sentences), maxlen, num_features), dtype=np.float32)
 y_a = np.zeros((len(sentences), len(target_chars)), dtype=np.float32)
@@ -335,8 +335,8 @@ for i, sentence in enumerate(sentences):
         X[i, t+leftpad, len(chars)+1] = sentence_t[t]/divisor
         X[i, t+leftpad, len(chars)+2] = sentence_t2[t]/divisor2
         X[i, t+leftpad, len(chars)+3] = sentence_t3[t]/divisor3
-        X[i, t+leftpad, len(chars)+4] = sentence_t4[t]/divisor4
-        X[i, t+leftpad, len(chars)+5] = sentence_t5[t]/divisor5
+#        X[i, t+leftpad, len(chars)+4] = sentence_t4[t]/divisor4
+#        X[i, t+leftpad, len(chars)+5] = sentence_t5[t]/divisor5
     for c in target_chars:
         if c==next_chars[i]:
             y_a[i, target_char_indices[c]] = 1-softness
@@ -435,8 +435,8 @@ def encodePrediction(sentence, times, times2, times3, times4, times5, maxlen=max
         X[0, t+leftpad, len(chars)+1] = times[t]/divisor
         X[0, t+leftpad, len(chars)+2] = times2[t]/divisor2
         X[0, t+leftpad, len(chars)+3] = times3[t]/divisor3
-        X[0, t+leftpad, len(chars)+4] = times4[t]/divisor4
-        X[0, t+leftpad, len(chars)+5] = times5[t]/divisor5
+#        X[0, t+leftpad, len(chars)+4] = times4[t]/divisor4
+#        X[0, t+leftpad, len(chars)+5] = times5[t]/divisor5
     return X
 
 def getSymbolPrediction(predictions):

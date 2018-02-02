@@ -36,7 +36,7 @@ from datetime import datetime
 from math import log
 
 filename = os.path.splitext(basename(os.path.realpath(__file__)))[0]
-eventlog = "c2k_data_comma_lstmready.csv"
+eventlog = "c2k_data_comma_lstmready_nopath.csv"
 ascii_offset = 161
 predict_size = 1
 
