@@ -36,8 +36,8 @@ namespace Analyser
             System.Threading.Thread.CurrentThread.CurrentCulture = customCulture;
 
             //target folders
-            DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Numeric S2S Neuron Variation\raw");
-            DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Numeric S2S Neuron Variation\");
+            DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Durchlauf 3\raw");
+            DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Durchlauf 3\");
             List<FileInfo> InFiles = InFolder.EnumerateFiles("*", SearchOption.AllDirectories).Where(t => t.Name.Contains(".csv") && !t.Name.Contains(".edited.csv")).ToList();
 
             //globals
@@ -48,86 +48,45 @@ namespace Analyser
                 allParameters[i] = new List<string>();
 
             #region init global models
-            OxyPlot.PlotModel model_glob_precision_sp = new PlotModel() { Title = "Results: Precision SP" };
-            model_glob_precision_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
-            model_glob_precision_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
-            model_glob_precision_sp.IsLegendVisible = true;
+            OxyPlot.PlotModel model_glob_precision_target = new PlotModel() { Title = "Results: Precision target" };
+            model_glob_precision_target.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_precision_target.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_precision_target.IsLegendVisible = true;
 
-            OxyPlot.PlotModel model_glob_recall_sp = new PlotModel() { Title = "Results: Recall SP" };
-            model_glob_recall_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
-            model_glob_recall_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
-            model_glob_recall_sp.IsLegendVisible = true;
+            OxyPlot.PlotModel model_glob_recall_target = new PlotModel() { Title = "Results: Recall target" };
+            model_glob_recall_target.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_recall_target.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_recall_target.IsLegendVisible = true;
 
-            OxyPlot.PlotModel model_glob_speceficity_sp = new PlotModel() { Title = "Results: Speceficity SP" };
-            model_glob_speceficity_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
-            model_glob_speceficity_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
-            model_glob_speceficity_sp.IsLegendVisible = true;
+            OxyPlot.PlotModel model_glob_speceficity_target = new PlotModel() { Title = "Results: Speceficity target" };
+            model_glob_speceficity_target.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_speceficity_target.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_speceficity_target.IsLegendVisible = true;
 
-            OxyPlot.PlotModel model_glob_falsepositives_sp = new PlotModel() { Title = "Results: False Positives SP" };
-            model_glob_falsepositives_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
-            model_glob_falsepositives_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
-            model_glob_falsepositives_sp.IsLegendVisible = true;
+            OxyPlot.PlotModel model_glob_falsepositives_target = new PlotModel() { Title = "Results: False Positives target" };
+            model_glob_falsepositives_target.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_falsepositives_target.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_falsepositives_target.IsLegendVisible = true;
 
-            OxyPlot.PlotModel model_glob_negativepredictions_sp = new PlotModel() { Title = "Results: Negative Predictions SP" };
-            model_glob_negativepredictions_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
-            model_glob_negativepredictions_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
-            model_glob_negativepredictions_sp.IsLegendVisible = true;
+            OxyPlot.PlotModel model_glob_negativepredictions_target = new PlotModel() { Title = "Results: Negative Predictions target" };
+            model_glob_negativepredictions_target.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_negativepredictions_target.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_negativepredictions_target.IsLegendVisible = true;
 
-            OxyPlot.PlotModel model_glob_accuracy_sp = new PlotModel() { Title = "Results: Accuracy SP" };
-            model_glob_accuracy_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
-            model_glob_accuracy_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
-            model_glob_accuracy_sp.IsLegendVisible = true;
+            OxyPlot.PlotModel model_glob_accuracy_target = new PlotModel() { Title = "Results: Accuracy target" };
+            model_glob_accuracy_target.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_accuracy_target.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_accuracy_target.IsLegendVisible = true;
 
-            OxyPlot.PlotModel model_glob_fmetric_sp = new PlotModel() { Title = "Results: F-Metric SP" };
-            model_glob_fmetric_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
-            model_glob_fmetric_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
-            model_glob_fmetric_sp.IsLegendVisible = true;
+            OxyPlot.PlotModel model_glob_fmetric_target = new PlotModel() { Title = "Results: F-Metric target" };
+            model_glob_fmetric_target.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_fmetric_target.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_fmetric_target.IsLegendVisible = true;
 
-            OxyPlot.PlotModel model_glob_mcc_sp = new PlotModel() { Title = "Results: MCC SP" };
-            model_glob_mcc_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
-            model_glob_mcc_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
-            model_glob_mcc_sp.IsLegendVisible = true;
-
-            //TS
-            OxyPlot.PlotModel model_glob_precision_ts = new PlotModel() { Title = "Results: Precision TS" };
-            model_glob_precision_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
-            model_glob_precision_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
-            model_glob_precision_ts.IsLegendVisible = true;
-
-            OxyPlot.PlotModel model_glob_recall_ts = new PlotModel() { Title = "Results: Recall TS" };
-            model_glob_recall_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
-            model_glob_recall_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
-            model_glob_recall_ts.IsLegendVisible = true;
-
-            OxyPlot.PlotModel model_glob_speceficity_ts = new PlotModel() { Title = "Results: Speceficity TS" };
-            model_glob_speceficity_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
-            model_glob_speceficity_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
-            model_glob_speceficity_ts.IsLegendVisible = true;
-
-            OxyPlot.PlotModel model_glob_falsepositives_ts = new PlotModel() { Title = "Results: False Positives TS" };
-            model_glob_falsepositives_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
-            model_glob_falsepositives_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
-            model_glob_falsepositives_ts.IsLegendVisible = true;
-
-            OxyPlot.PlotModel model_glob_negativepredictions_ts = new PlotModel() { Title = "Results: Negative Predictions TS" };
-            model_glob_negativepredictions_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
-            model_glob_negativepredictions_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
-            model_glob_negativepredictions_ts.IsLegendVisible = true;
-
-            OxyPlot.PlotModel model_glob_accuracy_ts = new PlotModel() { Title = "Results: Accuracy TS" };
-            model_glob_accuracy_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
-            model_glob_accuracy_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
-            model_glob_accuracy_ts.IsLegendVisible = true;
-
-            OxyPlot.PlotModel model_glob_fmetric_ts = new PlotModel() { Title = "Results: F-Metric TS" };
-            model_glob_fmetric_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
-            model_glob_fmetric_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
-            model_glob_fmetric_ts.IsLegendVisible = true;
-
-            OxyPlot.PlotModel model_glob_mcc_ts = new PlotModel() { Title = "Results: MCC TS" };
-            model_glob_mcc_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
-            model_glob_mcc_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
-            model_glob_mcc_ts.IsLegendVisible = true;
+            OxyPlot.PlotModel model_glob_mcc_target = new PlotModel() { Title = "Results: MCC target" };
+            model_glob_mcc_target.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+            model_glob_mcc_target.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+            model_glob_mcc_target.IsLegendVisible = true;           
 
             OxyPlot.PlotModel model_glob_predictedsequences = new PlotModel() { Title = "Predicted sequences" };
             var model_glob_predictedsequences_cataxis = new CategoryAxis() { Position = AxisPosition.Bottom, Title = "Parameters", Angle = 45, FontSize = 8 };
@@ -142,25 +101,25 @@ namespace Analyser
             Dictionary<String, int> validSequences = new Dictionary<string, int>();
 
             //boxplots
-            OxyPlot.PlotModel model_glob_boxplot_neurons_sp = new PlotModel() { Title = "Number of Neurons comparison (t >= 0.5)" };
-            var model_glob_boxplot_neurons_sp_cataxis = new CategoryAxis { Position = AxisPosition.Bottom, Title = "Parameters", Angle = 45, FontSize = 8 };
-            model_glob_boxplot_neurons_sp.Axes.Add(model_glob_boxplot_neurons_sp_cataxis);
-            model_glob_boxplot_neurons_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (Percentage)" });
+            OxyPlot.PlotModel model_glob_boxplot_neurons_target = new PlotModel() { Title = "Number of Neurons comparison (t >= 0.5)" };
+            var model_glob_boxplot_neurons_target_cataxis = new CategoryAxis { Position = AxisPosition.Bottom, Title = "Parameters", Angle = 45, FontSize = 8 };
+            model_glob_boxplot_neurons_target.Axes.Add(model_glob_boxplot_neurons_target_cataxis);
+            model_glob_boxplot_neurons_target.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (Percentage)" });
 
-            OxyPlot.PlotModel model_glob_boxplot_dropout_sp = new PlotModel() { Title = "Dropout comparison (t >= 0.5)" };
-            var model_glob_boxplot_dropout_sp_cataxis = new CategoryAxis { Position = AxisPosition.Bottom, Title = "Parameters", Angle = 45, FontSize = 8 };
-            model_glob_boxplot_dropout_sp.Axes.Add(model_glob_boxplot_dropout_sp_cataxis);
-            model_glob_boxplot_dropout_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (Percentage)" });
+            OxyPlot.PlotModel model_glob_boxplot_dropout_target = new PlotModel() { Title = "Dropout comparison (t >= 0.5)" };
+            var model_glob_boxplot_dropout_target_cataxis = new CategoryAxis { Position = AxisPosition.Bottom, Title = "Parameters", Angle = 45, FontSize = 8 };
+            model_glob_boxplot_dropout_target.Axes.Add(model_glob_boxplot_dropout_target_cataxis);
+            model_glob_boxplot_dropout_target.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (Percentage)" });
 
-            OxyPlot.PlotModel model_glob_boxplot_patience_sp = new PlotModel() { Title = "Patience comparison (t >= 0.5)" };
-            var model_glob_boxplot_patience_sp_cataxis = new CategoryAxis { Position = AxisPosition.Bottom, Title = "Parameters", Angle = 45, FontSize = 8 };
-            model_glob_boxplot_patience_sp.Axes.Add(model_glob_boxplot_patience_sp_cataxis);
-            model_glob_boxplot_patience_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (Percentage)" });
+            OxyPlot.PlotModel model_glob_boxplot_patience_target = new PlotModel() { Title = "Patience comparison (t >= 0.5)" };
+            var model_glob_boxplot_patience_target_cataxis = new CategoryAxis { Position = AxisPosition.Bottom, Title = "Parameters", Angle = 45, FontSize = 8 };
+            model_glob_boxplot_patience_target.Axes.Add(model_glob_boxplot_patience_target_cataxis);
+            model_glob_boxplot_patience_target.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (Percentage)" });
 
-            OxyPlot.PlotModel model_glob_boxplot_algorithm_sp = new PlotModel() { Title = "Algorithm comparison (t >= 0.5)" };
-            var model_glob_boxplot_algorithm_sp_cataxis = new CategoryAxis() { Position = AxisPosition.Bottom, Title = "Parameters", Angle = 45, FontSize = 8 };
-            model_glob_boxplot_algorithm_sp.Axes.Add(model_glob_boxplot_algorithm_sp_cataxis);
-            model_glob_boxplot_algorithm_sp.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (Percentage)" });
+            OxyPlot.PlotModel model_glob_boxplot_algorithm_target = new PlotModel() { Title = "Algorithm comparison (t >= 0.5)" };
+            var model_glob_boxplot_algorithm_target_cataxis = new CategoryAxis() { Position = AxisPosition.Bottom, Title = "Parameters", Angle = 45, FontSize = 8 };
+            model_glob_boxplot_algorithm_target.Axes.Add(model_glob_boxplot_algorithm_target_cataxis);
+            model_glob_boxplot_algorithm_target.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (Percentage)" });
 
             //boxplots
             OxyPlot.PlotModel model_glob_boxplot_neurons_ts = new PlotModel() { Title = "Number of Neurons comparison (t >= 0.5)" };
@@ -643,206 +602,107 @@ namespace Analyser
 
                     //plot and export
                     //SP series
-                    OxyPlot.PlotModel model_sp = new PlotModel() { Title = "Results" };
-                    model_sp.Axes.Add(new LinearAxis
+                    OxyPlot.PlotModel model_target = new PlotModel() { Title = "Results" };
+                    model_target.Axes.Add(new LinearAxis
                     {
                         Position = AxisPosition.Bottom,
                         Minimum = 0,
                         Maximum = 0.95,
                         Title = "Process completion"
                     });
-                    model_sp.Axes.Add(new LinearAxis
+                    model_target.Axes.Add(new LinearAxis
                     {
                         Position = AxisPosition.Left,
                         Minimum = 0,
                         Maximum = 1,
                         Title = "Value"
                     });
-                    model_sp.IsLegendVisible = true;
+                    model_target.IsLegendVisible = true;
 
-                    var precisionSeries_sp = new LineSeries() { Title = "Precision_sp" };
-                    var recallSeries_sp = new LineSeries() { Title = "Recall_sp" };
-                    var speceficitySeries_sp = new LineSeries() { Title = "Speceficity_sp" };
-                    var falsepositivesSeries_sp = new LineSeries() { Title = "False Positives_sp" };
-                    var negativepredictedSeries_sp = new LineSeries() { Title = "Negative Predictions_sp" };
-                    var accuracySeries_sp = new LineSeries() { Title = "Accuracy_sp" };
-                    var fmetricSeries_sp = new LineSeries() { Title = "Fmetric_sp" };
-                    var MCCSeries_sp = new LineSeries() { Title = "MCC_sp" };
+                    var precisionSeries_target = new LineSeries() { Title = "Precision_target" };
+                    var recallSeries_target = new LineSeries() { Title = "Recall_target" };
+                    var speceficitySeries_target = new LineSeries() { Title = "Speceficity_target" };
+                    var falsepositivesSeries_target = new LineSeries() { Title = "False Positives_target" };
+                    var negativepredictedSeries_target = new LineSeries() { Title = "Negative Predictions_target" };
+                    var accuracySeries_target = new LineSeries() { Title = "Accuracy_target" };
+                    var fmetricSeries_target = new LineSeries() { Title = "Fmetric_target" };
+                    var MCCSeries_target = new LineSeries() { Title = "MCC_target" };
 
-                    var precisionSeries_sp_global = new LineSeries() { Title = String.Join(" ", Parameters) };
-                    var recallSeries_sp_global = new LineSeries() { Title = String.Join(" ", Parameters) };
-                    var speceficitySeries_sp_global = new LineSeries() { Title = String.Join(" ", Parameters) };
-                    var falsepositivesSeries_sp_global = new LineSeries() { Title = String.Join(" ", Parameters) };
-                    var negativepredictedSeries_sp_global = new LineSeries() { Title = String.Join(" ", Parameters) };
-                    var accuracySeries_sp_global = new LineSeries() { Title = String.Join(" ", Parameters) };
-                    var fmetricSeries_sp_global = new LineSeries() { Title = String.Join(" ", Parameters) };
-                    var MCCSeries_sp_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+                    var precisionSeries_target_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+                    var recallSeries_target_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+                    var speceficitySeries_target_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+                    var falsepositivesSeries_target_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+                    var negativepredictedSeries_target_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+                    var accuracySeries_target_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+                    var fmetricSeries_target_global = new LineSeries() { Title = String.Join(" ", Parameters) };
+                    var MCCSeries_target_global = new LineSeries() { Title = String.Join(" ", Parameters) };
 
                     foreach (var bucket in BucketList)
                     {
                         //add to full list
                         allBuckets.Add(bucket);
 
-                        precisionSeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.PrecisionSP));
-                        recallSeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.RecallSP));
-                        speceficitySeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.SpecificitySP));
-                        falsepositivesSeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.FalsePositiveRateSP));
-                        negativepredictedSeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.NegativePredictedValueSP));
-                        accuracySeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.AccuracySP));
-                        fmetricSeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.FMeasureSP));
-                        MCCSeries_sp.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC_SP));
+                        precisionSeries_target.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
+                            bucket.PrecisionTarget));
+                        recallSeries_target.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
+                            bucket.RecallTarget));
+                        speceficitySeries_target.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
+                            bucket.SpecificityTarget));
+                        falsepositivesSeries_target.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
+                            bucket.FalsePositiveRateTarget));
+                        negativepredictedSeries_target.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
+                            bucket.NegativePredictedValueTarget));
+                        accuracySeries_target.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
+                            bucket.AccuracyTarget));
+                        fmetricSeries_target.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
+                            bucket.FMeasureTarget));
+                        MCCSeries_target.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC_Target));
 
-                        precisionSeries_sp_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.PrecisionSP));
-                        recallSeries_sp_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.RecallSP));
-                        speceficitySeries_sp_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.SpecificitySP));
-                        falsepositivesSeries_sp_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.FalsePositiveRateSP));
-                        negativepredictedSeries_sp_global.Points.Add(
-                            new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.NegativePredictedValueSP));
-                        accuracySeries_sp_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.AccuracySP));
-                        fmetricSeries_sp_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.FMeasureSP));
-                        MCCSeries_sp_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.MCC_SP));
+                        precisionSeries_target_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
+                            bucket.PrecisionTarget));
+                        recallSeries_target_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
+                            bucket.RecallTarget));
+                        speceficitySeries_target_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
+                            bucket.SpecificityTarget));
+                        falsepositivesSeries_target_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
+                            bucket.FalsePositiveRateTarget));
+                        negativepredictedSeries_target_global.Points.Add(
+                            new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.NegativePredictedValueTarget));
+                        accuracySeries_target_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
+                            bucket.AccuracyTarget));
+                        fmetricSeries_target_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
+                            bucket.FMeasureTarget));
+                        MCCSeries_target_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
+                            bucket.MCC_Target));
                     }
 
-                    model_sp.Series.Add(precisionSeries_sp);
-                    model_sp.Series.Add(recallSeries_sp);
-                    model_sp.Series.Add(speceficitySeries_sp);
-                    model_sp.Series.Add(falsepositivesSeries_sp);
-                    model_sp.Series.Add(negativepredictedSeries_sp);
-                    model_sp.Series.Add(accuracySeries_sp);
-                    model_sp.Series.Add(fmetricSeries_sp);
-                    model_sp.Series.Add(MCCSeries_sp);
+                    model_target.Series.Add(precisionSeries_target);
+                    model_target.Series.Add(recallSeries_target);
+                    model_target.Series.Add(speceficitySeries_target);
+                    model_target.Series.Add(falsepositivesSeries_target);
+                    model_target.Series.Add(negativepredictedSeries_target);
+                    model_target.Series.Add(accuracySeries_target);
+                    model_target.Series.Add(fmetricSeries_target);
+                    model_target.Series.Add(MCCSeries_target);
                     Task.Run(() =>
                     {
-                        using (var filestream = new FileStream($"{file.FullName.Replace(".csv", "")}.plot_sp.pdf",
+                        using (var filestream = new FileStream($"{file.FullName.Replace(".csv", "")}.plot_target.pdf",
                             FileMode.OpenOrCreate))
                         {
-                            OxyPlot.PdfExporter.Export(model_sp, filestream, PlotModelWidth, PlotModelHeight);
+                            OxyPlot.PdfExporter.Export(model_target, filestream, PlotModelWidth, PlotModelHeight);
                             filestream.Close();
                         }
                     });
                     //add to global
-                    model_glob_precision_sp.Series.Add(precisionSeries_sp_global);
-                    model_glob_recall_sp.Series.Add(recallSeries_sp_global);
-                    model_glob_speceficity_sp.Series.Add(speceficitySeries_sp_global);
-                    model_glob_falsepositives_sp.Series.Add(falsepositivesSeries_sp_global);
-                    model_glob_negativepredictions_sp.Series.Add(negativepredictedSeries_sp_global);
-                    model_glob_accuracy_sp.Series.Add(accuracySeries_sp_global);
-                    model_glob_fmetric_sp.Series.Add(fmetricSeries_sp_global);
-                    model_glob_mcc_sp.Series.Add(MCCSeries_sp_global);
-
-                    //TS series
-                    OxyPlot.PlotModel model_ts = new PlotModel() { Title = "Results" };
-                    model_ts.Axes.Add(new LinearAxis
-                    {
-                        Position = AxisPosition.Bottom,
-                        Minimum = 0,
-                        Maximum = 0.95,
-                        Title = "Process completion"
-                    });
-                    model_ts.Axes.Add(new LinearAxis
-                    {
-                        Position = AxisPosition.Left,
-                        Minimum = 0,
-                        Maximum = 1,
-                        Title = "Value"
-                    });
-                    model_ts.IsLegendVisible = true;
-
-                    var precisionSeries_ts = new LineSeries() { Title = "Precision_ts" };
-                    var recallSeries_ts = new LineSeries() { Title = "Recall_ts" };
-                    var speceficitySeries_ts = new LineSeries() { Title = "Speceficity_ts" };
-                    var falsepositivesSeries_ts = new LineSeries() { Title = "False Positives_ts" };
-                    var negativepredictedSeries_ts = new LineSeries() { Title = "Negative Predictions_ts" };
-                    var accuracySeries_ts = new LineSeries() { Title = "Accuracy_ts" };
-                    var fmetricSeries_ts = new LineSeries() { Title = "Fmetric_ts" };
-                    var MCCSeries_ts = new LineSeries() { Title = "MCC_ts" };
-
-                    var precisionSeries_ts_global = new LineSeries() { Title = String.Join(" ", Parameters) };
-                    var recallSeries_ts_global = new LineSeries() { Title = String.Join(" ", Parameters) };
-                    var speceficitySeries_ts_global = new LineSeries() { Title = String.Join(" ", Parameters) };
-                    var falsepositivesSeries_ts_global = new LineSeries() { Title = String.Join(" ", Parameters) };
-                    var negativepredictedSeries_ts_global = new LineSeries() { Title = String.Join(" ", Parameters) };
-                    var accuracySeries_ts_global = new LineSeries() { Title = String.Join(" ", Parameters) };
-                    var fmetricSeries_ts_global = new LineSeries() { Title = String.Join(" ", Parameters) };
-                    var MCCSeries_ts_global = new LineSeries() { Title = String.Join(" ", Parameters) };
-
-                    foreach (var bucket in BucketList)
-                    {
-                        precisionSeries_ts.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.PrecisionTS));
-                        recallSeries_ts.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.RecallTS));
-                        speceficitySeries_ts.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.SpecificityTS));
-                        falsepositivesSeries_ts.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.FalsePositiveRateTS));
-                        negativepredictedSeries_ts.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.NegativePredictedValueTS));
-                        accuracySeries_ts.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.AccuracyTS));
-                        fmetricSeries_ts.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.FMeasureTS));
-                        MCCSeries_ts.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC_TS));
-
-                        precisionSeries_ts_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.PrecisionTS));
-                        recallSeries_ts_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.RecallTS));
-                        speceficitySeries_ts_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.SpecificityTS));
-                        falsepositivesSeries_ts_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.FalsePositiveRateTS));
-                        negativepredictedSeries_ts_global.Points.Add(
-                            new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.NegativePredictedValueTS));
-                        accuracySeries_ts_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.AccuracyTS));
-                        fmetricSeries_ts_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.FMeasureTS));
-                        MCCSeries_ts_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                            bucket.MCC_TS));
-                    }
-
-                    model_ts.Series.Add(precisionSeries_ts);
-                    model_ts.Series.Add(recallSeries_ts);
-                    model_ts.Series.Add(speceficitySeries_ts);
-                    model_ts.Series.Add(falsepositivesSeries_ts);
-                    model_ts.Series.Add(negativepredictedSeries_ts);
-                    model_ts.Series.Add(accuracySeries_ts);
-                    model_ts.Series.Add(fmetricSeries_ts);
-                    model_ts.Series.Add(MCCSeries_ts);
-                    Task.Run(() =>
-                    {
-                        using (var filestream = new FileStream($"{file.FullName.Replace(".csv", "")}.plot_ts.pdf",
-                            FileMode.OpenOrCreate))
-                        {
-                            OxyPlot.PdfExporter.Export(model_ts, filestream, PlotModelWidth, PlotModelHeight);
-                            filestream.Close();
-                        }
-                    });
-                    //add to global
-                    model_glob_precision_ts.Series.Add(precisionSeries_ts_global);
-                    model_glob_recall_ts.Series.Add(recallSeries_ts_global);
-                    model_glob_speceficity_ts.Series.Add(speceficitySeries_ts_global);
-                    model_glob_falsepositives_ts.Series.Add(falsepositivesSeries_ts_global);
-                    model_glob_negativepredictions_ts.Series.Add(negativepredictedSeries_ts_global);
-                    model_glob_accuracy_ts.Series.Add(accuracySeries_ts_global);
-                    model_glob_fmetric_ts.Series.Add(fmetricSeries_ts_global);
-                    model_glob_mcc_ts.Series.Add(MCCSeries_ts_global);
-
+                    model_glob_precision_target.Series.Add(precisionSeries_target_global);
+                    model_glob_recall_target.Series.Add(recallSeries_target_global);
+                    model_glob_speceficity_target.Series.Add(speceficitySeries_target_global);
+                    model_glob_falsepositives_target.Series.Add(falsepositivesSeries_target_global);
+                    model_glob_negativepredictions_target.Series.Add(negativepredictedSeries_target_global);
+                    model_glob_accuracy_target.Series.Add(accuracySeries_target_global);
+                    model_glob_fmetric_target.Series.Add(fmetricSeries_target_global);
+                    model_glob_mcc_target.Series.Add(MCCSeries_target_global);
+                    
                     //get valid/predicted sequences
                     validSequences.Add(String.Join(" ", Parameters), output.Count(t => t.IsValidPrediction));
                     predictedSequences.Add(String.Join(" ", Parameters), output.Count);
@@ -852,139 +712,76 @@ namespace Analyser
                 Console.WriteLine($"finished file {counter}");
             });
 
-            ////create global statistics
-            ////create dictionary
-            //Dictionary<String, List<String>> sortedbuckets = new Dictionary<String, List<String>>();
-            //foreach (var bucket in allBuckets)
-            //    if (!sortedbuckets.ContainsKey(String.Join(" ", bucket.Parameters)))
-            //        sortedbuckets.Add(String.Join(" ", bucket.Parameters), new List<String>());
+            //create aggregated file
+            Dictionary<String, List<String>> sortedbuckets = new Dictionary<String, List<String>>();
+            foreach (var bucket in allBuckets)
+                if (!sortedbuckets.ContainsKey(String.Join(" ", bucket.Parameters)))
+                    sortedbuckets.Add(String.Join(" ", bucket.Parameters), new List<String>());
 
-            ////generate values
-            //foreach (var entry in sortedbuckets)
-            //{
-            //    var entrybuckets = allBuckets.Where(t => String.Join(" ", t.Parameters) == entry.Key);
-            //    entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity < 0.5d && !double.IsNaN(t.PrecisionTarget)).Average(t => t.PrecisionTarget).ToString());
-            //    entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity < 0.5d && !double.IsNaN(t.RecallTarget)).Average(t => t.RecallTarget).ToString());
-            //    entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity < 0.5d && !double.IsNaN(t.SpecificityTarget)).Average(t => t.SpecificityTarget).ToString());
-            //    entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity < 0.5d && !double.IsNaN(t.FalsePositiveRateTarget)).Average(t => t.FalsePositiveRateTarget).ToString());
-            //    entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity < 0.5d && !double.IsNaN(t.NegativePredictedValueTarget)).Average(t => t.NegativePredictedValueTarget).ToString());
-            //    entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity < 0.5d && !double.IsNaN(t.AccuracyTarget)).Average(t => t.AccuracyTarget).ToString());
-            //    entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity < 0.5d && !double.IsNaN(t.FMeasureTarget)).Average(t => t.FMeasureTarget).ToString());
-            //    entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity < 0.5d && !double.IsNaN(t.MCC_Target)).Average(t => t.MCC_Target).ToString());
+            //generate values
+            for(int i = 0; i * BucketGranularity < 1; i++)
+            {
+                var buckets = allBuckets.Where(t => t.BucketLevel == i);
+                foreach(var bucket in buckets)
+                {
+                    sortedbuckets[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.MCC_Target) ? "0" : bucket.MCC_Target.ToString());
+                }
+            }
 
-            //    entry.Value.Add(entrybuckets.Where(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5d) < 0.001 && !double.IsNaN(t.PrecisionTarget)).Average(t => t.PrecisionTarget).ToString());
-            //    entry.Value.Add(entrybuckets.Where(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5d) < 0.001 && !double.IsNaN(t.RecallTarget)).Average(t => t.RecallTarget).ToString());
-            //    entry.Value.Add(entrybuckets.Where(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5d) < 0.001 && !double.IsNaN(t.SpecificityTarget)).Average(t => t.SpecificityTarget).ToString());
-            //    entry.Value.Add(entrybuckets.Where(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5d) < 0.001 && !double.IsNaN(t.FalsePositiveRateTarget)).Average(t => t.FalsePositiveRateTarget).ToString());
-            //    entry.Value.Add(entrybuckets.Where(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5d) < 0.001 && !double.IsNaN(t.NegativePredictedValueTarget)).Average(t => t.NegativePredictedValueTarget).ToString());
-            //    entry.Value.Add(entrybuckets.Where(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5d) < 0.001 && !double.IsNaN(t.AccuracyTarget)).Average(t => t.AccuracyTarget).ToString());
-            //    entry.Value.Add(entrybuckets.Where(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5d) < 0.001 && !double.IsNaN(t.FMeasureTarget)).Average(t => t.FMeasureTarget).ToString());
-            //    entry.Value.Add(entrybuckets.Where(t => Math.Abs(t.BucketLevel * BucketGranularity - 0.5d) < 0.001 && !double.IsNaN(t.MCC_Target)).Average(t => t.MCC_Target).ToString());
-
-            //    entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity > 0.5d && !double.IsNaN(t.PrecisionTarget)).Average(t => t.PrecisionTarget).ToString());
-            //    entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity > 0.5d && !double.IsNaN(t.RecallTarget)).Average(t => t.RecallTarget).ToString());
-            //    entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity > 0.5d && !double.IsNaN(t.SpecificityTarget)).Average(t => t.SpecificityTarget).ToString());
-            //    entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity > 0.5d && !double.IsNaN(t.FalsePositiveRateTarget)).Average(t => t.FalsePositiveRateTarget).ToString());
-            //    entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity > 0.5d && !double.IsNaN(t.NegativePredictedValueTarget)).Average(t => t.NegativePredictedValueTarget).ToString());
-            //    entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity > 0.5d && !double.IsNaN(t.AccuracyTarget)).Average(t => t.AccuracyTarget).ToString());
-            //    entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity > 0.5d && !double.IsNaN(t.FMeasureTarget)).Average(t => t.FMeasureTarget).ToString());
-            //    entry.Value.Add(entrybuckets.Where(t => t.BucketLevel * BucketGranularity > 0.5d && !double.IsNaN(t.MCC_Target)).Average(t => t.MCC_Target).ToString());
-            //}
-
-            ////print
-            //List<String> sortedbucketsout = new List<string>();
-            //sortedbucketsout.Add("Parameters," +
-            //                     "precision<0.5,recall<0.5,speceficity<0.5,falsepositives<0.5,negativepredictions<0.5,accuracy<0.5,fmetric<0.5,mcc<0.5," +
-            //                     "precision=0.5,recall=0.5,speceficity=0.5,falsepositives=0.5,negativepredictions=0.5,accuracy=0.5,fmetric=0.5,mcc=0.5," +
-            //                     "precision>0.5,recall>0.5,speceficity>0.5,falsepositives>0.5,negativepredictions>0.5,accuracy>0.5,fmetric>0.5,mcc>0.5,");
-            //foreach (var entry in sortedbuckets)
-            //    sortedbucketsout.Add($"{entry.Key},{String.Join(",", entry.Value)}");
-
-            //File.WriteAllLines($"{ResultsFolder.FullName}\\all_averages_threeranged.csv", sortedbucketsout);
+            //print out values
+            List<String> outLines = new List<string>();
+            outLines.Add("p0,p1,p2,p3,p4,p5,0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9"); //header
+            foreach(var result in sortedbuckets)
+            {
+                var line = String.Empty;
+                line += result.Key.Replace(' ',',');
+                line += ',';
+                line += String.Join(",", result.Value);
+                outLines.Add(line.ToString());
+            }
+            File.WriteAllLines($"{ResultsFolder.FullName}\\raw_mcc.csv", outLines);
 
             #region print global
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_precision_sp.pdf", FileMode.OpenOrCreate))
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_precision_target.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_precision_sp, filestream, PlotModelWidth, PlotModelHeight);
+                OxyPlot.PdfExporter.Export(model_glob_precision_target, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
             }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_recall_sp.pdf", FileMode.OpenOrCreate))
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_recall_target.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_recall_sp, filestream, PlotModelWidth, PlotModelHeight);
+                OxyPlot.PdfExporter.Export(model_glob_recall_target, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
             }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_speceficity_sp.pdf", FileMode.OpenOrCreate))
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_speceficity_target.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_speceficity_sp, filestream, PlotModelWidth, PlotModelHeight);
+                OxyPlot.PdfExporter.Export(model_glob_speceficity_target, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
             }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_falsepositives_sp.pdf", FileMode.OpenOrCreate))
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_falsepositives_target.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_falsepositives_sp, filestream, PlotModelWidth, PlotModelHeight);
+                OxyPlot.PdfExporter.Export(model_glob_falsepositives_target, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
             }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_negativepredictions_sp.pdf", FileMode.OpenOrCreate))
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_negativepredictions_target.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_negativepredictions_sp, filestream, PlotModelWidth, PlotModelHeight);
+                OxyPlot.PdfExporter.Export(model_glob_negativepredictions_target, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
             }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_accuracy_sp.pdf", FileMode.OpenOrCreate))
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_accuracy_target.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_accuracy_sp, filestream, PlotModelWidth, PlotModelHeight);
+                OxyPlot.PdfExporter.Export(model_glob_accuracy_target, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
             }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_fmetric_sp.pdf", FileMode.OpenOrCreate))
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_fmetric_target.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_fmetric_sp, filestream, PlotModelWidth, PlotModelHeight);
+                OxyPlot.PdfExporter.Export(model_glob_fmetric_target, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
             }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_mcc_sp.pdf", FileMode.OpenOrCreate))
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_mcc_target.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_mcc_sp, filestream, PlotModelWidth, PlotModelHeight);
+                OxyPlot.PdfExporter.Export(model_glob_mcc_target, filestream, PlotModelWidth, PlotModelHeight);
                 filestream.Close();
-            }
-
-            //ts
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_precision_ts.pdf", FileMode.OpenOrCreate))
-            {
-                OxyPlot.PdfExporter.Export(model_glob_precision_ts, filestream, PlotModelWidth, PlotModelHeight);
-                filestream.Close();
-            }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_recall_ts.pdf", FileMode.OpenOrCreate))
-            {
-                OxyPlot.PdfExporter.Export(model_glob_recall_ts, filestream, PlotModelWidth, PlotModelHeight);
-                filestream.Close();
-            }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_speceficity_ts.pdf", FileMode.OpenOrCreate))
-            {
-                OxyPlot.PdfExporter.Export(model_glob_speceficity_ts, filestream, PlotModelWidth, PlotModelHeight);
-                filestream.Close();
-            }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_falsepositives_ts.pdf", FileMode.OpenOrCreate))
-            {
-                OxyPlot.PdfExporter.Export(model_glob_falsepositives_ts, filestream, PlotModelWidth, PlotModelHeight);
-                filestream.Close();
-            }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_negativepredictions_ts.pdf", FileMode.OpenOrCreate))
-            {
-                OxyPlot.PdfExporter.Export(model_glob_negativepredictions_ts, filestream, PlotModelWidth, PlotModelHeight);
-                filestream.Close();
-            }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_accuracy_ts.pdf", FileMode.OpenOrCreate))
-            {
-                OxyPlot.PdfExporter.Export(model_glob_accuracy_ts, filestream, PlotModelWidth, PlotModelHeight);
-                filestream.Close();
-            }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_fmetric_ts.pdf", FileMode.OpenOrCreate))
-            {
-                OxyPlot.PdfExporter.Export(model_glob_fmetric_ts, filestream, PlotModelWidth, PlotModelHeight);
-                filestream.Close();
-            }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_mcc_ts.pdf", FileMode.OpenOrCreate))
-            {
-                OxyPlot.PdfExporter.Export(model_glob_mcc_ts, filestream, PlotModelWidth, PlotModelHeight);
-                filestream.Close();
-            }
+            }            
 
             //prediction validity
             ColumnSeries validpredictionSeries = new ColumnSeries();
@@ -1015,413 +812,213 @@ namespace Analyser
             #endregion
 
             #region boxplots
-            var boxplotSeries_sp_neurons = new BoxPlotSeries() { };
-            model_glob_boxplot_neurons_sp.Series.Add(boxplotSeries_sp_neurons);
+            var boxplotSeries_target_neurons = new BoxPlotSeries() { };
+            model_glob_boxplot_neurons_target.Series.Add(boxplotSeries_target_neurons);
             var parameters = allParameters[0].Distinct().ToList();
             parameters.Sort();
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_neurons_sp_cataxis.ActualLabels.Add($"Precision {parameters[i]}");
-                boxplotSeries_sp_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.PrecisionSP).ToList(), i));
+                model_glob_boxplot_neurons_target_cataxis.ActualLabels.Add($"Precision {parameters[i]}");
+                boxplotSeries_target_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.PrecisionTarget).ToList(), i));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_neurons_sp_cataxis.ActualLabels.Add($"Recall {parameters[i]}");
-                boxplotSeries_sp_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.RecallSP).ToList(), i + (parameters.Count * 1)));
+                model_glob_boxplot_neurons_target_cataxis.ActualLabels.Add($"Recall {parameters[i]}");
+                boxplotSeries_target_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.RecallTarget).ToList(), i + (parameters.Count * 1)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_neurons_sp_cataxis.ActualLabels.Add($"Speceficity {parameters[i]}");
-                boxplotSeries_sp_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.SpecificitySP).ToList(), i + (parameters.Count * 2)));
+                model_glob_boxplot_neurons_target_cataxis.ActualLabels.Add($"Speceficity {parameters[i]}");
+                boxplotSeries_target_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.SpecificityTarget).ToList(), i + (parameters.Count * 2)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_neurons_sp_cataxis.ActualLabels.Add($"FalsePositive {parameters[i]}");
-                boxplotSeries_sp_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.FalsePositiveRateSP).ToList(), i + (parameters.Count * 3)));
+                model_glob_boxplot_neurons_target_cataxis.ActualLabels.Add($"FalsePositive {parameters[i]}");
+                boxplotSeries_target_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.FalsePositiveRateTarget).ToList(), i + (parameters.Count * 3)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_neurons_sp_cataxis.ActualLabels.Add($"NegativePredicted {parameters[i]}");
-                boxplotSeries_sp_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.NegativePredictedValueSP).ToList(), i + (parameters.Count * 4)));
+                model_glob_boxplot_neurons_target_cataxis.ActualLabels.Add($"NegativePredicted {parameters[i]}");
+                boxplotSeries_target_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.NegativePredictedValueTarget).ToList(), i + (parameters.Count * 4)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_neurons_sp_cataxis.ActualLabels.Add($"Accuracy {parameters[i]}");
-                boxplotSeries_sp_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.AccuracySP).ToList(), i + (parameters.Count * 5)));
+                model_glob_boxplot_neurons_target_cataxis.ActualLabels.Add($"Accuracy {parameters[i]}");
+                boxplotSeries_target_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.AccuracyTarget).ToList(), i + (parameters.Count * 5)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_neurons_sp_cataxis.ActualLabels.Add($"Fmetric {parameters[i]}");
-                boxplotSeries_sp_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.FMeasureSP).ToList(), i + (parameters.Count * 6)));
+                model_glob_boxplot_neurons_target_cataxis.ActualLabels.Add($"Fmetric {parameters[i]}");
+                boxplotSeries_target_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.FMeasureTarget).ToList(), i + (parameters.Count * 6)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_neurons_sp_cataxis.ActualLabels.Add($"MCC {parameters[i]}");
-                boxplotSeries_sp_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.MCC_SP).ToList(), i + (parameters.Count * 7)));
+                model_glob_boxplot_neurons_target_cataxis.ActualLabels.Add($"MCC {parameters[i]}");
+                boxplotSeries_target_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.MCC_Target).ToList(), i + (parameters.Count * 7)));
             }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_neurons_sp.pdf", FileMode.OpenOrCreate))
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_neurons_target.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_boxplot_neurons_sp, filestream, PlotModelWidth * 3, PlotModelHeight);
+                OxyPlot.PdfExporter.Export(model_glob_boxplot_neurons_target, filestream, PlotModelWidth * 3, PlotModelHeight);
                 filestream.Close();
             }
 
-            var boxplotSeries_sp_dropout = new BoxPlotSeries() { };
-            model_glob_boxplot_dropout_sp.Series.Add(boxplotSeries_sp_dropout);
+            var boxplotSeries_target_dropout = new BoxPlotSeries() { };
+            model_glob_boxplot_dropout_target.Series.Add(boxplotSeries_target_dropout);
             parameters = allParameters[1].Distinct().ToList();
             parameters.Sort();
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_dropout_sp_cataxis.ActualLabels.Add($"Precision {parameters[i]}");
-                boxplotSeries_sp_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.PrecisionSP).ToList(), i));
+                model_glob_boxplot_dropout_target_cataxis.ActualLabels.Add($"Precision {parameters[i]}");
+                boxplotSeries_target_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.PrecisionTarget).ToList(), i));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_dropout_sp_cataxis.ActualLabels.Add($"Recall {parameters[i]}");
-                boxplotSeries_sp_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.RecallSP).ToList(), i + (parameters.Count * 1)));
+                model_glob_boxplot_dropout_target_cataxis.ActualLabels.Add($"Recall {parameters[i]}");
+                boxplotSeries_target_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.RecallTarget).ToList(), i + (parameters.Count * 1)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_dropout_sp_cataxis.ActualLabels.Add($"Speceficity {parameters[i]}");
-                boxplotSeries_sp_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.SpecificitySP).ToList(), i + (parameters.Count * 2)));
+                model_glob_boxplot_dropout_target_cataxis.ActualLabels.Add($"Speceficity {parameters[i]}");
+                boxplotSeries_target_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.SpecificityTarget).ToList(), i + (parameters.Count * 2)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_dropout_sp_cataxis.ActualLabels.Add($"FalsePositive {parameters[i]}");
-                boxplotSeries_sp_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.FalsePositiveRateSP).ToList(), i + (parameters.Count * 3)));
+                model_glob_boxplot_dropout_target_cataxis.ActualLabels.Add($"FalsePositive {parameters[i]}");
+                boxplotSeries_target_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.FalsePositiveRateTarget).ToList(), i + (parameters.Count * 3)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_dropout_sp_cataxis.ActualLabels.Add($"NegativePredicted {parameters[i]}");
-                boxplotSeries_sp_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.NegativePredictedValueSP).ToList(), i + (parameters.Count * 4)));
+                model_glob_boxplot_dropout_target_cataxis.ActualLabels.Add($"NegativePredicted {parameters[i]}");
+                boxplotSeries_target_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.NegativePredictedValueTarget).ToList(), i + (parameters.Count * 4)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_dropout_sp_cataxis.ActualLabels.Add($"Accuracy {parameters[i]}");
-                boxplotSeries_sp_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.AccuracySP).ToList(), i + (parameters.Count * 5)));
+                model_glob_boxplot_dropout_target_cataxis.ActualLabels.Add($"Accuracy {parameters[i]}");
+                boxplotSeries_target_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.AccuracyTarget).ToList(), i + (parameters.Count * 5)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_dropout_sp_cataxis.ActualLabels.Add($"Fmetric {parameters[i]}");
-                boxplotSeries_sp_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.FMeasureSP).ToList(), i + (parameters.Count * 6)));
+                model_glob_boxplot_dropout_target_cataxis.ActualLabels.Add($"Fmetric {parameters[i]}");
+                boxplotSeries_target_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.FMeasureTarget).ToList(), i + (parameters.Count * 6)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_dropout_sp_cataxis.ActualLabels.Add($"MCC {parameters[i]}");
-                boxplotSeries_sp_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.MCC_SP).ToList(), i + (parameters.Count * 7)));
+                model_glob_boxplot_dropout_target_cataxis.ActualLabels.Add($"MCC {parameters[i]}");
+                boxplotSeries_target_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.MCC_Target).ToList(), i + (parameters.Count * 7)));
             }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_dropout_sp.pdf", FileMode.OpenOrCreate))
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_dropout_target.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_boxplot_dropout_sp, filestream, PlotModelWidth * 3, PlotModelHeight);
+                OxyPlot.PdfExporter.Export(model_glob_boxplot_dropout_target, filestream, PlotModelWidth * 3, PlotModelHeight);
                 filestream.Close();
             }
 
-            var boxplotSeries_sp_patience = new BoxPlotSeries() { };
-            model_glob_boxplot_patience_sp.Series.Add(boxplotSeries_sp_patience);
+            var boxplotSeries_target_patience = new BoxPlotSeries() { };
+            model_glob_boxplot_patience_target.Series.Add(boxplotSeries_target_patience);
             parameters = allParameters[2].Distinct().ToList();
             parameters.Sort();
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_patience_sp_cataxis.ActualLabels.Add($"Precision {parameters[i]}");
-                boxplotSeries_sp_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.PrecisionSP).ToList(), i));
+                model_glob_boxplot_patience_target_cataxis.ActualLabels.Add($"Precision {parameters[i]}");
+                boxplotSeries_target_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.PrecisionTarget).ToList(), i));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_patience_sp_cataxis.ActualLabels.Add($"Recall {parameters[i]}");
-                boxplotSeries_sp_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.RecallSP).ToList(), i + (parameters.Count * 1)));
+                model_glob_boxplot_patience_target_cataxis.ActualLabels.Add($"Recall {parameters[i]}");
+                boxplotSeries_target_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.RecallTarget).ToList(), i + (parameters.Count * 1)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_patience_sp_cataxis.ActualLabels.Add($"Speceficity {parameters[i]}");
-                boxplotSeries_sp_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.SpecificitySP).ToList(), i + (parameters.Count * 2)));
+                model_glob_boxplot_patience_target_cataxis.ActualLabels.Add($"Speceficity {parameters[i]}");
+                boxplotSeries_target_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.SpecificityTarget).ToList(), i + (parameters.Count * 2)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_patience_sp_cataxis.ActualLabels.Add($"FalsePositive {parameters[i]}");
-                boxplotSeries_sp_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.FalsePositiveRateSP).ToList(), i + (parameters.Count * 3)));
+                model_glob_boxplot_patience_target_cataxis.ActualLabels.Add($"FalsePositive {parameters[i]}");
+                boxplotSeries_target_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.FalsePositiveRateTarget).ToList(), i + (parameters.Count * 3)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_patience_sp_cataxis.ActualLabels.Add($"NegativePredicted {parameters[i]}");
-                boxplotSeries_sp_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.NegativePredictedValueSP).ToList(), i + (parameters.Count * 4)));
+                model_glob_boxplot_patience_target_cataxis.ActualLabels.Add($"NegativePredicted {parameters[i]}");
+                boxplotSeries_target_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.NegativePredictedValueTarget).ToList(), i + (parameters.Count * 4)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_patience_sp_cataxis.ActualLabels.Add($"Accuracy {parameters[i]}");
-                boxplotSeries_sp_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.AccuracySP).ToList(), i + (parameters.Count * 5)));
+                model_glob_boxplot_patience_target_cataxis.ActualLabels.Add($"Accuracy {parameters[i]}");
+                boxplotSeries_target_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.AccuracyTarget).ToList(), i + (parameters.Count * 5)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_patience_sp_cataxis.ActualLabels.Add($"Fmetric {parameters[i]}");
-                boxplotSeries_sp_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.FMeasureSP).ToList(), i + (parameters.Count * 6)));
+                model_glob_boxplot_patience_target_cataxis.ActualLabels.Add($"Fmetric {parameters[i]}");
+                boxplotSeries_target_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.FMeasureTarget).ToList(), i + (parameters.Count * 6)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_patience_sp_cataxis.ActualLabels.Add($"MCC {parameters[i]}");
-                boxplotSeries_sp_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.MCC_SP).ToList(), i + (parameters.Count * 7)));
+                model_glob_boxplot_patience_target_cataxis.ActualLabels.Add($"MCC {parameters[i]}");
+                boxplotSeries_target_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.MCC_Target).ToList(), i + (parameters.Count * 7)));
             }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_patience_sp.pdf", FileMode.OpenOrCreate))
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_patience_target.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_boxplot_patience_sp, filestream, PlotModelWidth * 3, PlotModelHeight);
+                OxyPlot.PdfExporter.Export(model_glob_boxplot_patience_target, filestream, PlotModelWidth * 3, PlotModelHeight);
                 filestream.Close();
             }
 
-            var boxplotSeries_sp_algorithm = new BoxPlotSeries() { };
-            model_glob_boxplot_algorithm_sp.Series.Add(boxplotSeries_sp_algorithm);
+            var boxplotSeries_target_algorithm = new BoxPlotSeries() { };
+            model_glob_boxplot_algorithm_target.Series.Add(boxplotSeries_target_algorithm);
             parameters = allParameters[3].Distinct().ToList();
             parameters.Sort();
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_algorithm_sp_cataxis.ActualLabels.Add($"Precision {parameters[i]}");
-                boxplotSeries_sp_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.PrecisionSP).ToList(), i));
+                model_glob_boxplot_algorithm_target_cataxis.ActualLabels.Add($"Precision {parameters[i]}");
+                boxplotSeries_target_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.PrecisionTarget).ToList(), i));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_algorithm_sp_cataxis.ActualLabels.Add($"Recall {parameters[i]}");
-                boxplotSeries_sp_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.RecallSP).ToList(), i + (parameters.Count * 1)));
+                model_glob_boxplot_algorithm_target_cataxis.ActualLabels.Add($"Recall {parameters[i]}");
+                boxplotSeries_target_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.RecallTarget).ToList(), i + (parameters.Count * 1)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_algorithm_sp_cataxis.ActualLabels.Add($"Speceficity {parameters[i]}");
-                boxplotSeries_sp_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.SpecificitySP).ToList(), i + (parameters.Count * 2)));
+                model_glob_boxplot_algorithm_target_cataxis.ActualLabels.Add($"Speceficity {parameters[i]}");
+                boxplotSeries_target_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.SpecificityTarget).ToList(), i + (parameters.Count * 2)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_algorithm_sp_cataxis.ActualLabels.Add($"FalsePositive {parameters[i]}");
-                boxplotSeries_sp_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.FalsePositiveRateSP).ToList(), i + (parameters.Count * 3)));
+                model_glob_boxplot_algorithm_target_cataxis.ActualLabels.Add($"FalsePositive {parameters[i]}");
+                boxplotSeries_target_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.FalsePositiveRateTarget).ToList(), i + (parameters.Count * 3)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_algorithm_sp_cataxis.ActualLabels.Add($"NegativePredicted {parameters[i]}");
-                boxplotSeries_sp_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.NegativePredictedValueSP).ToList(), i + (parameters.Count * 4)));
+                model_glob_boxplot_algorithm_target_cataxis.ActualLabels.Add($"NegativePredicted {parameters[i]}");
+                boxplotSeries_target_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.NegativePredictedValueTarget).ToList(), i + (parameters.Count * 4)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_algorithm_sp_cataxis.ActualLabels.Add($"Accuracy {parameters[i]}");
-                boxplotSeries_sp_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.AccuracySP).ToList(), i + (parameters.Count * 5)));
+                model_glob_boxplot_algorithm_target_cataxis.ActualLabels.Add($"Accuracy {parameters[i]}");
+                boxplotSeries_target_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.AccuracyTarget).ToList(), i + (parameters.Count * 5)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_algorithm_sp_cataxis.ActualLabels.Add($"Fmetric {parameters[i]}");
-                boxplotSeries_sp_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.FMeasureSP).ToList(), i + (parameters.Count * 6)));
+                model_glob_boxplot_algorithm_target_cataxis.ActualLabels.Add($"Fmetric {parameters[i]}");
+                boxplotSeries_target_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.FMeasureTarget).ToList(), i + (parameters.Count * 6)));
             }
             for (int i = 0; i < parameters.Count; i++)
             {
-                model_glob_boxplot_algorithm_sp_cataxis.ActualLabels.Add($"MCC {parameters[i]}");
-                boxplotSeries_sp_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.MCC_SP).ToList(), i + (parameters.Count * 7)));
+                model_glob_boxplot_algorithm_target_cataxis.ActualLabels.Add($"MCC {parameters[i]}");
+                boxplotSeries_target_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.MCC_Target).ToList(), i + (parameters.Count * 7)));
             }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_algorithm_sp.pdf", FileMode.OpenOrCreate))
+            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_algorithm_target.pdf", FileMode.OpenOrCreate))
             {
-                OxyPlot.PdfExporter.Export(model_glob_boxplot_algorithm_sp, filestream, PlotModelWidth * 3, PlotModelHeight);
-                filestream.Close();
-            }
-
-            //ts
-            var boxplotSeries_ts_neurons = new BoxPlotSeries() { };
-            model_glob_boxplot_neurons_ts.Series.Add(boxplotSeries_ts_neurons);
-            parameters = allParameters[0].Distinct().ToList();
-            parameters.Sort();
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_neurons_ts_cataxis.ActualLabels.Add($"Precision {parameters[i]}");
-                boxplotSeries_ts_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.PrecisionTS).ToList(), i));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_neurons_ts_cataxis.ActualLabels.Add($"Recall {parameters[i]}");
-                boxplotSeries_ts_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.RecallTS).ToList(), i + (parameters.Count * 1)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_neurons_ts_cataxis.ActualLabels.Add($"Speceficity {parameters[i]}");
-                boxplotSeries_ts_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.SpecificityTS).ToList(), i + (parameters.Count * 2)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_neurons_ts_cataxis.ActualLabels.Add($"FalsePositive {parameters[i]}");
-                boxplotSeries_ts_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.FalsePositiveRateTS).ToList(), i + (parameters.Count * 3)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_neurons_ts_cataxis.ActualLabels.Add($"NegativePredicted {parameters[i]}");
-                boxplotSeries_ts_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.NegativePredictedValueTS).ToList(), i + (parameters.Count * 4)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_neurons_ts_cataxis.ActualLabels.Add($"Accuracy {parameters[i]}");
-                boxplotSeries_ts_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.AccuracyTS).ToList(), i + (parameters.Count * 5)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_neurons_ts_cataxis.ActualLabels.Add($"Fmetric {parameters[i]}");
-                boxplotSeries_ts_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.FMeasureTS).ToList(), i + (parameters.Count * 6)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_neurons_ts_cataxis.ActualLabels.Add($"MCC {parameters[i]}");
-                boxplotSeries_ts_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.MCC_TS).ToList(), i + (parameters.Count * 7)));
-            }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_neurons_ts.pdf", FileMode.OpenOrCreate))
-            {
-                OxyPlot.PdfExporter.Export(model_glob_boxplot_neurons_ts, filestream, PlotModelWidth * 3, PlotModelHeight);
-                filestream.Close();
-            }
-
-            var boxplotSeries_ts_dropout = new BoxPlotSeries() { };
-            model_glob_boxplot_dropout_ts.Series.Add(boxplotSeries_ts_dropout);
-            parameters = allParameters[1].Distinct().ToList();
-            parameters.Sort();
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_dropout_ts_cataxis.ActualLabels.Add($"Precision {parameters[i]}");
-                boxplotSeries_ts_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.PrecisionTS).ToList(), i));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_dropout_ts_cataxis.ActualLabels.Add($"Recall {parameters[i]}");
-                boxplotSeries_ts_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.RecallTS).ToList(), i + (parameters.Count * 1)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_dropout_ts_cataxis.ActualLabels.Add($"Speceficity {parameters[i]}");
-                boxplotSeries_ts_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.SpecificityTS).ToList(), i + (parameters.Count * 2)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_dropout_ts_cataxis.ActualLabels.Add($"FalsePositive {parameters[i]}");
-                boxplotSeries_ts_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.FalsePositiveRateTS).ToList(), i + (parameters.Count * 3)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_dropout_ts_cataxis.ActualLabels.Add($"NegativePredicted {parameters[i]}");
-                boxplotSeries_ts_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.NegativePredictedValueTS).ToList(), i + (parameters.Count * 4)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_dropout_ts_cataxis.ActualLabels.Add($"Accuracy {parameters[i]}");
-                boxplotSeries_ts_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.AccuracyTS).ToList(), i + (parameters.Count * 5)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_dropout_ts_cataxis.ActualLabels.Add($"Fmetric {parameters[i]}");
-                boxplotSeries_ts_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.FMeasureTS).ToList(), i + (parameters.Count * 6)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_dropout_ts_cataxis.ActualLabels.Add($"MCC {parameters[i]}");
-                boxplotSeries_ts_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.MCC_TS).ToList(), i + (parameters.Count * 7)));
-            }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_dropout_ts.pdf", FileMode.OpenOrCreate))
-            {
-                OxyPlot.PdfExporter.Export(model_glob_boxplot_dropout_ts, filestream, PlotModelWidth * 3, PlotModelHeight);
-                filestream.Close();
-            }
-
-            var boxplotSeries_ts_patience = new BoxPlotSeries() { };
-            model_glob_boxplot_patience_ts.Series.Add(boxplotSeries_ts_patience);
-            parameters = allParameters[2].Distinct().ToList();
-            parameters.Sort();
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_patience_ts_cataxis.ActualLabels.Add($"Precision {parameters[i]}");
-                boxplotSeries_ts_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.PrecisionTS).ToList(), i));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_patience_ts_cataxis.ActualLabels.Add($"Recall {parameters[i]}");
-                boxplotSeries_ts_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.RecallTS).ToList(), i + (parameters.Count * 1)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_patience_ts_cataxis.ActualLabels.Add($"Speceficity {parameters[i]}");
-                boxplotSeries_ts_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.SpecificityTS).ToList(), i + (parameters.Count * 2)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_patience_ts_cataxis.ActualLabels.Add($"FalsePositive {parameters[i]}");
-                boxplotSeries_ts_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.FalsePositiveRateTS).ToList(), i + (parameters.Count * 3)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_patience_ts_cataxis.ActualLabels.Add($"NegativePredicted {parameters[i]}");
-                boxplotSeries_ts_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.NegativePredictedValueTS).ToList(), i + (parameters.Count * 4)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_patience_ts_cataxis.ActualLabels.Add($"Accuracy {parameters[i]}");
-                boxplotSeries_ts_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.AccuracyTS).ToList(), i + (parameters.Count * 5)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_patience_ts_cataxis.ActualLabels.Add($"Fmetric {parameters[i]}");
-                boxplotSeries_ts_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.FMeasureTS).ToList(), i + (parameters.Count * 6)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_patience_ts_cataxis.ActualLabels.Add($"MCC {parameters[i]}");
-                boxplotSeries_ts_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.MCC_TS).ToList(), i + (parameters.Count * 7)));
-            }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_patience_ts.pdf", FileMode.OpenOrCreate))
-            {
-                OxyPlot.PdfExporter.Export(model_glob_boxplot_patience_ts, filestream, PlotModelWidth * 3, PlotModelHeight);
-                filestream.Close();
-            }
-
-            var boxplotSeries_ts_algorithm = new BoxPlotSeries() { };
-            model_glob_boxplot_algorithm_ts.Series.Add(boxplotSeries_ts_algorithm);
-            parameters = allParameters[3].Distinct().ToList();
-            parameters.Sort();
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_algorithm_ts_cataxis.ActualLabels.Add($"Precision {parameters[i]}");
-                boxplotSeries_ts_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.PrecisionTS).ToList(), i));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_algorithm_ts_cataxis.ActualLabels.Add($"Recall {parameters[i]}");
-                boxplotSeries_ts_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.RecallTS).ToList(), i + (parameters.Count * 1)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_algorithm_ts_cataxis.ActualLabels.Add($"Speceficity {parameters[i]}");
-                boxplotSeries_ts_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.SpecificityTS).ToList(), i + (parameters.Count * 2)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_algorithm_ts_cataxis.ActualLabels.Add($"FalsePositive {parameters[i]}");
-                boxplotSeries_ts_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.FalsePositiveRateTS).ToList(), i + (parameters.Count * 3)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_algorithm_ts_cataxis.ActualLabels.Add($"NegativePredicted {parameters[i]}");
-                boxplotSeries_ts_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.NegativePredictedValueTS).ToList(), i + (parameters.Count * 4)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_algorithm_ts_cataxis.ActualLabels.Add($"Accuracy {parameters[i]}");
-                boxplotSeries_ts_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.AccuracyTS).ToList(), i + (parameters.Count * 5)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_algorithm_ts_cataxis.ActualLabels.Add($"Fmetric {parameters[i]}");
-                boxplotSeries_ts_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.FMeasureTS).ToList(), i + (parameters.Count * 6)));
-            }
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                model_glob_boxplot_algorithm_ts_cataxis.ActualLabels.Add($"MCC {parameters[i]}");
-                boxplotSeries_ts_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.MCC_TS).ToList(), i + (parameters.Count * 7)));
-            }
-            using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_algorithm_ts.pdf", FileMode.OpenOrCreate))
-            {
-                OxyPlot.PdfExporter.Export(model_glob_boxplot_algorithm_ts, filestream, PlotModelWidth * 3, PlotModelHeight);
+                OxyPlot.PdfExporter.Export(model_glob_boxplot_algorithm_target, filestream, PlotModelWidth * 3, PlotModelHeight);
                 filestream.Close();
             }
             #endregion
+
             #region groupings
             //get and sort parameters
             for (int group = 0; group < allParameters.Length; group++)
             {
                 //create grouping model
-                OxyPlot.PlotModel model_groupings0 = new PlotModel() { Title = "Results: Avg MCC grouped by parameter 0" };
+                OxyPlot.PlotModel model_groupings0 = new PlotModel() { Title = $"Results: Avg MCC grouped by parameter {group}" };
                 model_groupings0.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
                 model_groupings0.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
                 model_groupings0.IsLegendVisible = true;
@@ -1436,14 +1033,14 @@ namespace Analyser
                     grouping0header.Add((j * BucketGranularity).ToString());
                 grouping0out.Add(String.Join(",", grouping0header));
 
-                //iterate through first level grouping (file name)
+                //iterate through nth level grouping
                 for (int i = 0; i < parameters.Count; i++)
                 {
                     var grouping0line = new List<String>();
                     grouping0line.Add(parameters[i]);
                     var groupingSeries = new LineSeries() { Title = parameters[i] };
 
-                    //create boxplot model for each first level grouping
+                    //create boxplot model for each nth level grouping
                     OxyPlot.PlotModel groupingboxplotmodel = new PlotModel() { Title = $"Grouping Boxplots for {parameters[i]}" };
                     groupingboxplotmodel.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
                     groupingboxplotmodel.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (MCC)" });
