@@ -1078,8 +1078,43 @@ namespace Analyser
                 File.WriteAllLines($"{ResultsFolder.FullName}\\grouping{group}.csv", grouping0out);
 
             }
-
             #endregion
+
+            #region statistics
+            List<String> statisticsOutlines = new List<String>();
+            for(int i = 0; i * BucketGranularity < 1; i++)
+            {
+                var buckets = allBuckets.Where(t => t.BucketLevel == i);
+                parameters = allParameters[0].Distinct().ToList();
+                parameters.Sort();
+
+                statisticsOutlines.Add((i * BucketGranularity).ToString() + "," + String.Join(",", parameters)); //header
+                foreach (var parameter1 in parameters) //rows
+                {
+                    //get all combinations of parameter vs parameter and belonging buckets
+                    var parameterbuckets1 = buckets.Where(t => t.Parameters[0] == parameter1);
+
+                    List<double> pvalues = new List<double>();
+                    foreach (var parameter2 in parameters) //columns
+                    {
+                        //get data values
+                        var parameterbuckets2 = buckets.Where(t => t.Parameters[0] == parameter2);
+                        List<double> data1 = parameterbuckets1.Where(t => !double.IsNaN(t.MCC_Target)).Select(t => t.MCC_Target).ToList();
+                        List<double> data2 = parameterbuckets2.Where(t => !double.IsNaN(t.MCC_Target)).Select(t => t.MCC_Target).ToList();
+
+                        //get p-value
+                        if (parameter1 == parameter2)
+                            pvalues.Add(1d);
+                        else if (data1.Count <= 2 || data2.Count <= 2)
+                            pvalues.Add(double.NaN);
+                        else
+                            pvalues.Add(Statistics.CalculateP(data1, data2));
+                    }
+                    statisticsOutlines.Add(parameter1 + "," + String.Join(",", pvalues));
+                }
+            }
+            File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues.csv", statisticsOutlines);
+            #endregion statistics
         }
 
         public static double CalculateAccuracy(double pInput, double pReference)
@@ -1395,6 +1430,7 @@ namespace Analyser
 
             };
         }
+        
         public enum TargetData { SP, TS }
         
     }
