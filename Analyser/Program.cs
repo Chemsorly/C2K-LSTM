@@ -33,7 +33,7 @@ namespace Analyser
             //enforce decimal encoding
             System.Globalization.CultureInfo customCulture = (System.Globalization.CultureInfo)System.Threading.Thread.CurrentThread.CurrentCulture.Clone();
             customCulture.NumberFormat.NumberDecimalSeparator = ".";
-            System.Threading.Thread.CurrentThread.CurrentCulture = customCulture;
+            CultureInfo.DefaultThreadCurrentCulture = customCulture;
 
             //target folders
             DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Durchlauf 3\raw");
@@ -1085,60 +1085,31 @@ namespace Analyser
             List<String> anovaOutlines = new List<String>();
             List<String> wilcoxOutlines = new List<String>();
             List<String> ttestOutlines = new List<String>();
+            parameters = allParameters[0].Distinct().ToList();
+            parameters.Sort();
+
+            List<Task<Tuple<List<String>, List<String>, List<String>>>> taskList = new List<Task<Tuple<List<String>, List<String>, List<String>>>>();
             for (int i = 0; i * BucketGranularity < 1; i++)
             {
-                var buckets = allBuckets.Where(t => t.BucketLevel == i);
-                parameters = allParameters[0].Distinct().ToList();
-                parameters.Sort();
-
-                anovaOutlines.Add((i * BucketGranularity).ToString() + "," + String.Join(",", parameters)); //header
-                wilcoxOutlines.Add((i * BucketGranularity).ToString() + "," + String.Join(",", parameters));
-                ttestOutlines.Add((i * BucketGranularity).ToString() + "," + String.Join(",", parameters));
-                foreach (var parameter1 in parameters) //rows
-                {
-                    //get all combinations of parameter vs parameter and belonging buckets
-                    var parameterbuckets1 = buckets.Where(t => t.Parameters[0] == parameter1);
-
-                    List<double> anovapvalues = new List<double>();
-                    List<double> wilcoxpvalues = new List<double>();
-                    List<double> ttestpvalues = new List<double>();
-                    foreach (var parameter2 in parameters) //columns
-                    {                        
-                        var parameterbuckets2 = buckets.Where(t => t.Parameters[0] == parameter2);
-
-                        //get data values
-                        List<double> data1 = parameterbuckets1.Where(t => !double.IsNaN(t.MCC_Target)).Select(t => t.MCC_Target).ToList();
-                        List<double> data2 = parameterbuckets2.Where(t => !double.IsNaN(t.MCC_Target)).Select(t => t.MCC_Target).ToList();
-
-                        //get p-value
-                        if (parameter1 == parameter2)
-                        {
-                            anovapvalues.Add(1d);
-                            wilcoxpvalues.Add(1d);
-                            ttestpvalues.Add(1d);
-                        }                            
-                        else if (data1.Count <= 2 || data2.Count <= 2)
-                        {
-                            anovapvalues.Add(double.NaN);
-                            wilcoxpvalues.Add(double.NaN);
-                            ttestpvalues.Add(double.NaN);
-                        }                            
-                        else
-                        {
-                            anovapvalues.Add(Statistics.CalculateP(data1, data2));
-                            if (data1.Count == data2.Count)
-                                wilcoxpvalues.Add(new Accord.Statistics.Testing.TwoSampleWilcoxonSignedRankTest(data1.ToArray(), data2.ToArray()).PValue);
-                            else
-                                wilcoxpvalues.Add(double.NaN);
-                            ttestpvalues.Add(new Accord.Statistics.Testing.TwoSampleTTest(data1.ToArray(), data2.ToArray(), false).PValue);
-                        }
-                            
-                    }
-                    anovaOutlines.Add(parameter1 + "," + String.Join(",", anovapvalues));
-                    wilcoxOutlines.Add(parameter1 + "," + String.Join(",", wilcoxpvalues));
-                    ttestOutlines.Add(parameter1 + "," + String.Join(",", ttestpvalues));
-                }
+                var buckets = allBuckets.Where(t => t.BucketLevel == i).ToList();
+                var level = ((double)i * BucketGranularity).ToString();
+                taskList.Add(Task.Run(() => FillStatisticData(level, parameters, buckets)));
             }
+
+            //all, <50%, >=50%
+            taskList.Add(Task.Run(() => FillStatisticData("all",parameters, allBuckets)));
+            taskList.Add(Task.Run(() => FillStatisticData("<50%",parameters, allBuckets.Where(t => t.BucketLevel * BucketGranularity < 0.5d).ToList())));
+            taskList.Add(Task.Run(() => FillStatisticData(">=50%",parameters, allBuckets.Where(t => t.BucketLevel * BucketGranularity >= 0.5d).ToList())));
+
+            for(int i = 0; i < taskList.Count; i++)
+            {
+                taskList[i].Wait();
+                var result = taskList[i].Result;
+                anovaOutlines.AddRange(result.Item1);
+                wilcoxOutlines.AddRange(result.Item2);
+                ttestOutlines.AddRange(result.Item3);
+            }
+
             File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_anova.csv", anovaOutlines);
             File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_wilcox.csv", wilcoxOutlines);
             File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_ttest.csv", ttestOutlines);
@@ -1457,6 +1428,63 @@ namespace Analyser
                 Outliers = outliers,
 
             };
+        }
+
+        static Tuple<List<String>, List<String>, List<String>> FillStatisticData(String level, List<String> parameters,List<Bucket> buckets)
+        {
+            List<String> anovaOutlines = new List<string>();
+            List<String> wilcoxOutlines = new List<string>();
+            List<String> ttestOutlines = new List<string>();
+
+            anovaOutlines.Add(level + "," + String.Join(",", parameters)); //header
+            wilcoxOutlines.Add(level + "," + String.Join(",", parameters));
+            ttestOutlines.Add(level + "," + String.Join(",", parameters));
+            foreach (var parameter1 in parameters) //rows
+            {
+                //get all combinations of parameter vs parameter and belonging buckets
+                var parameterbuckets1 = buckets.Where(t => t.Parameters[0] == parameter1);
+
+                List<double> anovapvalues = new List<double>();
+                List<double> wilcoxpvalues = new List<double>();
+                List<double> ttestpvalues = new List<double>();
+                foreach (var parameter2 in parameters) //columns
+                {
+                    var parameterbuckets2 = buckets.Where(t => t.Parameters[0] == parameter2);
+
+                    //get data values
+                    List<double> data1 = parameterbuckets1.Where(t => !double.IsNaN(t.MCC_Target)).Select(t => t.MCC_Target).ToList();
+                    List<double> data2 = parameterbuckets2.Where(t => !double.IsNaN(t.MCC_Target)).Select(t => t.MCC_Target).ToList();
+
+                    //get p-value
+                    if (parameter1 == parameter2)
+                    {
+                        anovapvalues.Add(1d);
+                        wilcoxpvalues.Add(1d);
+                        ttestpvalues.Add(1d);
+                    }
+                    else if (data1.Count <= 2 || data2.Count <= 2)
+                    {
+                        anovapvalues.Add(double.NaN);
+                        wilcoxpvalues.Add(double.NaN);
+                        ttestpvalues.Add(double.NaN);
+                    }
+                    else
+                    {
+                        anovapvalues.Add(Statistics.CalculateP(data1, data2));
+                        if (data1.Count == data2.Count)
+                            wilcoxpvalues.Add(new Accord.Statistics.Testing.TwoSampleWilcoxonSignedRankTest(data1.ToArray(), data2.ToArray()).PValue);
+                        else
+                            wilcoxpvalues.Add(double.NaN);
+                        ttestpvalues.Add(new Accord.Statistics.Testing.TwoSampleTTest(data1.ToArray(), data2.ToArray(), false).PValue);
+                    }
+
+                }
+                anovaOutlines.Add(parameter1 + "," + String.Join(",", anovapvalues));
+                wilcoxOutlines.Add(parameter1 + "," + String.Join(",", wilcoxpvalues));
+                ttestOutlines.Add(parameter1 + "," + String.Join(",", ttestpvalues));
+            }
+
+            return Tuple.Create(anovaOutlines, wilcoxOutlines, ttestOutlines);
         }
         
         public enum TargetData { SP, TS }
