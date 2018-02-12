@@ -1082,9 +1082,12 @@ namespace Analyser
 
             #region statistics
             //(anova + wilcox paired)
-            List<String> anovaOutlines = new List<String>();
-            List<String> wilcoxOutlines = new List<String>();
-            List<String> ttestOutlines = new List<String>();
+            List<String> anovaBlockOutlines = new List<String>();
+            List<String> wilcoxBlockOutlines = new List<String>();
+            List<String> ttestBlockOutlines = new List<String>();
+            List<String> anovaRowOutlines = new List<String>();
+            List<String> wilcoxRowOutlines = new List<String>();
+            List<String> ttestRowOutlines = new List<String>();
             parameters = allParameters[0].Distinct().ToList();
             parameters.Sort();
 
@@ -1101,18 +1104,71 @@ namespace Analyser
             taskList.Add(Task.Run(() => FillStatisticData("<50%",parameters, allBuckets.Where(t => t.BucketLevel * BucketGranularity < 0.5d).ToList())));
             taskList.Add(Task.Run(() => FillStatisticData(">=50%",parameters, allBuckets.Where(t => t.BucketLevel * BucketGranularity >= 0.5d).ToList())));
 
+            //x vs y blocks
             for(int i = 0; i < taskList.Count; i++)
             {
                 taskList[i].Wait();
                 var result = taskList[i].Result;
-                anovaOutlines.AddRange(result.Item1);
-                wilcoxOutlines.AddRange(result.Item2);
-                ttestOutlines.AddRange(result.Item3);
+                anovaBlockOutlines.AddRange(result.Item1);
+                wilcoxBlockOutlines.AddRange(result.Item2);
+                ttestBlockOutlines.AddRange(result.Item3);
             }
 
-            File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_anova.csv", anovaOutlines);
-            File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_wilcox.csv", wilcoxOutlines);
-            File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_ttest.csv", ttestOutlines);
+            //rows
+            foreach(var parameter in new List<String>() { "s2s", "nopath", "noplanned", "rgb" })//test parameter vs opposite
+            {
+                //header 
+                var line = $"{parameter},null";
+                for (int j = 0; j * BucketGranularity < 1; j++)
+                    line += $",{(j * BucketGranularity).ToString()}";
+                anovaRowOutlines.Add(line);
+                wilcoxRowOutlines.Add(line);
+                ttestRowOutlines.Add(line);
+
+                //get unique p0s
+                var p01 = parameters.Where(t => t.Contains(parameter)).Distinct();
+                var p02 = parameters.Where(t => !t.Contains(parameter)).Distinct();
+
+                //iterate through p0s (generating combinations for parameter vs !parameter)
+                foreach (var p01param in p01)
+                {
+                    foreach (var p02param in p02)
+                    {
+                        var anovaoutline = new List<String>(); anovaoutline.Add(p01param); anovaoutline.Add(p02param);
+                        var wilcoxoutline = new List<String>(); wilcoxoutline.Add(p01param); wilcoxoutline.Add(p02param);
+                        var ttestoutline = new List<String>(); ttestoutline.Add(p01param); ttestoutline.Add(p02param);
+
+                        //go through each bucket
+                        for (int i = 0; i * BucketGranularity < 1; i++)
+                        {
+                            //get data
+                            var data1 = allBuckets.Where(t => t.Parameters.First() == p01param && t.BucketLevel == i);
+                            var data2 = allBuckets.Where(t => t.Parameters.First() == p02param && t.BucketLevel == i);
+
+                            //write data
+                            //get data values
+                            List<double> res1 = data1.Select(t => double.IsNaN(t.MCC_Target) ? 0d : t.MCC_Target).ToList();
+                            List<double> res2 = data2.Select(t => double.IsNaN(t.MCC_Target) ? 0d : t.MCC_Target).ToList();
+
+                            //get p-value
+                            anovaoutline.Add(Statistics.CalculateP(res1, res2).ToString());
+                            wilcoxoutline.Add(new Accord.Statistics.Testing.TwoSampleWilcoxonSignedRankTest(res1.ToArray(), res2.ToArray()).PValue.ToString());
+                            ttestoutline.Add(new Accord.Statistics.Testing.TwoSampleTTest(res1.ToArray(), res2.ToArray(), false).PValue.ToString());                            
+                        }
+
+                        anovaRowOutlines.Add(String.Join(",",anovaoutline));
+                        wilcoxRowOutlines.Add(String.Join(",", wilcoxoutline));
+                        ttestRowOutlines.Add(String.Join(",", ttestoutline));
+                    }
+                }
+            }
+
+            File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_anova_block.csv", anovaBlockOutlines);
+            File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_wilcox_block.csv", wilcoxBlockOutlines);
+            File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_ttest_block.csv", ttestBlockOutlines);
+            File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_anova_rows.csv", anovaRowOutlines);
+            File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_wilcox_rows.csv", wilcoxRowOutlines);
+            File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_ttest_rows.csv", ttestRowOutlines);
             #endregion statistics
         }
 
@@ -1452,8 +1508,8 @@ namespace Analyser
                     var parameterbuckets2 = buckets.Where(t => t.Parameters[0] == parameter2);
 
                     //get data values
-                    List<double> data1 = parameterbuckets1.Where(t => !double.IsNaN(t.MCC_Target)).Select(t => t.MCC_Target).ToList();
-                    List<double> data2 = parameterbuckets2.Where(t => !double.IsNaN(t.MCC_Target)).Select(t => t.MCC_Target).ToList();
+                    List<double> data1 = parameterbuckets1.Select(t => double.IsNaN(t.MCC_Target) ? 0d : t.MCC_Target).ToList();
+                    List<double> data2 = parameterbuckets2.Select(t => double.IsNaN(t.MCC_Target) ? 0d : t.MCC_Target).ToList();
 
                     //get p-value
                     if (parameter1 == parameter2)
