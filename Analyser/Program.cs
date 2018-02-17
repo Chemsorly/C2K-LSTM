@@ -729,7 +729,8 @@ namespace Analyser
             }
 
             //print out values
-            List<String> outLines = new List<string>();
+            List<String> outLines = new List<string>(); 
+            Dictionary<String, List<String>> dictOutlines = new Dictionary<string, List<string>>(); //R-format
             outLines.Add("p0,p1,p2,p3,p4,p5,0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9"); //header
             foreach(var result in sortedbuckets)
             {
@@ -738,8 +739,25 @@ namespace Analyser
                 line += ',';
                 line += String.Join(",", result.Value);
                 outLines.Add(line.ToString());
+
+                //R format
+                if (!dictOutlines.ContainsKey(result.Key.Split(' ')[0]))
+                    dictOutlines.Add(result.Key.Split(' ')[0], new List<string>());
+                result.Value.ForEach(t => dictOutlines[result.Key.Split(' ')[0]].Add(t));
             }
+
+            //R
+            var outLines2 = new List<String>();
+            var headline = String.Empty;
+            headline += "param";
+            for (int i = 0; i < dictOutlines.Max(t => t.Value.Count); i += 10)
+                headline += ",0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9";
+            outLines2.Add(headline);
+            foreach (var dict in dictOutlines)
+                outLines2.Add($"{dict.Key},{String.Join(",", dict.Value)}");
+
             File.WriteAllLines($"{ResultsFolder.FullName}\\raw_mcc.csv", outLines);
+            File.WriteAllLines($"{ResultsFolder.FullName}\\raw_mcc2.csv", outLines2);
 
             #region print global
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_precision_target.pdf", FileMode.OpenOrCreate))
@@ -1152,7 +1170,7 @@ namespace Analyser
 
                             //get p-value
                             anovaoutline.Add(Statistics.CalculateP(res1, res2).ToString());
-                            wilcoxoutline.Add(new Accord.Statistics.Testing.TwoSampleWilcoxonSignedRankTest(res1.ToArray(), res2.ToArray()).PValue.ToString());
+                            wilcoxoutline.Add(new Accord.Statistics.Testing.MannWhitneyWilcoxonTest(res1.ToArray(), res2.ToArray()).PValue.ToString());
                             ttestoutline.Add(new Accord.Statistics.Testing.TwoSampleTTest(res1.ToArray(), res2.ToArray(), false).PValue.ToString());                            
                         }
 
