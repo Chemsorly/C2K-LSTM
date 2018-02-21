@@ -1165,14 +1165,20 @@ namespace Analyser
 
                             //write data
                             //get data values
-                            List<double> res1 = data1.Select(t => double.IsNaN(t.MCC_Target) ? 0d : t.MCC_Target).ToList();
-                            List<double> res2 = data2.Select(t => double.IsNaN(t.MCC_Target) ? 0d : t.MCC_Target).ToList();
+                            List<double> res1 = data1.Where(t => !double.IsNaN(t.MCC_Target)).Select(t => t.MCC_Target).ToList();
+                            List<double> res2 = data2.Where(t => !double.IsNaN(t.MCC_Target)).Select(t => t.MCC_Target).ToList();
 
                             //get p-value
                             anovaoutline.Add(Statistics.CalculateP(res1, res2).ToString());
-                            wilcoxoutline.Add(new Accord.Statistics.Testing.MannWhitneyWilcoxonTest(res1.ToArray(), res2.ToArray()).PValue.ToString());
+                            wilcoxoutline.Add(new Accord.Statistics.Testing.MannWhitneyWilcoxonTest(res1.ToArray(), res2.ToArray(), exact: false).PValue.ToString());
                             ttestoutline.Add(new Accord.Statistics.Testing.TwoSampleTTest(res1.ToArray(), res2.ToArray(), false).PValue.ToString());                            
                         }
+                        //edge cases //all
+                        var dataa1 = allBuckets.Where(t => t.Parameters.First() == p01param).Where(t => !double.IsNaN(t.MCC_Target)).Select(t => t.MCC_Target).ToList();
+                        var dataa2 = allBuckets.Where(t => t.Parameters.First() == p02param).Where(t => !double.IsNaN(t.MCC_Target)).Select(t => t.MCC_Target).ToList();
+                        anovaoutline.Add(Statistics.CalculateP(dataa1, dataa2).ToString());
+                        wilcoxoutline.Add(new Accord.Statistics.Testing.MannWhitneyWilcoxonTest(dataa1.ToArray(), dataa2.ToArray(), exact: false).PValue.ToString());
+                        ttestoutline.Add(new Accord.Statistics.Testing.TwoSampleTTest(dataa1.ToArray(), dataa2.ToArray(), false).PValue.ToString());
 
                         anovaRowOutlines.Add(String.Join(",",anovaoutline));
                         wilcoxRowOutlines.Add(String.Join(",", wilcoxoutline));
@@ -1526,8 +1532,8 @@ namespace Analyser
                     var parameterbuckets2 = buckets.Where(t => t.Parameters[0] == parameter2);
 
                     //get data values
-                    List<double> data1 = parameterbuckets1.Select(t => double.IsNaN(t.MCC_Target) ? 0d : t.MCC_Target).ToList();
-                    List<double> data2 = parameterbuckets2.Select(t => double.IsNaN(t.MCC_Target) ? 0d : t.MCC_Target).ToList();
+                    List<double> data1 = parameterbuckets1.Where(t => !double.IsNaN(t.MCC_Target)).Select(t => t.MCC_Target).ToList();
+                    List<double> data2 = parameterbuckets2.Where(t => !double.IsNaN(t.MCC_Target)).Select(t => t.MCC_Target).ToList();
 
                     //get p-value
                     if (parameter1 == parameter2)
@@ -1545,10 +1551,7 @@ namespace Analyser
                     else
                     {
                         anovapvalues.Add(Statistics.CalculateP(data1, data2));
-                        if (data1.Count == data2.Count)
-                            wilcoxpvalues.Add(new Accord.Statistics.Testing.TwoSampleWilcoxonSignedRankTest(data1.ToArray(), data2.ToArray()).PValue);
-                        else
-                            wilcoxpvalues.Add(double.NaN);
+                        wilcoxpvalues.Add(new Accord.Statistics.Testing.MannWhitneyWilcoxonTest(data1.ToArray(), data2.ToArray(), exact:false).PValue);
                         ttestpvalues.Add(new Accord.Statistics.Testing.TwoSampleTTest(data1.ToArray(), data2.ToArray(), false).PValue);
                     }
 
