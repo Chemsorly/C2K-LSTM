@@ -36,8 +36,8 @@ namespace Analyser
             CultureInfo.DefaultThreadCurrentCulture = customCulture;
 
             //target folders
-            DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Durchlauf 4\raw");
-            DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Durchlauf 4\");
+            DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Durchlauf 3\raw");
+            DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Durchlauf 3\");
             List<FileInfo> InFiles = InFolder.EnumerateFiles("*", SearchOption.AllDirectories).Where(t => t.Name.Contains(".csv") && !t.Name.Contains(".edited.csv")).ToList();
 
             //globals
@@ -713,10 +713,43 @@ namespace Analyser
             });
 
             //create aggregated file
-            Dictionary<String, List<String>> sortedbuckets = new Dictionary<String, List<String>>();
+            Dictionary<String, List<String>> sortedbucketsPrecision = new Dictionary<String, List<String>>();
+            Dictionary<String, List<String>> sortedbucketsRecall = new Dictionary<String, List<String>>();
+            Dictionary<String, List<String>> sortedbucketsSpeceficity = new Dictionary<String, List<String>>();
+            Dictionary<String, List<String>> sortedbucketsFalsepositives = new Dictionary<String, List<String>>();
+            Dictionary<String, List<String>> sortedbucketsNegativepredictions = new Dictionary<String, List<String>>();
+            Dictionary<String, List<String>> sortedbucketsAccuracy = new Dictionary<String, List<String>>();
+            Dictionary<String, List<String>> sortedbucketsFmetric = new Dictionary<String, List<String>>();
+            Dictionary<String, List<String>> sortedbucketsMCC = new Dictionary<String, List<String>>();
+            List<Dictionary<String, List<String>>> sortedbucketsList = new List<Dictionary<string, List<string>>>()
+            {
+                sortedbucketsPrecision, sortedbucketsRecall, sortedbucketsSpeceficity, sortedbucketsFalsepositives,
+                sortedbucketsNegativepredictions, sortedbucketsAccuracy, sortedbucketsFmetric, sortedbucketsMCC
+            };
+            List<String> sortedbucketsListParameters = new List<string>()
+            {
+                "Precision","Recall","Speceficity","Falsepositives","Negativepredictions","Accuracy","Fmetric","MCC"
+            };
+
             foreach (var bucket in allBuckets)
-                if (!sortedbuckets.ContainsKey(String.Join(" ", bucket.Parameters)))
-                    sortedbuckets.Add(String.Join(" ", bucket.Parameters), new List<String>());
+            {
+                if (!sortedbucketsPrecision.ContainsKey(String.Join(" ", bucket.Parameters)))
+                    sortedbucketsPrecision.Add(String.Join(" ", bucket.Parameters), new List<String>());
+                if (!sortedbucketsRecall.ContainsKey(String.Join(" ", bucket.Parameters)))
+                    sortedbucketsRecall.Add(String.Join(" ", bucket.Parameters), new List<String>());
+                if (!sortedbucketsSpeceficity.ContainsKey(String.Join(" ", bucket.Parameters)))
+                    sortedbucketsSpeceficity.Add(String.Join(" ", bucket.Parameters), new List<String>());
+                if (!sortedbucketsFalsepositives.ContainsKey(String.Join(" ", bucket.Parameters)))
+                    sortedbucketsFalsepositives.Add(String.Join(" ", bucket.Parameters), new List<String>());
+                if (!sortedbucketsNegativepredictions.ContainsKey(String.Join(" ", bucket.Parameters)))
+                    sortedbucketsNegativepredictions.Add(String.Join(" ", bucket.Parameters), new List<String>());
+                if (!sortedbucketsAccuracy.ContainsKey(String.Join(" ", bucket.Parameters)))
+                    sortedbucketsAccuracy.Add(String.Join(" ", bucket.Parameters), new List<String>());
+                if (!sortedbucketsFmetric.ContainsKey(String.Join(" ", bucket.Parameters)))
+                    sortedbucketsFmetric.Add(String.Join(" ", bucket.Parameters), new List<String>());
+                if (!sortedbucketsMCC.ContainsKey(String.Join(" ", bucket.Parameters)))
+                    sortedbucketsMCC.Add(String.Join(" ", bucket.Parameters), new List<String>());
+            }
 
             //generate values
             for(int i = 0; i * BucketGranularity < 1; i++)
@@ -724,40 +757,49 @@ namespace Analyser
                 var buckets = allBuckets.Where(t => t.BucketLevel == i);
                 foreach(var bucket in buckets)
                 {
-                    sortedbuckets[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.MCC_Target) ? "0" : bucket.MCC_Target.ToString());
+                    sortedbucketsPrecision[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.PrecisionTarget) ? "0" : bucket.PrecisionTarget.ToString());
+                    sortedbucketsRecall[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.RecallTarget) ? "0" : bucket.RecallTarget.ToString());
+                    sortedbucketsSpeceficity[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.SpecificityTarget) ? "0" : bucket.SpecificityTarget.ToString());
+                    sortedbucketsFalsepositives[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.FalsePositiveRateTarget) ? "0" : bucket.FalsePositiveRateTarget.ToString());
+                    sortedbucketsNegativepredictions[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.NegativePredictedValueTarget) ? "0" : bucket.NegativePredictedValueTarget.ToString());
+                    sortedbucketsAccuracy[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.AccuracyTarget) ? "0" : bucket.AccuracyTarget.ToString());
+                    sortedbucketsFmetric[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.FMeasureTarget) ? "0" : bucket.FMeasureTarget.ToString());
+                    sortedbucketsMCC[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.MCC_Target) ? "0" : bucket.MCC_Target.ToString());
                 }
             }
 
-            //print out values
-            List<String> outLines = new List<string>(); 
-            Dictionary<String, List<String>> dictOutlines = new Dictionary<string, List<string>>(); //R-format
-            outLines.Add("p0,p1,p2,p3,p4,p5,0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9"); //header
-            foreach(var result in sortedbuckets)
+            for(int i = 0; i < sortedbucketsList.Count; i++)
             {
-                var line = String.Empty;
-                line += result.Key.Replace(' ',',');
-                line += ',';
-                line += String.Join(",", result.Value);
-                outLines.Add(line.ToString());
+                //print out values
+                List<String> outLines = new List<string>();
+                Dictionary<String, List<String>> dictOutlinesMCC = new Dictionary<string, List<string>>(); //R-format
+                outLines.Add("p0,p1,p2,p3,p4,p5,0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9"); //header
+                foreach (var result in sortedbucketsList[i])
+                {
+                    var line = String.Empty;
+                    line += result.Key.Replace(' ', ',');
+                    line += ',';
+                    line += String.Join(",", result.Value);
+                    outLines.Add(line.ToString());
 
-                //R format
-                if (!dictOutlines.ContainsKey(result.Key.Split(' ')[0]))
-                    dictOutlines.Add(result.Key.Split(' ')[0], new List<string>());
-                result.Value.ForEach(t => dictOutlines[result.Key.Split(' ')[0]].Add(t));
+                    //R format
+                    if (!dictOutlinesMCC.ContainsKey(result.Key.Split(' ')[0]))
+                        dictOutlinesMCC.Add(result.Key.Split(' ')[0], new List<string>());
+                    result.Value.ForEach(t => dictOutlinesMCC[result.Key.Split(' ')[0]].Add(t));
+                }
+                //R
+                var outLines2 = new List<String>();
+                var headline = String.Empty;
+                headline += "param";
+                for (int j = 0; j < dictOutlinesMCC.Max(t => t.Value.Count); j += 10)
+                    headline += ",0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9";
+                outLines2.Add(headline);
+                foreach (var dict in dictOutlinesMCC)
+                    outLines2.Add($"{dict.Key},{String.Join(",", dict.Value)}");
+
+                File.WriteAllLines($"{ResultsFolder.FullName}\\raw_{sortedbucketsListParameters[i]}.csv", outLines);
+                File.WriteAllLines($"{ResultsFolder.FullName}\\raw_{sortedbucketsListParameters[i]}2.csv", outLines2);
             }
-
-            //R
-            var outLines2 = new List<String>();
-            var headline = String.Empty;
-            headline += "param";
-            for (int i = 0; i < dictOutlines.Max(t => t.Value.Count); i += 10)
-                headline += ",0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9";
-            outLines2.Add(headline);
-            foreach (var dict in dictOutlines)
-                outLines2.Add($"{dict.Key},{String.Join(",", dict.Value)}");
-
-            File.WriteAllLines($"{ResultsFolder.FullName}\\raw_mcc.csv", outLines);
-            File.WriteAllLines($"{ResultsFolder.FullName}\\raw_mcc2.csv", outLines2);
 
             #region print global
             using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_precision_target.pdf", FileMode.OpenOrCreate))
