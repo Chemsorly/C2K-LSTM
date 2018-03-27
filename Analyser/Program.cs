@@ -181,10 +181,10 @@ namespace Analyser
                         else if (Parameters.Any(t => t.Contains("s2e")))
                             TargetData = TargetData.TS;
                         else
-                            throw new Exception("not found");
+                            Console.WriteLine("sequencer not found");
                     }
                     else
-                        throw new Exception("not found");
+                        Console.WriteLine("classifier not found");
 
                     if (Parameters.Any(t => t.Contains("rgb")))
                         IsRGBencoding = true;
