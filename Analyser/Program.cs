@@ -332,7 +332,12 @@ namespace Analyser
                                 indexout = listout.IndexOf("13");
 
                             if (indexout == -1)
-                                throw new Exception("indexing failed");
+                            {
+                                Console.WriteLine("Indexinf failed. Fallback");
+                                indexout = listout.IndexOf("12");
+                                indexout = listout.IndexOf("15");
+                                indexout = listout.IndexOf("14");
+                            }
 
                             //case prediction = 13 (50% marker)
                             if (indexout == line.Prefix)
