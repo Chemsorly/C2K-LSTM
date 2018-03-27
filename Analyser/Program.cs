@@ -36,8 +36,8 @@ namespace Analyser
             CultureInfo.DefaultThreadCurrentCulture = customCulture;
 
             //target folders
-            DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Durchlauf 3\raw");
-            DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\Durchlauf 3\");
+            DirectoryInfo InFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\archive\Durchlauf 1 (0.1 triple range bucketing)\raw");
+            DirectoryInfo ResultsFolder = new DirectoryInfo(@"Y:\Sicherung\Adrian\Sync\Sciebo\MA RNN-LSTM Results\archive\Durchlauf 1 (0.1 triple range bucketing)\");
             List<FileInfo> InFiles = InFolder.EnumerateFiles("*", SearchOption.AllDirectories).Where(t => t.Name.Contains(".csv") && !t.Name.Contains(".edited.csv")).ToList();
 
             //globals
@@ -252,7 +252,7 @@ namespace Analyser
                             GT_InstanceID = int.Parse(fields[9]),
                             PrefixActivities = fields[10],
                             PredictedActivities = fields[11],
-                            SuffixActivities = fields[12]
+                            //SuffixActivities = fields[12]
                         };
                         if (IsBinaryPrediction)
                             line.Predicted_Violations = fields[13] == "true";
@@ -322,7 +322,7 @@ namespace Analyser
                         foreach (var line in output)
                         {
                             //get index of 50% point
-                            var listout = (line.PrefixActivities + ' ' + line.SuffixActivities).Split(' ').ToList();
+                            var listout = (line.PrefixActivities + ' ' + line.PredictedActivities).Split(' ').ToList();
                             var indexout = -1;
                             if (IsRGBencoding)
                                 indexout = listout.IndexOf("M");
@@ -429,7 +429,7 @@ namespace Analyser
                                    "gt_instance," +
                                    "prefix_activities," +
                                    "predicted_activities," +
-                                   "suffix_activities," +
+                                   //"suffix_activities," +
                                    "accuracy_sumprevious," +
                                    "accuracy_timestamp," +
                                    "violation_effective," +
@@ -454,7 +454,7 @@ namespace Analyser
                                        $"{line.GT_InstanceID}," +
                                        $"{line.PrefixActivities}," +
                                        $"{line.PredictedActivities}," +
-                                       $"{line.SuffixActivities}," +
+                                       //$"{line.SuffixActivities}," +
                                        $"{line.AccuracySumprevious}," +
                                        $"{line.AccuracyTimestamp}," +
                                        $"{line.Violation_Effective}," +
