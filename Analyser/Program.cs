@@ -1261,10 +1261,7 @@ namespace Analyser
 
         public static List<String> ExtractParams(String pParameterString)
         {
-            var paras = pParameterString.Split(' ');
-
-            //we only want 1,2,3; neurons, dropout, patience, algorithm
-            return new List<string>() { paras[0], paras[1], paras[2], paras[3], paras[4], paras[5] };
+            return pParameterString.Split(' ').ToList();
         }
 
         class Line
