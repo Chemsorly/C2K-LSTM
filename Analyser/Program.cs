@@ -1361,7 +1361,7 @@ namespace Analyser
             public double RecallSP => (double)ViolationStringsSP.Count(t => t == "TP") / (double)ViolationStringsSP.Count(t => t == "TP" || t == "FN");
             public double SpecificitySP => (double)ViolationStringsSP.Count(t => t == "TN") / (double)ViolationStringsSP.Count(t => t == "TN" || t == "FP");
             public double FalsePositiveRateSP => (double)ViolationStringsSP.Count(t => t == "FP") / (double)ViolationStringsSP.Count(t => t == "FP" || t == "TN");
-            public double NegativePredictedValueSP => (double)ViolationStringsSP.Count(t => t == "TN") / (double)ViolationStringsSP.Count(t => t == "TN" || t == "FP");
+            public double NegativePredictedValueSP => (double)ViolationStringsSP.Count(t => t == "TN") / (double)ViolationStringsSP.Count(t => t == "TN" || t == "TP");
             public double AccuracySP => (double)ViolationStringsSP.Count(t => t == "TN" || t == "TP") / (double)ViolationStringsSP.Count;
             public double FMeasureSP => ((1 + Math.Pow(FmetricBeta, 2)) * PrecisionSP * RecallSP) / ((Math.Pow(FmetricBeta, 2) * PrecisionSP) + RecallSP);
             public double MCC_SP => (double)((TPcountSP * TNcountSP) - (FPcountSP * FNcountSP)) / Math.Sqrt((double)(TPcountSP + FPcountSP) * (TPcountSP + FNcountSP) * (TNcountSP + FPcountSP) * (TNcountSP + FNcountSP));
@@ -1370,7 +1370,7 @@ namespace Analyser
             public double RecallTS => (double)ViolationStringsTS.Count(t => t == "TP") / (double)ViolationStringsTS.Count(t => t == "TP" || t == "FN");
             public double SpecificityTS => (double)ViolationStringsTS.Count(t => t == "TN") / (double)ViolationStringsTS.Count(t => t == "TN" || t == "FP");
             public double FalsePositiveRateTS => (double)ViolationStringsTS.Count(t => t == "FP") / (double)ViolationStringsTS.Count(t => t == "FP" || t == "TN");
-            public double NegativePredictedValueTS => (double)ViolationStringsTS.Count(t => t == "TN") / (double)ViolationStringsTS.Count(t => t == "TN" || t == "FP");
+            public double NegativePredictedValueTS => (double)ViolationStringsTS.Count(t => t == "TN") / (double)ViolationStringsTS.Count(t => t == "TN" || t == "TP");
             public double AccuracyTS => (double)ViolationStringsTS.Count(t => t == "TN" || t == "TP") / (double)ViolationStringsTS.Count;
             public double FMeasureTS => ((1 + Math.Pow(FmetricBeta, 2)) * PrecisionTS * RecallTS) / ((Math.Pow(FmetricBeta, 2) * PrecisionTS) + RecallTS);
             public double MCC_TS => (double)((TPcountTS * TNcountTS) - (FPcountTS * FNcountTS)) / Math.Sqrt((double)(TPcountTS + FPcountTS) * (TPcountTS + FNcountTS) * (TNcountTS + FPcountTS) * (TNcountTS + FNcountTS));
@@ -1380,7 +1380,7 @@ namespace Analyser
             public double RecallTarget => (double)ViolationStringsTarget.Count(t => t == "TP") / (double)ViolationStringsTarget.Count(t => t == "TP" || t == "FN");
             public double SpecificityTarget => (double)ViolationStringsTarget.Count(t => t == "TN") / (double)ViolationStringsTarget.Count(t => t == "TN" || t == "FP");
             public double FalsePositiveRateTarget => (double)ViolationStringsTarget.Count(t => t == "FP") / (double)ViolationStringsTarget.Count(t => t == "FP" || t == "TN");
-            public double NegativePredictedValueTarget => (double)ViolationStringsTarget.Count(t => t == "TN") / (double)ViolationStringsTarget.Count(t => t == "TN" || t == "FP");
+            public double NegativePredictedValueTarget => (double)ViolationStringsTarget.Count(t => t == "TN") / (double)ViolationStringsTarget.Count(t => t == "TN" || t == "TP");
             public double AccuracyTarget => (double)ViolationStringsTarget.Count(t => t == "TN" || t == "TP") / (double)ViolationStringsTarget.Count;
             public double FMeasureTarget => ((1 + Math.Pow(FmetricBeta, 2)) * PrecisionTarget * RecallTarget) / ((Math.Pow(FmetricBeta, 2) * PrecisionTarget) + RecallTarget);
             public double MCC_Target => (double)((TPcountTarget * TNcountTarget) - (FPcountTarget * FNcountTarget)) / Math.Sqrt((double)(TPcountTarget + FPcountTarget) * (TPcountTarget + FNcountTarget) * (TNcountTarget + FPcountTarget) * (TNcountTarget + FNcountTarget));
