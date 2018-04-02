@@ -275,6 +275,7 @@ namespace Analyser
                         {
                             BucketLevel = i,
                             Parameters = Parameters,
+                            Target = TargetData,
                             Prediction_SP = new List<double>(),
                             Prediction_TS = new List<double>(),
                             ViolationStringsTS = new List<string>(),
@@ -721,14 +722,22 @@ namespace Analyser
             Dictionary<String, List<String>> sortedbucketsAccuracy = new Dictionary<String, List<String>>();
             Dictionary<String, List<String>> sortedbucketsFmetric = new Dictionary<String, List<String>>();
             Dictionary<String, List<String>> sortedbucketsMCC = new Dictionary<String, List<String>>();
+            Dictionary<String, List<String>> sortedbucketsMSE = new Dictionary<String, List<String>>();
+            Dictionary<String, List<String>> sortedbucketsRMSE = new Dictionary<String, List<String>>();
+            Dictionary<String, List<String>> sortedbucketsMAE = new Dictionary<String, List<String>>();
+            Dictionary<String, List<String>> sortedbucketsRSE = new Dictionary<String, List<String>>();
+            Dictionary<String, List<String>> sortedbucketsRRSE = new Dictionary<String, List<String>>();
+            Dictionary<String, List<String>> sortedbucketsRAE = new Dictionary<String, List<String>>();
             List<Dictionary<String, List<String>>> sortedbucketsList = new List<Dictionary<string, List<string>>>()
             {
                 sortedbucketsPrecision, sortedbucketsRecall, sortedbucketsSpeceficity, sortedbucketsFalsepositives,
-                sortedbucketsNegativepredictions, sortedbucketsAccuracy, sortedbucketsFmetric, sortedbucketsMCC
+                sortedbucketsNegativepredictions, sortedbucketsAccuracy, sortedbucketsFmetric, sortedbucketsMCC,
+                sortedbucketsMSE,sortedbucketsRMSE,sortedbucketsMAE,sortedbucketsRSE,sortedbucketsRRSE,sortedbucketsRAE
             };
             List<String> sortedbucketsListParameters = new List<string>()
             {
-                "Precision","Recall","Speceficity","Falsepositives","Negativepredictions","Accuracy","Fmetric","MCC"
+                "Precision","Recall","Speceficity","Falsepositives","Negativepredictions","Accuracy","Fmetric","MCC",
+                "MSE","RMSE","MAE","RSE","RRSE","RAE"
             };
 
             foreach (var bucket in allBuckets)
@@ -749,6 +758,18 @@ namespace Analyser
                     sortedbucketsFmetric.Add(String.Join(" ", bucket.Parameters), new List<String>());
                 if (!sortedbucketsMCC.ContainsKey(String.Join(" ", bucket.Parameters)))
                     sortedbucketsMCC.Add(String.Join(" ", bucket.Parameters), new List<String>());
+                if (!sortedbucketsMSE.ContainsKey(String.Join(" ", bucket.Parameters)))
+                    sortedbucketsMSE.Add(String.Join(" ", bucket.Parameters), new List<String>());
+                if (!sortedbucketsRMSE.ContainsKey(String.Join(" ", bucket.Parameters)))
+                    sortedbucketsRMSE.Add(String.Join(" ", bucket.Parameters), new List<String>());
+                if (!sortedbucketsMAE.ContainsKey(String.Join(" ", bucket.Parameters)))
+                    sortedbucketsMAE.Add(String.Join(" ", bucket.Parameters), new List<String>());
+                if (!sortedbucketsRSE.ContainsKey(String.Join(" ", bucket.Parameters)))
+                    sortedbucketsRSE.Add(String.Join(" ", bucket.Parameters), new List<String>());
+                if (!sortedbucketsRRSE.ContainsKey(String.Join(" ", bucket.Parameters)))
+                    sortedbucketsRRSE.Add(String.Join(" ", bucket.Parameters), new List<String>());
+                if (!sortedbucketsRAE.ContainsKey(String.Join(" ", bucket.Parameters)))
+                    sortedbucketsRAE.Add(String.Join(" ", bucket.Parameters), new List<String>());
             }
 
             //generate values
@@ -765,6 +786,12 @@ namespace Analyser
                     sortedbucketsAccuracy[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.AccuracyTarget) ? "0" : bucket.AccuracyTarget.ToString());
                     sortedbucketsFmetric[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.FMeasureTarget) ? "0" : bucket.FMeasureTarget.ToString());
                     sortedbucketsMCC[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.MCC_Target) ? "0" : bucket.MCC_Target.ToString());
+                    sortedbucketsMSE[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.MSE_Target) ? "0" : bucket.MSE_Target.ToString());
+                    sortedbucketsRMSE[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.RMSE_Target) ? "0" : bucket.RMSE_Target.ToString());
+                    sortedbucketsMAE[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.MAE_Target) ? "0" : bucket.MAE_Target.ToString());
+                    sortedbucketsRSE[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.RSE_Target) ? "0" : bucket.RSE_Target.ToString());
+                    sortedbucketsRRSE[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.RRSE_Target) ? "0" : bucket.RRSE_Target.ToString());
+                    sortedbucketsRAE[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.RAE_Target) ? "0" : bucket.RAE_Target.ToString());
                 }
             }
 
@@ -1303,6 +1330,7 @@ namespace Analyser
         {
             public int BucketLevel { get; set; }
             public List<String> Parameters { get; set; }
+            public TargetData Target { get; set; }
 
             //counts
             public int TPcountSP => ViolationStringsSP.Count(t => t == "TP");
@@ -1357,7 +1385,6 @@ namespace Analyser
             public double FMeasureTarget => ((1 + Math.Pow(FmetricBeta, 2)) * PrecisionTarget * RecallTarget) / ((Math.Pow(FmetricBeta, 2) * PrecisionTarget) + RecallTarget);
             public double MCC_Target => (double)((TPcountTarget * TNcountTarget) - (FPcountTarget * FNcountTarget)) / Math.Sqrt((double)(TPcountTarget + FPcountTarget) * (TPcountTarget + FNcountTarget) * (TNcountTarget + FPcountTarget) * (TNcountTarget + FNcountTarget));
 
-
             //regression prediction
             public double PredictionMedianSP => Median(PredictionAccuraciesSP.ToArray());
             public double PredictionMedianTS => Median(PredictionAccuraciesTS.ToArray());
@@ -1378,6 +1405,14 @@ namespace Analyser
             public double RRSE_TS => Math.Sqrt(DeviationsAbsoluteTS.Sum(t => Math.Pow(t, 2)) / (Prediction_TS.Sum(t => Math.Pow(t - Prediction_TS.Average(), 2))));
             public double RAE_TS => DeviationsAbsoluteTS.Sum(t => Math.Abs(t)) /
                                     (Prediction_TS.Sum(t => Math.Abs(t - Prediction_TS.Average())));
+
+            //numeric target metrics
+            public double MSE_Target => Target == TargetData.SP ? MSE_SP : MSE_TS;
+            public double RMSE_Target => Target == TargetData.SP ? RMSE_SP : RMSE_TS;
+            public double MAE_Target => Target == TargetData.SP ? MAE_SP : MAE_TS;
+            public double RSE_Target => Target == TargetData.SP ? RSE_SP : RSE_TS;
+            public double RRSE_Target => Target == TargetData.SP ? RRSE_SP : RRSE_TS;
+            public double RAE_Target => Target == TargetData.SP ? RAE_SP : RAE_TS;
 
         }
 
