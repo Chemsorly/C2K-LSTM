@@ -1105,64 +1105,322 @@ namespace Analyser
             for (int group = 0; group < allParameters.Length; group++)
             {
                 //create grouping model
-                OxyPlot.PlotModel model_groupings0 = new PlotModel() { Title = $"Results: Avg MCC grouped by parameter {group}" };
-                model_groupings0.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
-                model_groupings0.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
-                model_groupings0.IsLegendVisible = true;
+                OxyPlot.PlotModel model_groupings0accuracy = new PlotModel() { Title = $"Results: Avg accuracy grouped by parameter {group}" };
+                model_groupings0accuracy.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+                model_groupings0accuracy.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+                model_groupings0accuracy.IsLegendVisible = true;
+                OxyPlot.PlotModel model_groupings0falsepositives = new PlotModel() { Title = $"Results: Avg false positives grouped by parameter {group}" };
+                model_groupings0falsepositives.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+                model_groupings0falsepositives.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+                model_groupings0falsepositives.IsLegendVisible = true;
+                OxyPlot.PlotModel model_groupings0fmetric = new PlotModel() { Title = $"Results: Avg fmetric grouped by parameter {group}" };
+                model_groupings0fmetric.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+                model_groupings0fmetric.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+                model_groupings0fmetric.IsLegendVisible = true;
+                OxyPlot.PlotModel model_groupings0negativepredictions = new PlotModel() { Title = $"Results: Avg negative predictions grouped by parameter {group}" };
+                model_groupings0negativepredictions.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+                model_groupings0negativepredictions.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+                model_groupings0negativepredictions.IsLegendVisible = true;
+                OxyPlot.PlotModel model_groupings0precision = new PlotModel() { Title = $"Results: Avg precision grouped by parameter {group}" };
+                model_groupings0precision.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+                model_groupings0precision.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+                model_groupings0precision.IsLegendVisible = true;
+                OxyPlot.PlotModel model_groupings0recall = new PlotModel() { Title = $"Results: Avg recall grouped by parameter {group}" };
+                model_groupings0recall.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+                model_groupings0recall.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+                model_groupings0recall.IsLegendVisible = true;
+                OxyPlot.PlotModel model_groupings0speceficity = new PlotModel() { Title = $"Results: Avg speceficity grouped by parameter {group}" };
+                model_groupings0speceficity.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+                model_groupings0speceficity.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+                model_groupings0speceficity.IsLegendVisible = true;
+                OxyPlot.PlotModel model_groupings0mcc = new PlotModel() { Title = $"Results: Avg MCC grouped by parameter {group}" };
+                model_groupings0mcc.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+                model_groupings0mcc.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value" });
+                model_groupings0mcc.IsLegendVisible = true;
 
                 parameters = allParameters[group].Distinct().ToList();
                 parameters.Sort();
 
                 //set up output lines
-                var grouping0out = new List<String>();
+                var grouping0acc_out = new List<String>();
+                var grouping0fpr_out = new List<String>();
+                var grouping0fmetric_out = new List<String>();
+                var grouping0npr_out = new List<String>();
+                var grouping0prec_out = new List<String>();
+                var grouping0rec_out = new List<String>();
+                var grouping0spec_out = new List<String>();
+                var grouping0mcc_out = new List<String>();
                 List<String> grouping0header = new List<String>() { "groupingname" };
                 for (int j = 0; j * BucketGranularity < 1; j++)
                     grouping0header.Add((j * BucketGranularity).ToString());
-                grouping0out.Add(String.Join(",", grouping0header));
+                grouping0acc_out.Add(String.Join(",", grouping0header));
+                grouping0fpr_out.Add(String.Join(",", grouping0header));
+                grouping0fmetric_out.Add(String.Join(",", grouping0header));
+                grouping0npr_out.Add(String.Join(",", grouping0header));
+                grouping0prec_out.Add(String.Join(",", grouping0header));
+                grouping0rec_out.Add(String.Join(",", grouping0header));
+                grouping0spec_out.Add(String.Join(",", grouping0header));
+                grouping0mcc_out.Add(String.Join(",", grouping0header));
 
                 //iterate through nth level grouping
                 for (int i = 0; i < parameters.Count; i++)
                 {
-                    var grouping0line = new List<String>();
-                    grouping0line.Add(parameters[i]);
-                    var groupingSeries = new LineSeries() { Title = parameters[i] };
+                    var grouping0line_acc = new List<String>();
+                    var grouping0line_fpr = new List<String>();
+                    var grouping0line_fmetric = new List<String>();
+                    var grouping0line_npr = new List<String>();
+                    var grouping0line_prec = new List<String>();
+                    var grouping0line_rec = new List<String>();
+                    var grouping0line_spec = new List<String>();
+                    var grouping0line_mcc = new List<String>();
+                    grouping0line_acc.Add(parameters[i]);
+                    grouping0line_fpr.Add(parameters[i]);
+                    grouping0line_fmetric.Add(parameters[i]);
+                    grouping0line_npr.Add(parameters[i]);
+                    grouping0line_prec.Add(parameters[i]);
+                    grouping0line_rec.Add(parameters[i]);
+                    grouping0line_spec.Add(parameters[i]);
+                    grouping0line_mcc.Add(parameters[i]);
+                    var groupingSeries_acc = new LineSeries() { Title = parameters[i] };
+                    var groupingSeries_fpr = new LineSeries() { Title = parameters[i] };
+                    var groupingSeries_fmetric = new LineSeries() { Title = parameters[i] };
+                    var groupingSeries_npr = new LineSeries() { Title = parameters[i] };
+                    var groupingSeries_prec = new LineSeries() { Title = parameters[i] };
+                    var groupingSeries_rec = new LineSeries() { Title = parameters[i] };
+                    var groupingSeries_spec = new LineSeries() { Title = parameters[i] };
+                    var groupingSeries_mcc = new LineSeries() { Title = parameters[i] };
 
                     //create boxplot model for each nth level grouping
-                    OxyPlot.PlotModel groupingboxplotmodel = new PlotModel() { Title = $"Grouping Boxplots for {parameters[i]}" };
-                    groupingboxplotmodel.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
-                    groupingboxplotmodel.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (MCC)" });
-                    var groupingBoxPlotSeries = new BoxPlotSeries() { BoxWidth = 0.025 };
-                    groupingboxplotmodel.Series.Add(groupingBoxPlotSeries);
+                    OxyPlot.PlotModel groupingboxplotmodel_acc = new PlotModel() { Title = $"Grouping Boxplots for {parameters[i]}" };
+                    groupingboxplotmodel_acc.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+                    groupingboxplotmodel_acc.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (accuracy)" });
+                    var groupingBoxPlotSeries_acc = new BoxPlotSeries() { BoxWidth = 0.025 };
+                    groupingboxplotmodel_acc.Series.Add(groupingBoxPlotSeries_acc);
+
+                    OxyPlot.PlotModel groupingboxplotmodel_fpr = new PlotModel() { Title = $"Grouping Boxplots for {parameters[i]}" };
+                    groupingboxplotmodel_fpr.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+                    groupingboxplotmodel_fpr.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (false positves)" });
+                    var groupingBoxPlotSeries_fpr = new BoxPlotSeries() { BoxWidth = 0.025 };
+                    groupingboxplotmodel_fpr.Series.Add(groupingBoxPlotSeries_fpr);
+
+                    OxyPlot.PlotModel groupingboxplotmodel_fmetric = new PlotModel() { Title = $"Grouping Boxplots for {parameters[i]}" };
+                    groupingboxplotmodel_fmetric.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+                    groupingboxplotmodel_fmetric.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (fmetric)" });
+                    var groupingBoxPlotSeries_fmetric = new BoxPlotSeries() { BoxWidth = 0.025 };
+                    groupingboxplotmodel_fmetric.Series.Add(groupingBoxPlotSeries_fmetric);
+
+                    OxyPlot.PlotModel groupingboxplotmodel_npr = new PlotModel() { Title = $"Grouping Boxplots for {parameters[i]}" };
+                    groupingboxplotmodel_npr.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+                    groupingboxplotmodel_npr.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (negative predictions)" });
+                    var groupingBoxPlotSeries_npr = new BoxPlotSeries() { BoxWidth = 0.025 };
+                    groupingboxplotmodel_npr.Series.Add(groupingBoxPlotSeries_npr);
+
+                    OxyPlot.PlotModel groupingboxplotmodel_prec = new PlotModel() { Title = $"Grouping Boxplots for {parameters[i]}" };
+                    groupingboxplotmodel_prec.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+                    groupingboxplotmodel_prec.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (precision)" });
+                    var groupingBoxPlotSeries_prec = new BoxPlotSeries() { BoxWidth = 0.025 };
+                    groupingboxplotmodel_prec.Series.Add(groupingBoxPlotSeries_prec);
+
+                    OxyPlot.PlotModel groupingboxplotmodel_rec = new PlotModel() { Title = $"Grouping Boxplots for {parameters[i]}" };
+                    groupingboxplotmodel_rec.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+                    groupingboxplotmodel_rec.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (recall)" });
+                    var groupingBoxPlotSeries_rec = new BoxPlotSeries() { BoxWidth = 0.025 };
+                    groupingboxplotmodel_rec.Series.Add(groupingBoxPlotSeries_rec);
+
+                    OxyPlot.PlotModel groupingboxplotmodel_spec = new PlotModel() { Title = $"Grouping Boxplots for {parameters[i]}" };
+                    groupingboxplotmodel_spec.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+                    groupingboxplotmodel_spec.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (speceficity)" });
+                    var groupingBoxPlotSeries_spec = new BoxPlotSeries() { BoxWidth = 0.025 };
+                    groupingboxplotmodel_spec.Series.Add(groupingBoxPlotSeries_spec);
+
+                    OxyPlot.PlotModel groupingboxplotmodel_mcc = new PlotModel() { Title = $"Grouping Boxplots for {parameters[i]}" };
+                    groupingboxplotmodel_mcc.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 0.95, Title = "Process completion" });
+                    groupingboxplotmodel_mcc.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (MCC)" });
+                    var groupingBoxPlotSeries_mcc = new BoxPlotSeries() { BoxWidth = 0.025 };
+                    groupingboxplotmodel_mcc.Series.Add(groupingBoxPlotSeries_mcc);
 
                     //iterate through each bucket
                     for (int j = 0; j * BucketGranularity < 1; j++)
                     {
                         var tbuckets = allBuckets.Where(t => t.BucketLevel == j && t.Parameters[group] == parameters[i].ToString());
-                        var val = 0d;
+                        var val_acc = 0d;
+                        var val_fpr = 0d;
+                        var val_fmetric = 0d;
+                        var val_npr = 0d;
+                        var val_prec = 0d;
+                        var val_rec = 0d;
+                        var val_spec = 0d;
+                        var val_mcc = 0d;
+                        if (tbuckets.Where(t => !double.IsNaN(t.AccuracyTarget)).Any())
+                        {
+                            val_acc = tbuckets.Where(t => !double.IsNaN(t.AccuracyTarget)).Average(t => t.AccuracyTarget);
+                            groupingBoxPlotSeries_acc.Items.Add(CreateBoxplot(tbuckets.Where(t => !double.IsNaN(t.AccuracyTarget)).Select(t => t.AccuracyTarget).ToList(), j * BucketGranularity));
+                        }
+                        if (tbuckets.Where(t => !double.IsNaN(t.FalsePositiveRateTarget)).Any())
+                        {
+                            val_fpr = tbuckets.Where(t => !double.IsNaN(t.FalsePositiveRateTarget)).Average(t => t.FalsePositiveRateTarget);
+                            groupingBoxPlotSeries_fpr.Items.Add(CreateBoxplot(tbuckets.Where(t => !double.IsNaN(t.FalsePositiveRateTarget)).Select(t => t.FalsePositiveRateTarget).ToList(), j * BucketGranularity));
+                        }
+                        if (tbuckets.Where(t => !double.IsNaN(t.FMeasureTarget)).Any())
+                        {
+                            val_fmetric = tbuckets.Where(t => !double.IsNaN(t.FMeasureTarget)).Average(t => t.FMeasureTarget);
+                            groupingBoxPlotSeries_fmetric.Items.Add(CreateBoxplot(tbuckets.Where(t => !double.IsNaN(t.FMeasureTarget)).Select(t => t.FMeasureTarget).ToList(), j * BucketGranularity));
+                        }
+                        if (tbuckets.Where(t => !double.IsNaN(t.NegativePredictedValueTarget)).Any())
+                        {
+                            val_npr = tbuckets.Where(t => !double.IsNaN(t.NegativePredictedValueTarget)).Average(t => t.NegativePredictedValueTarget);
+                            groupingBoxPlotSeries_npr.Items.Add(CreateBoxplot(tbuckets.Where(t => !double.IsNaN(t.NegativePredictedValueTarget)).Select(t => t.NegativePredictedValueTarget).ToList(), j * BucketGranularity));
+                        }
+                        if (tbuckets.Where(t => !double.IsNaN(t.PrecisionTarget)).Any())
+                        {
+                            val_prec = tbuckets.Where(t => !double.IsNaN(t.PrecisionTarget)).Average(t => t.PrecisionTarget);
+                            groupingBoxPlotSeries_prec.Items.Add(CreateBoxplot(tbuckets.Where(t => !double.IsNaN(t.PrecisionTarget)).Select(t => t.PrecisionTarget).ToList(), j * BucketGranularity));
+                        }
+                        if (tbuckets.Where(t => !double.IsNaN(t.RecallTarget)).Any())
+                        {
+                            val_rec = tbuckets.Where(t => !double.IsNaN(t.RecallTarget)).Average(t => t.RecallTarget);
+                            groupingBoxPlotSeries_rec.Items.Add(CreateBoxplot(tbuckets.Where(t => !double.IsNaN(t.RecallTarget)).Select(t => t.RecallTarget).ToList(), j * BucketGranularity));
+                        }
+                        if (tbuckets.Where(t => !double.IsNaN(t.SpecificityTarget)).Any())
+                        {
+                            val_spec = tbuckets.Where(t => !double.IsNaN(t.SpecificityTarget)).Average(t => t.SpecificityTarget);
+                            groupingBoxPlotSeries_spec.Items.Add(CreateBoxplot(tbuckets.Where(t => !double.IsNaN(t.SpecificityTarget)).Select(t => t.SpecificityTarget).ToList(), j * BucketGranularity));
+                        }
                         if (tbuckets.Where(t => !double.IsNaN(t.MCC_Target)).Any())
                         {
-                            val = tbuckets.Where(t => !double.IsNaN(t.MCC_Target)).Average(t => t.MCC_Target);
-                            groupingBoxPlotSeries.Items.Add(CreateBoxplot(tbuckets.Where(t => !double.IsNaN(t.MCC_Target)).Select(t => t.MCC_Target).ToList(), j * BucketGranularity));
+                            val_mcc = tbuckets.Where(t => !double.IsNaN(t.MCC_Target)).Average(t => t.MCC_Target);
+                            groupingBoxPlotSeries_mcc.Items.Add(CreateBoxplot(tbuckets.Where(t => !double.IsNaN(t.MCC_Target)).Select(t => t.MCC_Target).ToList(), j * BucketGranularity));
                         }
-                        groupingSeries.Points.Add(new DataPoint(j * BucketGranularity, val));
-                        grouping0line.Add(val.ToString());
-
+                        groupingSeries_acc.Points.Add(new DataPoint(j * BucketGranularity, val_acc));
+                        groupingSeries_fpr.Points.Add(new DataPoint(j * BucketGranularity, val_fpr));
+                        groupingSeries_fmetric.Points.Add(new DataPoint(j * BucketGranularity, val_fmetric));
+                        groupingSeries_npr.Points.Add(new DataPoint(j * BucketGranularity, val_npr));
+                        groupingSeries_prec.Points.Add(new DataPoint(j * BucketGranularity, val_prec));
+                        groupingSeries_rec.Points.Add(new DataPoint(j * BucketGranularity, val_rec));
+                        groupingSeries_spec.Points.Add(new DataPoint(j * BucketGranularity, val_spec));
+                        groupingSeries_mcc.Points.Add(new DataPoint(j * BucketGranularity, val_mcc));
+                        grouping0line_acc.Add(val_acc.ToString());
+                        grouping0line_fpr.Add(val_fpr.ToString());
+                        grouping0line_fmetric.Add(val_fmetric.ToString());
+                        grouping0line_npr.Add(val_npr.ToString());
+                        grouping0line_prec.Add(val_prec.ToString());
+                        grouping0line_rec.Add(val_rec.ToString());
+                        grouping0line_spec.Add(val_spec.ToString());
+                        grouping0line_mcc.Add(val_mcc.ToString());
                     }
-                    model_groupings0.Series.Add(groupingSeries);
-                    grouping0out.Add(String.Join(",", grouping0line));
-                    using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}.pdf", FileMode.OpenOrCreate))
+                    model_groupings0accuracy.Series.Add(groupingSeries_acc);
+                    model_groupings0falsepositives.Series.Add(groupingSeries_fpr);
+                    model_groupings0fmetric.Series.Add(groupingSeries_fmetric);
+                    model_groupings0negativepredictions.Series.Add(groupingSeries_npr);
+                    model_groupings0precision.Series.Add(groupingSeries_prec);
+                    model_groupings0recall.Series.Add(groupingSeries_rec);
+                    model_groupings0speceficity.Series.Add(groupingSeries_spec);
+                    model_groupings0mcc.Series.Add(groupingSeries_mcc);
+                    grouping0acc_out.Add(String.Join(",", grouping0line_acc));
+                    grouping0fpr_out.Add(String.Join(",", grouping0line_fpr));
+                    grouping0fmetric_out.Add(String.Join(",", grouping0line_fmetric));
+                    grouping0npr_out.Add(String.Join(",", grouping0line_npr));
+                    grouping0prec_out.Add(String.Join(",", grouping0line_prec));
+                    grouping0rec_out.Add(String.Join(",", grouping0line_rec));
+                    grouping0spec_out.Add(String.Join(",", grouping0line_spec));
+                    grouping0mcc_out.Add(String.Join(",", grouping0line_mcc));
+                    using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_acc.pdf", FileMode.OpenOrCreate))
                     {
-                        OxyPlot.PdfExporter.Export(groupingboxplotmodel, filestream, PlotModelWidth, PlotModelHeight);
+                        OxyPlot.PdfExporter.Export(groupingboxplotmodel_acc, filestream, PlotModelWidth, PlotModelHeight);
+                        filestream.Close();
+                    }
+                    using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_fpr.pdf", FileMode.OpenOrCreate))
+                    {
+                        OxyPlot.PdfExporter.Export(groupingboxplotmodel_fpr, filestream, PlotModelWidth, PlotModelHeight);
+                        filestream.Close();
+                    }
+                    using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_fmetric.pdf", FileMode.OpenOrCreate))
+                    {
+                        OxyPlot.PdfExporter.Export(groupingboxplotmodel_fmetric, filestream, PlotModelWidth, PlotModelHeight);
+                        filestream.Close();
+                    }
+                    using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_npr.pdf", FileMode.OpenOrCreate))
+                    {
+                        OxyPlot.PdfExporter.Export(groupingboxplotmodel_npr, filestream, PlotModelWidth, PlotModelHeight);
+                        filestream.Close();
+                    }
+                    using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_prec.pdf", FileMode.OpenOrCreate))
+                    {
+                        OxyPlot.PdfExporter.Export(groupingboxplotmodel_prec, filestream, PlotModelWidth, PlotModelHeight);
+                        filestream.Close();
+                    }
+                    using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_rec.pdf", FileMode.OpenOrCreate))
+                    {
+                        OxyPlot.PdfExporter.Export(groupingboxplotmodel_rec, filestream, PlotModelWidth, PlotModelHeight);
+                        filestream.Close();
+                    }
+                    using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_spec.pdf", FileMode.OpenOrCreate))
+                    {
+                        OxyPlot.PdfExporter.Export(groupingboxplotmodel_spec, filestream, PlotModelWidth, PlotModelHeight);
+                        filestream.Close();
+                    }
+                    using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_mcc.pdf", FileMode.OpenOrCreate))
+                    {
+                        OxyPlot.PdfExporter.Export(groupingboxplotmodel_mcc, filestream, PlotModelWidth, PlotModelHeight);
                         filestream.Close();
                     }
 
                 }
-                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}.pdf", FileMode.OpenOrCreate))
+                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_acc.pdf", FileMode.OpenOrCreate))
                 {
-                    OxyPlot.PdfExporter.Export(model_groupings0, filestream, PlotModelWidth, PlotModelHeight);
+                    OxyPlot.PdfExporter.Export(model_groupings0accuracy, filestream, PlotModelWidth, PlotModelHeight);
                     filestream.Close();
                 }
-                File.WriteAllLines($"{ResultsFolder.FullName}\\grouping{group}.csv", grouping0out);
+                File.WriteAllLines($"{ResultsFolder.FullName}\\grouping{group}_acc.csv", grouping0acc_out);
+
+                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_fpr.pdf", FileMode.OpenOrCreate))
+                {
+                    OxyPlot.PdfExporter.Export(model_groupings0falsepositives, filestream, PlotModelWidth, PlotModelHeight);
+                    filestream.Close();
+                }
+                File.WriteAllLines($"{ResultsFolder.FullName}\\grouping{group}_fpr.csv", grouping0fpr_out);
+
+                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_fmetric.pdf", FileMode.OpenOrCreate))
+                {
+                    OxyPlot.PdfExporter.Export(model_groupings0fmetric, filestream, PlotModelWidth, PlotModelHeight);
+                    filestream.Close();
+                }
+                File.WriteAllLines($"{ResultsFolder.FullName}\\grouping{group}_fmetric.csv", grouping0fmetric_out);
+
+                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_npr.pdf", FileMode.OpenOrCreate))
+                {
+                    OxyPlot.PdfExporter.Export(model_groupings0negativepredictions, filestream, PlotModelWidth, PlotModelHeight);
+                    filestream.Close();
+                }
+                File.WriteAllLines($"{ResultsFolder.FullName}\\grouping{group}_npr.csv", grouping0npr_out);
+
+                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_prec.pdf", FileMode.OpenOrCreate))
+                {
+                    OxyPlot.PdfExporter.Export(model_groupings0precision, filestream, PlotModelWidth, PlotModelHeight);
+                    filestream.Close();
+                }
+                File.WriteAllLines($"{ResultsFolder.FullName}\\grouping{group}_prec.csv", grouping0prec_out);
+
+                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_rec.pdf", FileMode.OpenOrCreate))
+                {
+                    OxyPlot.PdfExporter.Export(model_groupings0recall, filestream, PlotModelWidth, PlotModelHeight);
+                    filestream.Close();
+                }
+                File.WriteAllLines($"{ResultsFolder.FullName}\\grouping{group}_rec.csv", grouping0rec_out);
+
+                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_spec.pdf", FileMode.OpenOrCreate))
+                {
+                    OxyPlot.PdfExporter.Export(model_groupings0speceficity, filestream, PlotModelWidth, PlotModelHeight);
+                    filestream.Close();
+                }
+                File.WriteAllLines($"{ResultsFolder.FullName}\\grouping{group}_spec.csv", grouping0spec_out);
+
+                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_mcc.pdf", FileMode.OpenOrCreate))
+                {
+                    OxyPlot.PdfExporter.Export(model_groupings0mcc, filestream, PlotModelWidth, PlotModelHeight);
+                    filestream.Close();
+                }
+                File.WriteAllLines($"{ResultsFolder.FullName}\\grouping{group}_mcc.csv", grouping0mcc_out);
 
             }
             #endregion
