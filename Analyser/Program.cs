@@ -43,6 +43,8 @@ namespace Analyser
             @"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag1.0 1"
         };
 
+        private const bool clearFolder = true;
+
         static void Main(string[] args)
         {
             //enforce decimal encoding
@@ -56,6 +58,10 @@ namespace Analyser
                 DirectoryInfo ResultsFolder = new DirectoryInfo(folder);
                 DirectoryInfo InFolder = new DirectoryInfo(ResultsFolder.FullName + @"\raw");
                 List<FileInfo> InFiles = InFolder.EnumerateFiles("*", SearchOption.AllDirectories).Where(t => t.Name.Contains(".csv") && !t.Name.Contains(".edited.csv")).ToList();
+
+                //clear folder if defined //WARNING: WILL DELETE ALL FILES IN SAID FOLDER
+                if (clearFolder)
+                    ResultsFolder.GetFiles().ToList().ForEach(t => t.Delete());
 
                 //globals
                 int maxSequences = 0;
@@ -244,14 +250,20 @@ namespace Analyser
                 //add ensembles on top
                 #region ensemble                
 
-                OxyPlot.PlotModel ensemblePlot = new PlotModel() { Title = "Results: Ensemble majority vote" };
-                ensemblePlot.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = ensembleBuckets.Count, Title = "Ensemble Size" });
-                ensemblePlot.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = -1, Maximum = 1, Title = "MCC Value" });
-                LineSeries mccensembleSeries = new LineSeries() { Title = "mcc" };
-                LineSeries reliabilityensembleseries = new LineSeries() { Title = "reliability" };
-                ensemblePlot.Series.Add(mccensembleSeries);
-                ensemblePlot.Series.Add(reliabilityensembleseries);
-                ensemblePlot.IsLegendVisible = true;
+                OxyPlot.PlotModel ensemblePlot_bysize = new PlotModel() { Title = "Results: Ensemble majority vote by ensemble size" };
+                ensemblePlot_bysize.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = ensembleBuckets.Count, Title = "Ensemble Size" });
+                ensemblePlot_bysize.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = -1, Maximum = 1, Title = "MCC Value" });
+                LineSeries mccensemblesizeSeries = new LineSeries() { Title = "mcc" };
+                LineSeries reliabilityensemblesizeseries = new LineSeries() { Title = "reliability" };
+                ensemblePlot_bysize.Series.Add(mccensemblesizeSeries);
+                ensemblePlot_bysize.Series.Add(reliabilityensemblesizeseries);
+                ensemblePlot_bysize.IsLegendVisible = true;
+
+                OxyPlot.PlotModel ensemblePlot_byprogress = new PlotModel() { Title = "Results: Ensemble majority vote by process progress" };
+                ensemblePlot_byprogress.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 1, Title = "Progress" });
+                ensemblePlot_byprogress.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "MCC / Reliability" });
+                
+                ensemblePlot_byprogress.IsLegendVisible = true;
 
                 var allLines = bagLines.ToList();
                 for (int i = 0; i < allLines.Count; i++)
@@ -261,14 +273,25 @@ namespace Analyser
                         items.Add(allLines[j]);
 
                     Ensemble ensemble = new Ensemble(items);
-                    mccensembleSeries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.MCC));
-                    reliabilityensembleseries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.Reliability));
+                    mccensemblesizeSeries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.MCC));
+                    reliabilityensemblesizeseries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.Reliability));
                     //export to csv
                     File.WriteAllLines($"{ResultsFolder.FullName}\\raw_ensemble_size{i}_mcc.csv", ensemble.ExportToCsv());
 
                     var ensembleLines = GetLinesFromEnsemble(ensemble, false, false);
                     //get buckets
                     var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { "ensemble", i.ToString(), "100", "0.1", "20","1" }, TargetData.TS, BucketingType, ensembleLines, false, false);
+
+                    LineSeries mccensembleprogressSeries = new LineSeries() { Title = $"mcc ensemble {i}" };
+                    LineSeries reliabilityensembleprogressseries = new LineSeries() { Title = $"reliability ensemble {i}" };
+                    ensemblePlot_byprogress.Series.Add(mccensembleprogressSeries);
+                    ensemblePlot_byprogress.Series.Add(reliabilityensembleprogressseries);
+                    foreach (var bucket in BucketList)
+                    {
+                        //add buckets to chart
+                        mccensembleprogressSeries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC_Target));
+                        reliabilityensembleprogressseries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, ensemble.GetReliabilityForBucket(bucket.BucketLevel, BucketGranularity)));
+                    }
                     RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { "ensemble", i.ToString(), "100", "0.1", "20", "1" }, string.Empty,
                         model_glob_precision_target,
                         model_glob_recall_target,
@@ -282,9 +305,14 @@ namespace Analyser
                         ref counter);
 
                 }
-                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\ensemble_mcc.pdf", FileMode.OpenOrCreate))
+                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\ensemble_mcc_bysize.pdf", FileMode.OpenOrCreate))
                 {
-                    OxyPlot.PdfExporter.Export(ensemblePlot, filestream, PlotModelWidth * 2, PlotModelHeight);
+                    OxyPlot.PdfExporter.Export(ensemblePlot_bysize, filestream, PlotModelWidth * 2, PlotModelHeight);
+                    filestream.Close();
+                }
+                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\ensemble_mcc_byprogress.pdf", FileMode.OpenOrCreate))
+                {
+                    OxyPlot.PdfExporter.Export(ensemblePlot_byprogress, filestream, PlotModelWidth * 2, PlotModelHeight);
                     filestream.Close();
                 }
 

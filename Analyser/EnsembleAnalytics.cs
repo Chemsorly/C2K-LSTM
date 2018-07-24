@@ -31,6 +31,15 @@ namespace Analyser
 
         public double Reliability => EnsembleLines.Average(t => t.Reliability);
 
+        public double GetReliabilityForBucket(double pBucketLevel, double pBucketGranularity)
+        {
+            var lines = EnsembleLines.Where(line => line.Completion >= pBucketLevel * pBucketGranularity && line.Completion < (pBucketLevel + 1) * pBucketGranularity);
+            if (lines.Any())
+                return lines.Average(t => t.Reliability);
+            else
+                return 0;
+        }
+
         int TPcount => EnsembleLines.Count(t => t.ActualViolation && t.PredictedViolation);
         int FPcount => EnsembleLines.Count(t => !t.ActualViolation && t.PredictedViolation);
         int FNcount => EnsembleLines.Count(t => t.ActualViolation && !t.PredictedViolation);
