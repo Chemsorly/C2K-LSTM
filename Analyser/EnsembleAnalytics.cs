@@ -72,18 +72,20 @@ namespace Analyser
             InstanceId = pLines.First().GT_InstanceID;
             ActualPlanned = pLines.First().GT_Planned;
             PrefixActivities = pLines.First().PrefixActivities;
-            SuffixActivitirs = pLines.First().SuffixActivities;
+            SuffixActivities = pLines.First().SuffixActivities;
+            Completion = pLines.First().Completion;
         }
 
         List<EnsembleVote> EnsembleVotes { get; } = new List<EnsembleVote>();
         public bool ActualViolation { get; }
         public double ActualValue { get; }
         public double ActualPlanned { get; }
+        public double Completion { get; }
         public int Prefix { get; }
         public int InstanceLength { get; }
         public int InstanceId { get; }
         public String PrefixActivities { get; }
-        public String SuffixActivitirs { get; }
+        public String SuffixActivities { get; }
 
         public bool PredictedViolation => ((double)EnsembleVotes.Count(t => t.Violation == true) / (double)EnsembleVotes.Count) > 0.5;
         public double MedianPrediction => Program.Median(EnsembleVotes.Select(t => t.Prediction).ToArray());

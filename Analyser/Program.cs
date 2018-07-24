@@ -31,15 +31,15 @@ namespace Analyser
 
         static List<String> folders = new List<string>()
         {
-            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.1 1",
-            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.2 1",
-            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.3 1",
-            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.4 1",
-            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.5 1",
-            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.6 1",
-            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.7 1",
-            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.8 1",
-            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.9 1",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.1 1",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.2 1",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.3 1",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.4 1",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.5 1",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.6 1",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.7 1",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.8 1",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.9 1",
             @"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag1.0 1"
         };
 
@@ -268,8 +268,8 @@ namespace Analyser
 
                     var ensembleLines = GetLinesFromEnsemble(ensemble, false, false);
                     //get buckets
-                    var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { "ensemble", i.ToString(), "", "", "" }, TargetData.TS, BucketingType, ensembleLines, false, false);
-                    RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { "ensemble", i.ToString(), "", "", "" }, string.Empty,
+                    var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { "ensemble", i.ToString(), "100", "0.1", "20","1" }, TargetData.TS, BucketingType, ensembleLines, false, false);
+                    RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { "ensemble", i.ToString(), "100", "0.1", "20", "1" }, string.Empty,
                         model_glob_precision_target,
                         model_glob_recall_target,
                         model_glob_speceficity_target,
@@ -1474,14 +1474,13 @@ namespace Analyser
                 if (IsBinaryPrediction)
                     line.Predicted_Violations = fields[13] == "true";
 
-                output.Add(line);
-
                 //calculate accuracy values
                 line.Violation_Effective = line.GT_Timestamp > line.GT_Planned;
                 line.Violation_PredictedSP = line.SumPrevious > line.GT_Planned;
                 line.Violation_PredictedTS = line.Timestamp > line.GT_Planned;
                 line.AccuracySumprevious = CalculateAccuracy(line.SumPrevious, line.GT_SumPrevious);
                 line.AccuracyTimestamp = CalculateAccuracy(line.Timestamp, line.GT_Timestamp);
+                output.Add(line);
             }
             return output;
         }
@@ -1491,7 +1490,7 @@ namespace Analyser
             List<Line> output = new List<Line>();
             foreach(var enLine in ensemble.EnsembleLines)
             {
-                output.Add(new Line()
+                var line = new Line()
                 {
                     IsBinaryPrediction = IsBinaryPrediction,
                     IsRGBEncoding = IsRGBencoding,
@@ -1501,20 +1500,22 @@ namespace Analyser
                     Prefix = enLine.Prefix,
                     SumPrevious = enLine.MedianPrediction,
                     Timestamp = enLine.MedianPrediction,
-                    Completion = (double)enLine.Prefix / (double)enLine.InstanceLength,
+                    Completion = enLine.Completion,
                     GT_SumPrevious = (int)enLine.ActualValue,
                     GT_Timestamp = (int)enLine.ActualValue,
                     GT_Planned = (int)enLine.ActualPlanned,
                     GT_InstanceID = enLine.InstanceId,
                     PrefixActivities = enLine.PrefixActivities,
                     //PredictedActivities = fields[11],
-                    SuffixActivities = enLine.SuffixActivitirs,  
-                    
+                    SuffixActivities = enLine.SuffixActivities,
+
                     Violation_Effective = enLine.ActualViolation,
                     Violation_PredictedSP = enLine.PredictedViolation,
                     Violation_PredictedTS = enLine.PredictedViolation
-                });
+                };
+                output.Add(line);
             }
+
             return output;
         }
         public static double CalculateAccuracy(double pInput, double pReference)
