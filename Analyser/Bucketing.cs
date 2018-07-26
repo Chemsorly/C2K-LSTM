@@ -19,6 +19,7 @@ namespace Analyser
                     BucketLevel = i,
                     Parameters = Parameters,
                     Target = TargetData,
+                    Lines = new List<Line>(),
                     Prediction_SP = new List<double>(),
                     Prediction_TS = new List<double>(),
                     ViolationStringsTS = new List<string>(),
@@ -41,6 +42,7 @@ namespace Analyser
                         if (line.Completion >= i * BucketGranularity &&
                             line.Completion < (i + 1) * BucketGranularity)
                         {
+                            BucketList[i].Lines.Add(line);
                             BucketList[i].Prediction_SP.Add(line.SumPrevious);
                             BucketList[i].Prediction_TS.Add(line.Timestamp);
                             BucketList[i].ViolationStringsSP.Add(line.Violation_StringSP);
@@ -82,6 +84,7 @@ namespace Analyser
                     if (indexout == line.Prefix)
                     {
                         line.Completion = 0.5d;
+                        midbucket.Lines.Add(line);
                         midbucket.Prediction_SP.Add(line.SumPrevious);
                         midbucket.Prediction_TS.Add(line.Timestamp);
                         midbucket.ViolationStringsSP.Add(line.Violation_StringSP);
@@ -105,6 +108,7 @@ namespace Analyser
                         {
                             if (completion >= i * BucketGranularity && completion < (i + 1) * BucketGranularity)
                             {
+                                BucketList[i].Lines.Add(line);
                                 BucketList[i].Prediction_SP.Add(line.SumPrevious);
                                 BucketList[i].Prediction_TS.Add(line.Timestamp);
                                 BucketList[i].ViolationStringsSP.Add(line.Violation_StringSP);
@@ -134,7 +138,7 @@ namespace Analyser
                             {
                                 if (BucketList[i] == midbucket)
                                     i++;
-
+                                BucketList[i].Lines.Add(line);
                                 BucketList[i].Prediction_SP.Add(line.SumPrevious);
                                 BucketList[i].Prediction_TS.Add(line.Timestamp);
                                 BucketList[i].ViolationStringsSP.Add(line.Violation_StringSP);

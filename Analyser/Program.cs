@@ -31,16 +31,7 @@ namespace Analyser
 
         static List<String> folders = new List<string>()
         {
-            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.1 1",
-            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.2 1",
-            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.3 1",
-            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.4 1",
-            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.5 1",
-            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.6 1",
-            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.7 1",
-            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.8 1",
-            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag0.9 1",
-            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bag1.0 1"
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn baseline"
         };
 
         private const bool clearFolder = true;
@@ -250,22 +241,38 @@ namespace Analyser
                 //add ensembles on top
                 #region ensemble                
 
-                OxyPlot.PlotModel ensemblePlot_bysize = new PlotModel() { Title = "Results: Ensemble majority vote by ensemble size" };
-                ensemblePlot_bysize.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = ensembleBuckets.Count, Title = "Ensemble Size" });
-                ensemblePlot_bysize.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = -1, Maximum = 1, Title = "MCC Value" });
-                LineSeries mccensemblesizeSeries = new LineSeries() { Title = "mcc" };
-                LineSeries reliabilityensemblesizeseries = new LineSeries() { Title = "reliability" };
-                ensemblePlot_bysize.Series.Add(mccensemblesizeSeries);
-                ensemblePlot_bysize.Series.Add(reliabilityensemblesizeseries);
-                ensemblePlot_bysize.IsLegendVisible = true;
+                OxyPlot.PlotModel ensemblePlot_bysizeUnsorted = new PlotModel() { Title = "Results: unsorted ensemble majority vote by ensemble size" };
+                ensemblePlot_bysizeUnsorted.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = ensembleBuckets.Count, Title = "Ensemble Size" });
+                ensemblePlot_bysizeUnsorted.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = -1, Maximum = 1, Title = "MCC Value" });
+                LineSeries mccensemblesizeUnsortedSeries = new LineSeries() { Title = "mcc" };
+                LineSeries reliabilityensemblesizeUnsortedSeries = new LineSeries() { Title = "reliability" };
+                ensemblePlot_bysizeUnsorted.Series.Add(mccensemblesizeUnsortedSeries);
+                ensemblePlot_bysizeUnsorted.Series.Add(reliabilityensemblesizeUnsortedSeries);
+                ensemblePlot_bysizeUnsorted.IsLegendVisible = true;
 
-                OxyPlot.PlotModel ensemblePlot_byprogress = new PlotModel() { Title = "Results: Ensemble majority vote by process progress" };
-                ensemblePlot_byprogress.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 1, Title = "Progress" });
-                ensemblePlot_byprogress.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "MCC / Reliability" });
-                
-                ensemblePlot_byprogress.IsLegendVisible = true;
+                OxyPlot.PlotModel ensemblePlot_bysizeBoosted = new PlotModel() { Title = "Results: boosted ensemble majority vote by ensemble size" };
+                ensemblePlot_bysizeBoosted.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = ensembleBuckets.Count, Title = "Ensemble Size" });
+                ensemblePlot_bysizeBoosted.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = -1, Maximum = 1, Title = "MCC Value" });
+                LineSeries mccensemblesizeBoostedSeries = new LineSeries() { Title = "mcc" };
+                LineSeries reliabilityensemblesizeBoostedSeries = new LineSeries() { Title = "reliability" };
+                ensemblePlot_bysizeBoosted.Series.Add(mccensemblesizeBoostedSeries);
+                ensemblePlot_bysizeBoosted.Series.Add(reliabilityensemblesizeBoostedSeries);
+                ensemblePlot_bysizeBoosted.IsLegendVisible = true;
+
+                OxyPlot.PlotModel ensemblePlot_byprogressUnsorted = new PlotModel() { Title = "Results: unsorted ensemble majority vote by process progress" };
+                ensemblePlot_byprogressUnsorted.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 1, Title = "Progress" });
+                ensemblePlot_byprogressUnsorted.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "MCC / Reliability" });                
+                ensemblePlot_byprogressUnsorted.IsLegendVisible = true;
+
+                OxyPlot.PlotModel ensemblePlot_byprogressBoosted = new PlotModel() { Title = "Results: unsorted ensemble majority vote by process progress" };
+                ensemblePlot_byprogressBoosted.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 1, Title = "Progress" });
+                ensemblePlot_byprogressBoosted.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "MCC / Reliability" });
+                ensemblePlot_byprogressBoosted.IsLegendVisible = true;
 
                 var allLines = bagLines.ToList();
+                var mccsortedAllLines = ensembleBuckets.OrderBy(t => t.Sum(u => u.MCC_Target)).Select(t => t.SelectMany(u => u.Lines).ToList()).ToList();
+
+                //run for unsorted
                 for (int i = 0; i < allLines.Count; i++)
                 {
                     List<List<Line>> items = new List<List<Line>>();
@@ -273,26 +280,26 @@ namespace Analyser
                         items.Add(allLines[j]);
 
                     Ensemble ensemble = new Ensemble(items);
-                    mccensemblesizeSeries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.MCC));
-                    reliabilityensemblesizeseries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.Reliability));
+                    mccensemblesizeUnsortedSeries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.MCC));
+                    reliabilityensemblesizeUnsortedSeries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.Reliability));
                     //export to csv
-                    File.WriteAllLines($"{ResultsFolder.FullName}\\raw_ensemble_size{i}_mcc.csv", ensemble.ExportToCsv());
+                    File.WriteAllLines($"{ResultsFolder.FullName}\\raw_ensemble_size_unsorted{i}_mcc.csv", ensemble.ExportToCsv());
 
                     var ensembleLines = GetLinesFromEnsemble(ensemble, false, false);
                     //get buckets
-                    var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { "ensemble", i.ToString(), "100", "0.1", "20","1" }, TargetData.TS, BucketingType, ensembleLines, false, false);
+                    var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { "ensemble_unsorted", i.ToString(), "100", "0.1", "20","1" }, TargetData.TS, BucketingType, ensembleLines, false, false);
 
                     LineSeries mccensembleprogressSeries = new LineSeries() { Title = $"mcc ensemble {i}" };
                     LineSeries reliabilityensembleprogressseries = new LineSeries() { Title = $"reliability ensemble {i}" };
-                    ensemblePlot_byprogress.Series.Add(mccensembleprogressSeries);
-                    ensemblePlot_byprogress.Series.Add(reliabilityensembleprogressseries);
+                    ensemblePlot_byprogressUnsorted.Series.Add(mccensembleprogressSeries);
+                    ensemblePlot_byprogressUnsorted.Series.Add(reliabilityensembleprogressseries);
                     foreach (var bucket in BucketList)
                     {
                         //add buckets to chart
                         mccensembleprogressSeries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC_Target));
                         reliabilityensembleprogressseries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, ensemble.GetReliabilityForBucket(bucket.BucketLevel, BucketGranularity)));
                     }
-                    RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { "ensemble", i.ToString(), "100", "0.1", "20", "1" }, string.Empty,
+                    RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { "ensemble_unsorted", i.ToString(), "100", "0.1", "20", "1" }, string.Empty,
                         model_glob_precision_target,
                         model_glob_recall_target,
                         model_glob_speceficity_target,
@@ -303,16 +310,67 @@ namespace Analyser
                         ref validSequences,
                         ref predictedSequences,
                         ref counter);
-
                 }
-                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\ensemble_mcc_bysize.pdf", FileMode.OpenOrCreate))
+
+                //run for mcc sorted (aka boosted)
+                for (int i = 0; i < mccsortedAllLines.Count; i++)
                 {
-                    OxyPlot.PdfExporter.Export(ensemblePlot_bysize, filestream, PlotModelWidth * 2, PlotModelHeight);
+                    List<List<Line>> items = new List<List<Line>>();
+                    for (int j = 0; j <= i; j++)
+                        items.Add(mccsortedAllLines[j]);
+
+                    Ensemble ensemble = new Ensemble(items);
+                    mccensemblesizeBoostedSeries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.MCC));
+                    reliabilityensemblesizeBoostedSeries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.Reliability));
+                    //export to csv
+                    File.WriteAllLines($"{ResultsFolder.FullName}\\raw_ensemble_size_boosted{i}_mcc.csv", ensemble.ExportToCsv());
+
+                    var ensembleLines = GetLinesFromEnsemble(ensemble, false, false);
+                    //get buckets
+                    var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { "ensemble_boosted", i.ToString(), "100", "0.1", "20", "1" }, TargetData.TS, BucketingType, ensembleLines, false, false);
+
+                    LineSeries mccensembleprogressSeries = new LineSeries() { Title = $"mcc ensemble {i}" };
+                    LineSeries reliabilityensembleprogressseries = new LineSeries() { Title = $"reliability ensemble {i}" };
+                    ensemblePlot_byprogressBoosted.Series.Add(mccensembleprogressSeries);
+                    ensemblePlot_byprogressBoosted.Series.Add(reliabilityensembleprogressseries);
+                    foreach (var bucket in BucketList)
+                    {
+                        //add buckets to chart
+                        mccensembleprogressSeries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC_Target));
+                        reliabilityensembleprogressseries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, ensemble.GetReliabilityForBucket(bucket.BucketLevel, BucketGranularity)));
+                    }
+                    RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { "ensemble_boosted", i.ToString(), "100", "0.1", "20", "1" }, string.Empty,
+                        model_glob_precision_target,
+                        model_glob_recall_target,
+                        model_glob_speceficity_target,
+                        model_glob_falsepositives_target,
+                        model_glob_negativepredictions_target,
+                        model_glob_accuracy_target,
+                        model_glob_mcc_target, model_glob_fmetric_target,
+                        ref validSequences,
+                        ref predictedSequences,
+                        ref counter);
+                }
+
+
+                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\ensemble_mcc_bysize_unsorted.pdf", FileMode.OpenOrCreate))
+                {
+                    OxyPlot.PdfExporter.Export(ensemblePlot_bysizeUnsorted, filestream, PlotModelWidth * 2, PlotModelHeight);
                     filestream.Close();
                 }
-                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\ensemble_mcc_byprogress.pdf", FileMode.OpenOrCreate))
+                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\ensemble_mcc_byprogress_unsorted.pdf", FileMode.OpenOrCreate))
                 {
-                    OxyPlot.PdfExporter.Export(ensemblePlot_byprogress, filestream, PlotModelWidth * 2, PlotModelHeight);
+                    OxyPlot.PdfExporter.Export(ensemblePlot_byprogressUnsorted, filestream, PlotModelWidth * 2, PlotModelHeight);
+                    filestream.Close();
+                }
+                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\ensemble_mcc_bysize_boosted.pdf", FileMode.OpenOrCreate))
+                {
+                    OxyPlot.PdfExporter.Export(ensemblePlot_bysizeBoosted, filestream, PlotModelWidth * 2, PlotModelHeight);
+                    filestream.Close();
+                }
+                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\ensemble_mcc_byprogress_boosted.pdf", FileMode.OpenOrCreate))
+                {
+                    OxyPlot.PdfExporter.Export(ensemblePlot_byprogressBoosted, filestream, PlotModelWidth * 2, PlotModelHeight);
                     filestream.Close();
                 }
 
@@ -1609,6 +1667,7 @@ namespace Analyser
 
         public class Bucket
         {
+            public List<Line> Lines { get; set; }
             public int BucketLevel { get; set; }
             public List<String> Parameters { get; set; }
             public TargetData Target { get; set; }
