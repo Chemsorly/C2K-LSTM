@@ -27,7 +27,7 @@ namespace Analyser
 
         public List<EnsembleLine> EnsembleLines { get; } = new List<EnsembleLine>();
 
-        public double MCC => (double)((TPcount * TNcount) - (FPcount * FNcount)) / Math.Sqrt((double)(TPcount + FPcount) * (TPcount + FNcount) * (TNcount + FPcount) * (TNcount + FNcount));
+        public double MCC => (double)((TPcount * TNcount) - (FPcount * FNcount)) / Math.Sqrt((double)(TPcount + FPcount) * (double)(TPcount + FNcount) * (double)(TNcount + FPcount) * (double)(TNcount + FNcount));
 
         public double Reliability => EnsembleLines.Average(t => t.Reliability);
 

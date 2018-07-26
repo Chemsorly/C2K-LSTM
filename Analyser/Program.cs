@@ -271,7 +271,6 @@ namespace Analyser
 
                 var allLines = bagLines.ToList();
                 var mccsortedBuckets = ensembleBuckets.Select(t => t.Where(u => !double.IsNaN(u.MCC_Target))).OrderByDescending(t => t.Sum(u => u.MCC_Target)); //.OrderBy(t => t.Where(u => !double.IsNaN(u.MCC_Target)).Sum(u => u.MCC_Target));
-                //var b1 = mccsortedBuckets.Select(s => s.Sum(t => t.MCC_Target));
                 var mccsortedAllLines = mccsortedBuckets.Select(t => t.SelectMany(u => u.Lines).ToList()).ToList();
 
                 //run for unsorted
@@ -313,6 +312,8 @@ namespace Analyser
                         ref predictedSequences,
                         ref counter);
                 });
+                mccensemblesizeUnsortedSeries.Points.Sort((x, y) => x.X.CompareTo(y.X));
+                reliabilityensemblesizeUnsortedSeries.Points.Sort((x, y) => x.X.CompareTo(y.X));
 
                 //run for mcc sorted (aka boosted)
                 Parallel.For(0, mccsortedAllLines.Count, i => //for (int i = 0; i < mccsortedAllLines.Count; i++)
@@ -353,6 +354,8 @@ namespace Analyser
                         ref predictedSequences,
                         ref counter);
                 });
+                mccensemblesizeBoostedSeries.Points.Sort((x, y) => x.X.CompareTo(y.X));
+                reliabilityensemblesizeBoostedSeries.Points.Sort((x, y) => x.X.CompareTo(y.X));
 
                 using (var filestream = new FileStream($"{ResultsFolder.FullName}\\ensemble_mcc_bysize_unsorted.pdf", FileMode.OpenOrCreate))
                 {
