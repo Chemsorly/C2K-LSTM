@@ -164,12 +164,12 @@ namespace Analyser
                 Parallel.ForEach(InFiles, file =>
                 {
                     int rows = 0;
-                    //numeric or binary
-                    bool IsBinaryPrediction = false;
-                    //rgb encoding
-                    bool IsRGBencoding = false;
-                    //no path encoding
-                    bool IsNopathEncoding = false;
+                //numeric or binary
+                bool IsBinaryPrediction = false;
+                //rgb encoding
+                bool IsRGBencoding = false;
+                //no path encoding
+                bool IsNopathEncoding = false;
                     List<String> Parameters = new List<String>();
                     List<Line> output = new List<Line>();
                     TargetData TargetData = TargetData.SP;
@@ -179,8 +179,8 @@ namespace Analyser
                         parser.TextFieldType = FieldType.Delimited;
                         parser.SetDelimiters(",");
 
-                        //List<String> Parameters = ExtractParams(file.Name.Replace("results-", String.Empty).Replace(".csv", String.Empty));
-                        Parameters = ExtractParams(file.Directory.Name);
+                    //List<String> Parameters = ExtractParams(file.Name.Replace("results-", String.Empty).Replace(".csv", String.Empty));
+                    Parameters = ExtractParams(file.Directory.Name);
                         if (Parameters.Any(t => t.Contains("binary")))
                         {
                             IsBinaryPrediction = true;
@@ -209,33 +209,33 @@ namespace Analyser
                         else
                             IsNopathEncoding = false;
 
-                        //add to global
-                        for (int i = 0; i < allParameters.Length; i++)
+                    //add to global
+                    for (int i = 0; i < allParameters.Length; i++)
                             allParameters[i].Add(Parameters[i]);
 
-                        //generate line objects
-                        output = GetLinesFromData(parser, ref rows, IsBinaryPrediction, IsRGBencoding);
+                    //generate line objects
+                    output = GetLinesFromData(parser, ref rows, IsBinaryPrediction, IsRGBencoding);
                     }
 
-                    //save longest sequence
-                    if (rows > maxSequences)
+                //save longest sequence
+                if (rows > maxSequences)
                         maxSequences = rows;
 
-                    //get buckets
-                    var BucketList = Bucketing.CreateBuckets(BucketGranularity, Parameters, TargetData, BucketingType, output, IsRGBencoding, IsNopathEncoding);
+                //get buckets
+                var BucketList = Bucketing.CreateBuckets(BucketGranularity, Parameters, TargetData, BucketingType, output, IsRGBencoding, IsNopathEncoding);
 
-                    //run workload
-                    RunPerFileWorkload(output, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, Parameters, file.FullName,
-                        model_glob_precision_target,
-                        model_glob_recall_target,
-                        model_glob_speceficity_target,
-                        model_glob_falsepositives_target,
-                        model_glob_negativepredictions_target,
-                        model_glob_accuracy_target,
-                        model_glob_mcc_target, model_glob_fmetric_target,
-                        ref validSequences,
-                        ref predictedSequences,
-                        ref counter);
+                //run workload
+                RunPerFileWorkload(output, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, Parameters, file.FullName,
+                model_glob_precision_target,
+                model_glob_recall_target,
+                model_glob_speceficity_target,
+                model_glob_falsepositives_target,
+                model_glob_negativepredictions_target,
+                model_glob_accuracy_target,
+                model_glob_mcc_target, model_glob_fmetric_target,
+                ref validSequences,
+                ref predictedSequences,
+                ref counter);
                 });
 
                 //add ensembles on top
@@ -261,7 +261,7 @@ namespace Analyser
 
                 OxyPlot.PlotModel ensemblePlot_byprogressUnsorted = new PlotModel() { Title = "Results: unsorted ensemble majority vote by process progress" };
                 ensemblePlot_byprogressUnsorted.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 1, Title = "Progress" });
-                ensemblePlot_byprogressUnsorted.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "MCC / Reliability" });                
+                ensemblePlot_byprogressUnsorted.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "MCC / Reliability" });
                 ensemblePlot_byprogressUnsorted.IsLegendVisible = true;
 
                 OxyPlot.PlotModel ensemblePlot_byprogressBoosted = new PlotModel() { Title = "Results: unsorted ensemble majority vote by process progress" };
@@ -270,10 +270,12 @@ namespace Analyser
                 ensemblePlot_byprogressBoosted.IsLegendVisible = true;
 
                 var allLines = bagLines.ToList();
-                var mccsortedAllLines = ensembleBuckets.OrderBy(t => t.Sum(u => u.MCC_Target)).Select(t => t.SelectMany(u => u.Lines).ToList()).ToList();
+                var mccsortedBuckets = ensembleBuckets.Select(t => t.Where(u => !double.IsNaN(u.MCC_Target))).OrderByDescending(t => t.Sum(u => u.MCC_Target)); //.OrderBy(t => t.Where(u => !double.IsNaN(u.MCC_Target)).Sum(u => u.MCC_Target));
+                //var b1 = mccsortedBuckets.Select(s => s.Sum(t => t.MCC_Target));
+                var mccsortedAllLines = mccsortedBuckets.Select(t => t.SelectMany(u => u.Lines).ToList()).ToList();
 
                 //run for unsorted
-                for (int i = 0; i < allLines.Count; i++)
+                Parallel.For(0, allLines.Count, i =>  //(int i = 0; i < allLines.Count; i++)
                 {
                     List<List<Line>> items = new List<List<Line>>();
                     for (int j = 0; j <= i; j++)
@@ -287,7 +289,7 @@ namespace Analyser
 
                     var ensembleLines = GetLinesFromEnsemble(ensemble, false, false);
                     //get buckets
-                    var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { "ensemble_unsorted", i.ToString(), "100", "0.1", "20","1" }, TargetData.TS, BucketingType, ensembleLines, false, false);
+                    var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { "ensemble_unsorted", i.ToString(), "100", "0.1", "20", "1" }, TargetData.TS, BucketingType, ensembleLines, false, false);
 
                     LineSeries mccensembleprogressSeries = new LineSeries() { Title = $"mcc ensemble {i}" };
                     LineSeries reliabilityensembleprogressseries = new LineSeries() { Title = $"reliability ensemble {i}" };
@@ -310,10 +312,10 @@ namespace Analyser
                         ref validSequences,
                         ref predictedSequences,
                         ref counter);
-                }
+                });
 
                 //run for mcc sorted (aka boosted)
-                for (int i = 0; i < mccsortedAllLines.Count; i++)
+                Parallel.For(0, mccsortedAllLines.Count, i => //for (int i = 0; i < mccsortedAllLines.Count; i++)
                 {
                     List<List<Line>> items = new List<List<Line>>();
                     for (int j = 0; j <= i; j++)
@@ -350,8 +352,7 @@ namespace Analyser
                         ref validSequences,
                         ref predictedSequences,
                         ref counter);
-                }
-
+                });
 
                 using (var filestream = new FileStream($"{ResultsFolder.FullName}\\ensemble_mcc_bysize_unsorted.pdf", FileMode.OpenOrCreate))
                 {
@@ -1381,7 +1382,7 @@ namespace Analyser
             );
 
             ////export as csv to match LSTM input examples
-            if(!String.IsNullOrWhiteSpace(file))
+            if (!String.IsNullOrWhiteSpace(file))
                 Task.Run(() => File.WriteAllLines($"{file.Replace(".csv", "")}.edited.csv", exportrows));
 
             //plot and export
@@ -1468,7 +1469,7 @@ namespace Analyser
             model_target.Series.Add(accuracySeries_target);
             model_target.Series.Add(fmetricSeries_target);
             model_target.Series.Add(MCCSeries_target);
-            if(!String.IsNullOrWhiteSpace(file))
+            if (!String.IsNullOrWhiteSpace(file))
                 Task.Run(() =>
                 {
                     using (var filestream = new FileStream($"{file.Replace(".csv", "")}.plot_target.pdf",
@@ -1574,7 +1575,7 @@ namespace Analyser
         public static List<Line> GetLinesFromEnsemble(Ensemble ensemble, bool IsBinaryPrediction, bool IsRGBencoding)
         {
             List<Line> output = new List<Line>();
-            foreach(var enLine in ensemble.EnsembleLines)
+            foreach (var enLine in ensemble.EnsembleLines)
             {
                 var line = new Line()
                 {
