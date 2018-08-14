@@ -31,7 +31,41 @@ namespace Analyser
 
         static List<String> folders = new List<string>()
         {
-            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn baseline"
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn baseline", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn no_overlap_s2i0", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn no_overlap_s2i1", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn sorting1 v1.31", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn sorting2 v1.32", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn sorting3 v1.33", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn sorting4 v1.34", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn sorting5 v1.35", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn no_overlap_s4i0", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn no_overlap_s4i1", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn no_overlap_s4i2", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn no_overlap_s4i3", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn no_overlap_s8i0", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn no_overlap_s8i1", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn no_overlap_s8i2", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn no_overlap_s8i3", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn no_overlap_s8i4", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn no_overlap_s8i5", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn no_overlap_s8i6", done 
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn no_overlap_s8i7", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bagging_10_v1.41", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bagging_09_v1.42", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bagging_08_v1.43", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bagging_07_v1.44", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bagging_06_v1.45", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bagging_05_v1.46", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bagging_04_v1.47", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bagging_03_v1.48", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bagging_02_v1.49", done
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bagging_01_v1.410", done
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_10_v1.61",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_09_v1.62",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_08_v1.63",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_07_v1.64",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_06_v1.65",
         };
 
         private const bool clearFolder = true;
@@ -214,7 +248,7 @@ namespace Analyser
                             allParameters[i].Add(Parameters[i]);
 
                     //generate line objects
-                    output = GetLinesFromData(parser, ref rows, IsBinaryPrediction, IsRGBencoding);
+                    output = GetLinesFromData(file.FullName, parser, ref rows, IsBinaryPrediction, IsRGBencoding);
                     }
 
                 //save longest sequence
@@ -1503,7 +1537,7 @@ namespace Analyser
             Console.WriteLine($"finished file {counter}");
         }
 
-        public static List<Line> GetLinesFromData(TextFieldParser parser, ref int rows, bool IsBinaryPrediction, bool IsRGBencoding)
+        public static List<Line> GetLinesFromData(String FullPathToFile, TextFieldParser parser, ref int rows, bool IsBinaryPrediction, bool IsRGBencoding)
         {
             bool firstline = true;
             List<Line> output = new List<Line>();
@@ -1544,6 +1578,8 @@ namespace Analyser
 
                 Line line = new Line()
                 {
+                    FullPathToFile = FullPathToFile,
+
                     IsBinaryPrediction = IsBinaryPrediction,
                     IsRGBEncoding = IsRGBencoding,
 
@@ -1582,6 +1618,8 @@ namespace Analyser
             {
                 var line = new Line()
                 {
+                    FullPathToFile = "ensemble",
+
                     IsBinaryPrediction = IsBinaryPrediction,
                     IsRGBEncoding = IsRGBencoding,
 
@@ -1636,6 +1674,11 @@ namespace Analyser
 
         public class Line
         {
+            /// <summary>
+            /// contains the full path to the file the line belongs to, for debugging purposes
+            /// </summary>
+            public String FullPathToFile { get; set; }
+
             public bool IsBinaryPrediction { get; set; }
             public bool IsRGBEncoding { get; set; }
 
@@ -1671,6 +1714,8 @@ namespace Analyser
 
         public class Bucket
         {
+
+
             public List<Line> Lines { get; set; }
             public int BucketLevel { get; set; }
             public List<String> Parameters { get; set; }
