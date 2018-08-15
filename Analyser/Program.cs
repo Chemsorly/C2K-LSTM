@@ -51,21 +51,46 @@ namespace Analyser
             //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn no_overlap_s8i5", done
             //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn no_overlap_s8i6", done 
             //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn no_overlap_s8i7", done
-            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bagging_10_v1.41", done
-            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bagging_09_v1.42", done
-            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bagging_08_v1.43", done
-            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bagging_07_v1.44", done
-            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bagging_06_v1.45", done
-            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bagging_05_v1.46", done
-            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bagging_04_v1.47", done
-            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bagging_03_v1.48", done
-            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bagging_02_v1.49", done
-            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn bagging_01_v1.410", done
             @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_10_v1.61",
             @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_09_v1.62",
             @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_08_v1.63",
             @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_07_v1.64",
             @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_06_v1.65",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_05_v1.66",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_04_v1.67",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_03_v1.68",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_02_v1.69",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_01_v1.610",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_11_v1.611",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_12_v1.612",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_13_v1.613",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_14_v1.614",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_15_v1.615",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_16_v1.616",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_17_v1.617",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_18_v1.618",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_19_v1.619",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_20_v1.620",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2duplicates_005_v1.71",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2duplicates_010_v1.72",
+            @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2duplicates_015_v1.73",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2duplicates_020_v1.74",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2duplicates_025_v1.75",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2duplicates_030_v1.76",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2duplicates_035_v1.77",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2duplicates_040_v1.78",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2duplicates_045_v1.79",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2duplicates_050_v1.710",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2duplicates_055_v1.711",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2duplicates_060_v1.712",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2duplicates_065_v1.713",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2duplicates_070_v1.714",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2duplicates_075_v1.715",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2duplicates_080_v1.716",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2duplicates_085_v1.717",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2duplicates_090_v1.718",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2duplicates_095_v1.719",
+            //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2duplicates_100_v1.720",
         };
 
         private const bool clearFolder = true;
@@ -324,6 +349,13 @@ namespace Analyser
                     //get buckets
                     var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { "ensemble_unsorted", i.ToString(), "100", "0.1", "20", "1" }, TargetData.TS, BucketingType, ensembleLines, false, false);
 
+                    //create models
+                    OxyPlot.PlotModel ensembleBoxplot = new PlotModel() { Title = "Reliability distribution by progress"};
+                    ensembleBoxplot.Axes.Add(new LinearAxis {Position = AxisPosition.Bottom, Minimum = 0, Maximum = 1, Title = "Process completion" });
+                    ensembleBoxplot.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0.5, Maximum = 1, Title = "Reliability" });
+                    var ensembleBoxplotSeries = new BoxPlotSeries() { BoxWidth = 0.025 };
+                    ensembleBoxplot.Series.Add(ensembleBoxplotSeries);
+
                     LineSeries mccensembleprogressSeries = new LineSeries() { Title = $"mcc ensemble {i}" };
                     LineSeries reliabilityensembleprogressseries = new LineSeries() { Title = $"reliability ensemble {i}" };
                     ensemblePlot_byprogressUnsorted.Series.Add(mccensembleprogressSeries);
@@ -333,6 +365,9 @@ namespace Analyser
                         //add buckets to chart
                         mccensembleprogressSeries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC_Target));
                         reliabilityensembleprogressseries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, ensemble.GetReliabilityForBucket(bucket.BucketLevel, BucketGranularity)));
+                        var item = CreateBoxplot(ensemble.GetReliabilitiesForBucket(bucket.BucketLevel, BucketGranularity), bucket.BucketLevel * BucketGranularity);
+                        if(item != null)
+                            ensembleBoxplotSeries.Items.Add(item);
                     }
                     RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { "ensemble_unsorted", i.ToString(), "100", "0.1", "20", "1" }, string.Empty,
                         model_glob_precision_target,
@@ -345,6 +380,12 @@ namespace Analyser
                         ref validSequences,
                         ref predictedSequences,
                         ref counter);
+
+                    using (var filestream = new FileStream($"{ResultsFolder.FullName}\\ensemble_boxplot_unsorted_{i} .pdf", FileMode.OpenOrCreate))
+                    {
+                        OxyPlot.PdfExporter.Export(ensembleBoxplot, filestream, PlotModelWidth, PlotModelHeight);
+                        filestream.Close();
+                    }
                 });
                 mccensemblesizeUnsortedSeries.Points.Sort((x, y) => x.X.CompareTo(y.X));
                 reliabilityensemblesizeUnsortedSeries.Points.Sort((x, y) => x.X.CompareTo(y.X));

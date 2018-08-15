@@ -40,6 +40,11 @@ namespace Analyser
                 return 0;
         }
 
+        public List<double> GetReliabilitiesForBucket(double pBucketLevel, double pBucketGranularity)
+        {
+            return EnsembleLines.Where(line => line.Completion >= pBucketLevel * pBucketGranularity && line.Completion < (pBucketLevel + 1) * pBucketGranularity).Select(t => t.Reliability).ToList();
+        }
+
         int TPcount => EnsembleLines.Count(t => t.ActualViolation && t.PredictedViolation);
         int FPcount => EnsembleLines.Count(t => !t.ActualViolation && t.PredictedViolation);
         int FNcount => EnsembleLines.Count(t => t.ActualViolation && !t.PredictedViolation);
