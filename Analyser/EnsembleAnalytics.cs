@@ -10,9 +10,11 @@ namespace Analyser
     public class Ensemble
     {
         public int EnsembleSize { get; }
+        internal double reliabilityThreshold;
 
-        public Ensemble(List<List<Line>> pAllLines)
+        public Ensemble(List<List<Line>> pAllLines, double pReliabilityThreshold)
         {
+            reliabilityThreshold = pReliabilityThreshold;
             EnsembleSize = pAllLines.Count;
             for (int i = 0; i < pAllLines[0].Count; i++)
             {
@@ -21,7 +23,7 @@ namespace Analyser
                 foreach (var model in pAllLines)
                     processInstanceLines.Add(model[i]);
 
-                EnsembleLines.Add(new EnsembleLine(processInstanceLines));
+                EnsembleLines.Add(new EnsembleLine(processInstanceLines, this));
             }
         }
 
@@ -72,8 +74,13 @@ namespace Analyser
 
     public class EnsembleLine
     {
-        public EnsembleLine(List<Line> pLines)
+        double reliabilityThreshold;
+
+        public EnsembleLine(List<Line> pLines, Ensemble pEnsemble)
         {
+            //set vlaues
+            reliabilityThreshold = pEnsemble.reliabilityThreshold;
+
             //create single votes
             foreach (var line in pLines)
                 EnsembleVotes.Add(new EnsembleVote(line.Violation_PredictedTS, line.Timestamp));
@@ -101,7 +108,7 @@ namespace Analyser
         public String PrefixActivities { get; }
         public String SuffixActivities { get; }
 
-        public bool PredictedViolation => ((double)EnsembleVotes.Count(t => t.Violation == true) / (double)EnsembleVotes.Count) > 0.5;
+        public bool PredictedViolation => ((double)EnsembleVotes.Count(t => t.Violation == true) / (double)EnsembleVotes.Count) >= reliabilityThreshold;
         public double MedianPrediction => Program.Median(EnsembleVotes.Select(t => t.Prediction).ToArray());
         public double AveragePrediction => EnsembleVotes.Average(t => t.Prediction);
         public double Reliability => PredictedViolation ?

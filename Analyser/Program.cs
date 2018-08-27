@@ -20,6 +20,7 @@ namespace Analyser
     {
         private static readonly double BucketGranularity = 0.1; //creates a bucket every 0.1 of completion
         private static readonly double FmetricBeta = 1;
+        private static readonly double ReliabilityThreshold = 0.5; //turns true predictions to false if below threshold (values between 0.5 and 1; 0.5 = no prediction changes)
 
         //bucketing type: defines how results are bucketet
         //1 = normal bucketing over all results
@@ -29,8 +30,7 @@ namespace Analyser
         private static readonly int PlotModelWidth = 512;
         private static readonly int PlotModelHeight = 512;
 
-        static List<String> folders = Folderlist.GetFolderlist();        
-
+        static List<String> folders = Folderlist.GetFolderlist(); 
         private const bool clearFolder = true;
 
         static void Main(string[] args)
@@ -277,7 +277,7 @@ namespace Analyser
                     for (int j = 0; j <= i; j++)
                         items.Add(allLines[j]);
 
-                    Ensemble ensemble = new Ensemble(items);
+                    Ensemble ensemble = new Ensemble(items, ReliabilityThreshold);
                     mccensemblesizeUnsortedSeries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.MCC));
                     reliabilityensemblesizeUnsortedSeries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.Reliability));
                     //export to csv
@@ -335,7 +335,7 @@ namespace Analyser
                     for (int j = 0; j <= i; j++)
                         items.Add(mccsortedAllLines[j]);
 
-                    Ensemble ensemble = new Ensemble(items);
+                    Ensemble ensemble = new Ensemble(items, ReliabilityThreshold);
                     mccensemblesizeBoostedSeries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.MCC));
                     reliabilityensemblesizeBoostedSeries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.Reliability));
                     //export to csv
