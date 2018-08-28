@@ -108,7 +108,7 @@ namespace Analyser
         public String PrefixActivities { get; }
         public String SuffixActivities { get; }
 
-        public bool PredictedViolation => ((double)EnsembleVotes.Count(t => t.Violation == true) / (double)EnsembleVotes.Count) >= reliabilityThreshold;
+        public bool PredictedViolation => ((double)EnsembleVotes.Count(t => t.Violation == true) / (double)EnsembleVotes.Count) > 0.5; //>= reliabilityThreshold;
         public double MedianPrediction => Program.Median(EnsembleVotes.Select(t => t.Prediction).ToArray());
         public double AveragePrediction => EnsembleVotes.Average(t => t.Prediction);
         public double Reliability => PredictedViolation ?

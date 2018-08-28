@@ -20,7 +20,7 @@ namespace Analyser
     {
         private static readonly double BucketGranularity = 0.1; //creates a bucket every 0.1 of completion
         private static readonly double FmetricBeta = 1;
-        private static readonly double ReliabilityThreshold = 0.5; //turns true predictions to false if below threshold (values between 0.5 and 1; 0.5 = no prediction changes)
+        private static readonly double[] ReliabilityThresholds = {0.5, 0.6, 0.7, 0.8, 0.9, 1.0 }; //turns true predictions to false if below threshold (values between 0.5 and 1; 0.5 = no prediction changes)
 
         //bucketing type: defines how results are bucketet
         //1 = normal bucketing over all results
@@ -45,11 +45,22 @@ namespace Analyser
                 //target folders
                 DirectoryInfo ResultsFolder = new DirectoryInfo(folder);
                 DirectoryInfo InFolder = new DirectoryInfo(ResultsFolder.FullName + @"\raw");
+
+                //create ensemble folder (if not exist)
+                Directory.CreateDirectory(ResultsFolder.FullName + @"\ensembles");
+                DirectoryInfo EnsembleFolder = new DirectoryInfo(ResultsFolder.FullName + @"\ensembles");
                 List<FileInfo> InFiles = InFolder.EnumerateFiles("*", SearchOption.AllDirectories).Where(t => t.Name.Contains(".csv") && !t.Name.Contains(".edited.csv")).ToList();
 
                 //clear folder if defined //WARNING: WILL DELETE ALL FILES IN SAID FOLDER
                 if (clearFolder)
+                {
+                    //clear root
                     ResultsFolder.GetFiles().ToList().ForEach(t => t.Delete());
+                    //clear ensemble folders
+                    EnsembleFolder.GetFiles().ToList().ForEach(t => t.Delete());
+                    EnsembleFolder.GetDirectories().ToList().ForEach(t => t.Delete(true));
+                }
+                    
 
                 //globals
                 int maxSequences = 0;
@@ -270,126 +281,136 @@ namespace Analyser
                 var mccsortedBuckets = ensembleBuckets.Select(t => t.Where(u => !double.IsNaN(u.MCC_Target))).OrderByDescending(t => t.Sum(u => u.MCC_Target)); //.OrderBy(t => t.Where(u => !double.IsNaN(u.MCC_Target)).Sum(u => u.MCC_Target));
                 var mccsortedAllLines = mccsortedBuckets.Select(t => t.SelectMany(u => u.Lines).ToList()).ToList();
 
-                //run for unsorted
-                Parallel.For(0, allLines.Count, i =>  //(int i = 0; i < allLines.Count; i++)
+                ReliabilityThresholds.ToList().ForEach(reliabilityThreshold =>
                 {
-                    List<List<Line>> items = new List<List<Line>>();
-                    for (int j = 0; j <= i; j++)
-                        items.Add(allLines[j]);
-
-                    Ensemble ensemble = new Ensemble(items, ReliabilityThreshold);
-                    mccensemblesizeUnsortedSeries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.MCC));
-                    reliabilityensemblesizeUnsortedSeries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.Reliability));
-                    //export to csv
-                    File.WriteAllLines($"{ResultsFolder.FullName}\\raw_ensemble_size_unsorted{i}_mcc.csv", ensemble.ExportToCsv());
-
-                    var ensembleLines = GetLinesFromEnsemble(ensemble, false, false);
-                    //get buckets
-                    var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { "ensemble_unsorted", i.ToString(), "100", "0.1", "20", "1" }, TargetData.TS, BucketingType, ensembleLines, false, false);
-
-                    //create models
-                    OxyPlot.PlotModel ensembleBoxplot = new PlotModel() { Title = "Reliability distribution by progress"};
-                    ensembleBoxplot.Axes.Add(new LinearAxis {Position = AxisPosition.Bottom, Minimum = 0, Maximum = 1, Title = "Process completion" });
-                    ensembleBoxplot.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0.5, Maximum = 1, Title = "Reliability" });
-                    var ensembleBoxplotSeries = new BoxPlotSeries() { BoxWidth = 0.025 };
-                    ensembleBoxplot.Series.Add(ensembleBoxplotSeries);
-
-                    LineSeries mccensembleprogressSeries = new LineSeries() { Title = $"mcc ensemble {i}" };
-                    LineSeries reliabilityensembleprogressseries = new LineSeries() { Title = $"reliability ensemble {i}" };
-                    ensemblePlot_byprogressUnsorted.Series.Add(mccensembleprogressSeries);
-                    ensemblePlot_byprogressUnsorted.Series.Add(reliabilityensembleprogressseries);
-                    foreach (var bucket in BucketList)
+                    //run for unsorted
+                    Parallel.For(0, allLines.Count, i =>  //(int i = 0; i < allLines.Count; i++)
                     {
-                        //add buckets to chart
-                        mccensembleprogressSeries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC_Target));
-                        reliabilityensembleprogressseries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, ensemble.GetReliabilityForBucket(bucket.BucketLevel, BucketGranularity)));
-                        var item = CreateBoxplot(ensemble.GetReliabilitiesForBucket(bucket.BucketLevel, BucketGranularity), bucket.BucketLevel * BucketGranularity);
-                        if(item != null)
-                            ensembleBoxplotSeries.Items.Add(item);
-                    }
-                    RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { "ensemble_unsorted", i.ToString(), "100", "0.1", "20", "1" }, string.Empty,
-                        model_glob_precision_target,
-                        model_glob_recall_target,
-                        model_glob_speceficity_target,
-                        model_glob_falsepositives_target,
-                        model_glob_negativepredictions_target,
-                        model_glob_accuracy_target,
-                        model_glob_mcc_target, model_glob_fmetric_target,
-                        ref validSequences,
-                        ref predictedSequences,
-                        ref counter);
+                        String targetFilename = $"raw_ensemble_size_unsorted{i}_mcc.csv";
 
-                    using (var filestream = new FileStream($"{ResultsFolder.FullName}\\ensemble_boxplot_unsorted_{i} .pdf", FileMode.OpenOrCreate))
+                        List<List<Line>> items = new List<List<Line>>();
+                        for (int j = 0; j <= i; j++)
+                            items.Add(allLines[j]);
+
+                        Ensemble ensemble = new Ensemble(items, reliabilityThreshold);
+                        mccensemblesizeUnsortedSeries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.MCC));
+                        reliabilityensemblesizeUnsortedSeries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.Reliability));
+                        //export to csv
+                        Directory.CreateDirectory($"{EnsembleFolder.FullName}\\{reliabilityThreshold}\\{i}");
+                        File.WriteAllLines($"{EnsembleFolder.FullName}\\{reliabilityThreshold}\\{i}\\{targetFilename}", ensemble.ExportToCsv());
+
+                        var ensembleLines = GetLinesFromEnsemble(ensemble, false, false, reliabilityThreshold);
+                        //get buckets
+                        var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { $"ensemble_unsorted {reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" }, TargetData.TS, BucketingType, ensembleLines, false, false);
+
+                        //create models
+                        OxyPlot.PlotModel ensembleBoxplot = new PlotModel() { Title = "Reliability distribution by progress" };
+                        ensembleBoxplot.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 1, Title = "Process completion" });
+                        ensembleBoxplot.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0.5, Maximum = 1, Title = "Reliability" });
+                        var ensembleBoxplotSeries = new BoxPlotSeries() { BoxWidth = 0.025 };
+                        ensembleBoxplot.Series.Add(ensembleBoxplotSeries);
+
+                        LineSeries mccensembleprogressSeries = new LineSeries() { Title = $"mcc ensemble {i}" };
+                        LineSeries reliabilityensembleprogressseries = new LineSeries() { Title = $"reliability ensemble {i}" };
+                        ensemblePlot_byprogressUnsorted.Series.Add(mccensembleprogressSeries);
+                        ensemblePlot_byprogressUnsorted.Series.Add(reliabilityensembleprogressseries);
+                        foreach (var bucket in BucketList)
+                        {
+                            //add buckets to chart
+                            mccensembleprogressSeries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC_Target));
+                            reliabilityensembleprogressseries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, ensemble.GetReliabilityForBucket(bucket.BucketLevel, BucketGranularity)));
+                            var item = CreateBoxplot(ensemble.GetReliabilitiesForBucket(bucket.BucketLevel, BucketGranularity), bucket.BucketLevel * BucketGranularity);
+                            if (item != null)
+                                ensembleBoxplotSeries.Items.Add(item);
+                        }
+                        RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { $"ensemble_unsorted {reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" }, 
+                            $"{EnsembleFolder.FullName}\\{reliabilityThreshold}\\{i}\\{targetFilename}",
+                            model_glob_precision_target,
+                            model_glob_recall_target,
+                            model_glob_speceficity_target,
+                            model_glob_falsepositives_target,
+                            model_glob_negativepredictions_target,
+                            model_glob_accuracy_target,
+                            model_glob_mcc_target, model_glob_fmetric_target,
+                            ref validSequences,
+                            ref predictedSequences,
+                            ref counter);
+
+                        using (var filestream = new FileStream($"{EnsembleFolder.FullName}\\{reliabilityThreshold}\\{i}\\ensemble_boxplot_unsorted_{i} .pdf", FileMode.OpenOrCreate))
+                        {
+                            OxyPlot.PdfExporter.Export(ensembleBoxplot, filestream, PlotModelWidth, PlotModelHeight);
+                            filestream.Close();
+                        }
+                    });
+                    mccensemblesizeUnsortedSeries.Points.Sort((x, y) => x.X.CompareTo(y.X));
+                    reliabilityensemblesizeUnsortedSeries.Points.Sort((x, y) => x.X.CompareTo(y.X));
+
+                    //run for mcc sorted (aka boosted)
+                    Parallel.For(0, mccsortedAllLines.Count, i => //for (int i = 0; i < mccsortedAllLines.Count; i++)
                     {
-                        OxyPlot.PdfExporter.Export(ensembleBoxplot, filestream, PlotModelWidth, PlotModelHeight);
+                        String targetFilename = $"raw_ensemble_size_boosted{i}_mcc.csv";
+
+                        List<List<Line>> items = new List<List<Line>>();
+                        for (int j = 0; j <= i; j++)
+                            items.Add(mccsortedAllLines[j]);
+
+                        Ensemble ensemble = new Ensemble(items, reliabilityThreshold);
+                        mccensemblesizeBoostedSeries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.MCC));
+                        reliabilityensemblesizeBoostedSeries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.Reliability));
+                        //export to csv
+                        File.WriteAllLines($"{EnsembleFolder.FullName}\\{reliabilityThreshold}\\{i}\\{targetFilename}", ensemble.ExportToCsv());
+
+                        var ensembleLines = GetLinesFromEnsemble(ensemble, false, false, reliabilityThreshold);
+                        //get buckets
+                        var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { $"ensemble_boosted {reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" }, TargetData.TS, BucketingType, ensembleLines, false, false);
+
+                        LineSeries mccensembleprogressSeries = new LineSeries() { Title = $"mcc ensemble {i}" };
+                        LineSeries reliabilityensembleprogressseries = new LineSeries() { Title = $"reliability ensemble {i}" };
+                        ensemblePlot_byprogressBoosted.Series.Add(mccensembleprogressSeries);
+                        ensemblePlot_byprogressBoosted.Series.Add(reliabilityensembleprogressseries);
+                        foreach (var bucket in BucketList)
+                        {
+                            //add buckets to chart
+                            mccensembleprogressSeries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC_Target));
+                            reliabilityensembleprogressseries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, ensemble.GetReliabilityForBucket(bucket.BucketLevel, BucketGranularity)));
+                        }
+                        RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { $"ensemble_boosted {reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" }, 
+                            $"{EnsembleFolder.FullName}\\{reliabilityThreshold}\\{i}\\{targetFilename}",
+                            model_glob_precision_target,
+                            model_glob_recall_target,
+                            model_glob_speceficity_target,
+                            model_glob_falsepositives_target,
+                            model_glob_negativepredictions_target,
+                            model_glob_accuracy_target,
+                            model_glob_mcc_target, model_glob_fmetric_target,
+                            ref validSequences,
+                            ref predictedSequences,
+                            ref counter);
+                    });
+                    mccensemblesizeBoostedSeries.Points.Sort((x, y) => x.X.CompareTo(y.X));
+                    reliabilityensemblesizeBoostedSeries.Points.Sort((x, y) => x.X.CompareTo(y.X));
+
+                    using (var filestream = new FileStream($"{EnsembleFolder.FullName}\\ensemble_mcc_bysize_unsorted.pdf", FileMode.OpenOrCreate))
+                    {
+                        OxyPlot.PdfExporter.Export(ensemblePlot_bysizeUnsorted, filestream, PlotModelWidth * 2, PlotModelHeight);
                         filestream.Close();
                     }
-                });
-                mccensemblesizeUnsortedSeries.Points.Sort((x, y) => x.X.CompareTo(y.X));
-                reliabilityensemblesizeUnsortedSeries.Points.Sort((x, y) => x.X.CompareTo(y.X));
-
-                //run for mcc sorted (aka boosted)
-                Parallel.For(0, mccsortedAllLines.Count, i => //for (int i = 0; i < mccsortedAllLines.Count; i++)
-                {
-                    List<List<Line>> items = new List<List<Line>>();
-                    for (int j = 0; j <= i; j++)
-                        items.Add(mccsortedAllLines[j]);
-
-                    Ensemble ensemble = new Ensemble(items, ReliabilityThreshold);
-                    mccensemblesizeBoostedSeries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.MCC));
-                    reliabilityensemblesizeBoostedSeries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.Reliability));
-                    //export to csv
-                    File.WriteAllLines($"{ResultsFolder.FullName}\\raw_ensemble_size_boosted{i}_mcc.csv", ensemble.ExportToCsv());
-
-                    var ensembleLines = GetLinesFromEnsemble(ensemble, false, false);
-                    //get buckets
-                    var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { "ensemble_boosted", i.ToString(), "100", "0.1", "20", "1" }, TargetData.TS, BucketingType, ensembleLines, false, false);
-
-                    LineSeries mccensembleprogressSeries = new LineSeries() { Title = $"mcc ensemble {i}" };
-                    LineSeries reliabilityensembleprogressseries = new LineSeries() { Title = $"reliability ensemble {i}" };
-                    ensemblePlot_byprogressBoosted.Series.Add(mccensembleprogressSeries);
-                    ensemblePlot_byprogressBoosted.Series.Add(reliabilityensembleprogressseries);
-                    foreach (var bucket in BucketList)
+                    using (var filestream = new FileStream($"{EnsembleFolder.FullName}\\ensemble_mcc_byprogress_unsorted.pdf", FileMode.OpenOrCreate))
                     {
-                        //add buckets to chart
-                        mccensembleprogressSeries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC_Target));
-                        reliabilityensembleprogressseries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, ensemble.GetReliabilityForBucket(bucket.BucketLevel, BucketGranularity)));
+                        OxyPlot.PdfExporter.Export(ensemblePlot_byprogressUnsorted, filestream, PlotModelWidth * 2, PlotModelHeight);
+                        filestream.Close();
                     }
-                    RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { "ensemble_boosted", i.ToString(), "100", "0.1", "20", "1" }, string.Empty,
-                        model_glob_precision_target,
-                        model_glob_recall_target,
-                        model_glob_speceficity_target,
-                        model_glob_falsepositives_target,
-                        model_glob_negativepredictions_target,
-                        model_glob_accuracy_target,
-                        model_glob_mcc_target, model_glob_fmetric_target,
-                        ref validSequences,
-                        ref predictedSequences,
-                        ref counter);
-                });
-                mccensemblesizeBoostedSeries.Points.Sort((x, y) => x.X.CompareTo(y.X));
-                reliabilityensemblesizeBoostedSeries.Points.Sort((x, y) => x.X.CompareTo(y.X));
-
-                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\ensemble_mcc_bysize_unsorted.pdf", FileMode.OpenOrCreate))
-                {
-                    OxyPlot.PdfExporter.Export(ensemblePlot_bysizeUnsorted, filestream, PlotModelWidth * 2, PlotModelHeight);
-                    filestream.Close();
-                }
-                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\ensemble_mcc_byprogress_unsorted.pdf", FileMode.OpenOrCreate))
-                {
-                    OxyPlot.PdfExporter.Export(ensemblePlot_byprogressUnsorted, filestream, PlotModelWidth * 2, PlotModelHeight);
-                    filestream.Close();
-                }
-                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\ensemble_mcc_bysize_boosted.pdf", FileMode.OpenOrCreate))
-                {
-                    OxyPlot.PdfExporter.Export(ensemblePlot_bysizeBoosted, filestream, PlotModelWidth * 2, PlotModelHeight);
-                    filestream.Close();
-                }
-                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\ensemble_mcc_byprogress_boosted.pdf", FileMode.OpenOrCreate))
-                {
-                    OxyPlot.PdfExporter.Export(ensemblePlot_byprogressBoosted, filestream, PlotModelWidth * 2, PlotModelHeight);
-                    filestream.Close();
-                }
+                    using (var filestream = new FileStream($"{EnsembleFolder.FullName}\\ensemble_mcc_bysize_boosted.pdf", FileMode.OpenOrCreate))
+                    {
+                        OxyPlot.PdfExporter.Export(ensemblePlot_bysizeBoosted, filestream, PlotModelWidth * 2, PlotModelHeight);
+                        filestream.Close();
+                    }
+                    using (var filestream = new FileStream($"{EnsembleFolder.FullName}\\ensemble_mcc_byprogress_boosted.pdf", FileMode.OpenOrCreate))
+                    {
+                        OxyPlot.PdfExporter.Export(ensemblePlot_byprogressBoosted, filestream, PlotModelWidth * 2, PlotModelHeight);
+                        filestream.Close();
+                    }
+                });            
 
                 #endregion
                 //create aggregated file
@@ -1239,7 +1260,8 @@ namespace Analyser
                            "violation_string_ts," +
                            "deviation_abs_sp," +
                            "deviation_abs_ts," +
-                           "valid_suffix");
+                           "valid_suffix," +
+                           "reliability");
             foreach (var line in output)
             {
                 exportrows.Add($"{line.SequenceID}," +
@@ -1264,7 +1286,8 @@ namespace Analyser
                                $"{line.Violation_StringTS}," +
                                $"{line.DeviationAbsoluteSumprevious}," +
                                $"{line.DeviationAbsoluteTimestamp}," +
-                               $"{line.IsValidPrediction}");
+                               $"{line.IsValidPrediction}," +
+                               $"{line.Reliability}");
             }
 
             //add buckets
@@ -1308,7 +1331,8 @@ namespace Analyser
                            "NegativePredictedValue_TS," +
                            "Accuracy_TS," +
                            "F-Measure_TS," +
-                           "MCC_TS"
+                           "MCC_TS," +
+                           "AvgReliability"
             );
             foreach (var bucket in BucketList)
                 if (bucket.ViolationStringsTS.Any())
@@ -1352,7 +1376,8 @@ namespace Analyser
                                    $"{bucket.NegativePredictedValueTS}," +
                                    $"{bucket.AccuracyTS}," +
                                    $"{bucket.FMeasureTS}," +
-                                   $"{bucket.MCC_TS}"
+                                   $"{bucket.MCC_TS}," +
+                                   $"{bucket.AvgReliability}"
                     );
             exportrows.Add($"Total," +
                            $"{BucketList.Sum(t => t.ViolationStringsSP.Count)}," +
@@ -1394,7 +1419,8 @@ namespace Analyser
                            $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.NegativePredictedValueTS)}," +
                            $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.AccuracyTS)}," +
                            $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.FMeasureTS)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.MCC_TS)}"
+                           $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.MCC_TS)}," +
+                           $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.AvgReliability)}"
             );
 
             ////export as csv to match LSTM input examples
@@ -1574,7 +1600,7 @@ namespace Analyser
                     GT_InstanceID = int.Parse(fields[9]),
                     PrefixActivities = fields[10],
                     //PredictedActivities = fields[11],
-                    SuffixActivities = fields[11]
+                    SuffixActivities = fields[11]                
                 };
                 if (IsBinaryPrediction)
                     line.Predicted_Violations = fields[13] == "true";
@@ -1590,37 +1616,43 @@ namespace Analyser
             return output;
         }
 
-        public static List<Line> GetLinesFromEnsemble(Ensemble ensemble, bool IsBinaryPrediction, bool IsRGBencoding)
+        public static List<Line> GetLinesFromEnsemble(Ensemble ensemble, bool IsBinaryPrediction, bool IsRGBencoding, double pReliabilityThreshold)
         {
             List<Line> output = new List<Line>();
             foreach (var enLine in ensemble.EnsembleLines)
             {
-                var line = new Line()
+                if(enLine.Reliability >= pReliabilityThreshold)
                 {
-                    FullPathToFile = "ensemble",
+                    var line = new Line()
+                    {
+                        FullPathToFile = "ensemble",
 
-                    IsBinaryPrediction = IsBinaryPrediction,
-                    IsRGBEncoding = IsRGBencoding,
+                        IsBinaryPrediction = IsBinaryPrediction,
+                        IsRGBEncoding = IsRGBencoding,
 
-                    SequenceID = enLine.InstanceId,
-                    SequenceLength = enLine.InstanceLength,
-                    Prefix = enLine.Prefix,
-                    SumPrevious = enLine.MedianPrediction,
-                    Timestamp = enLine.MedianPrediction,
-                    Completion = enLine.Completion,
-                    GT_SumPrevious = (int)enLine.ActualValue,
-                    GT_Timestamp = (int)enLine.ActualValue,
-                    GT_Planned = (int)enLine.ActualPlanned,
-                    GT_InstanceID = enLine.InstanceId,
-                    PrefixActivities = enLine.PrefixActivities,
-                    //PredictedActivities = fields[11],
-                    SuffixActivities = enLine.SuffixActivities,
+                        SequenceID = enLine.InstanceId,
+                        SequenceLength = enLine.InstanceLength,
+                        Prefix = enLine.Prefix,
+                        SumPrevious = enLine.MedianPrediction,
+                        Timestamp = enLine.MedianPrediction,
+                        Completion = enLine.Completion,
+                        GT_SumPrevious = (int)enLine.ActualValue,
+                        GT_Timestamp = (int)enLine.ActualValue,
+                        GT_Planned = (int)enLine.ActualPlanned,
+                        GT_InstanceID = enLine.InstanceId,
+                        PrefixActivities = enLine.PrefixActivities,
+                        //PredictedActivities = fields[11],
+                        SuffixActivities = enLine.SuffixActivities,
 
-                    Violation_Effective = enLine.ActualViolation,
-                    Violation_PredictedSP = enLine.PredictedViolation,
-                    Violation_PredictedTS = enLine.PredictedViolation
-                };
-                output.Add(line);
+                        Violation_Effective = enLine.ActualViolation,
+                        Violation_PredictedSP = enLine.PredictedViolation,
+                        Violation_PredictedTS = enLine.PredictedViolation,
+
+                        Reliability = enLine.Reliability
+                    };
+
+                    output.Add(line);
+                }
             }
 
             return output;
@@ -1676,6 +1708,7 @@ namespace Analyser
             public String PredictedActivities { get; set; }
             public String SuffixActivities { get; set; }
             public bool Predicted_Violations { get; set; }
+            public double? Reliability { get; set; }
 
             //output
             public double AccuracySumprevious { get; set; }
@@ -1782,6 +1815,7 @@ namespace Analyser
             public double RRSE_Target => Target == TargetData.SP ? RRSE_SP : RRSE_TS;
             public double RAE_Target => Target == TargetData.SP ? RAE_SP : RAE_TS;
 
+            public double AvgReliability => Lines.Any(t => t.Reliability != null) ? Lines.Average(t => t.Reliability).Value : -1d;
         }
 
         public static double Median(double[] xs)
