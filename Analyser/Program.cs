@@ -25,7 +25,7 @@ namespace Analyser
         //bucketing type: defines how results are bucketet
         //1 = normal bucketing over all results
         //2 = triple ranged: 0% - 50%, 50%, 50% - 100%
-        private static readonly int BucketingType = 2;
+        private static readonly int BucketingType = 1;
 
         //violation type: predictions bigger than ground truth equal violation
         //TT dataset: false

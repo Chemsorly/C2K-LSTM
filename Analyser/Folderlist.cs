@@ -82,7 +82,8 @@ namespace Analyser
                 //@"C:\TT\Ensemble Results\c2k\stateless lstm v2bagging_wo-zl_08_v1.88",
                 //@"C:\TT\Ensemble Results\c2k\stateless lstm v2bagging_wo-zl_09_v1.89",
                 //@"C:\TT\Ensemble Results\c2k\stateless lstm v2bagging_wo-zl_010_v1.810",
-                @"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn nosubsequences",
+                //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn nosubsequences",
+                @"D:\Sciebo\TT\Ensemble Results\tt\v2.11"
             };
         }
     }
