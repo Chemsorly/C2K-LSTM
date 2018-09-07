@@ -20,12 +20,17 @@ namespace Analyser
     {
         private static readonly double BucketGranularity = 0.1; //creates a bucket every 0.1 of completion
         private static readonly double FmetricBeta = 1;
-        private static readonly double[] ReliabilityThresholds = {0.5, 0.6, 0.7, 0.8, 0.9, 1.0 }; //turns true predictions to false if below threshold (values between 0.5 and 1; 0.5 = no prediction changes)
+        private static readonly double[] ReliabilityThresholds = { 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 }; //turns true predictions to false if below threshold (values between 0.5 and 1; 0.5 = no prediction changes)
 
         //bucketing type: defines how results are bucketet
         //1 = normal bucketing over all results
         //2 = triple ranged: 0% - 50%, 50%, 50% - 100%
         private static readonly int BucketingType = 2;
+
+        //violation type: predictions bigger than ground truth equal violation
+        //TT dataset: false
+        //C2K dataset: true
+        private static readonly bool PositiveIsViolation = false;
 
         private static readonly int PlotModelWidth = 512;
         private static readonly int PlotModelHeight = 512;
@@ -222,7 +227,7 @@ namespace Analyser
                             allParameters[i].Add(Parameters[i]);
 
                     //generate line objects
-                    output = GetLinesFromData(file.FullName, parser, ref rows, IsBinaryPrediction, IsRGBencoding);
+                    output = GetLinesFromData(file.FullName, parser, ref rows, IsBinaryPrediction, IsRGBencoding, PositiveIsViolation);
                     }
 
                 //save longest sequence
@@ -301,7 +306,7 @@ namespace Analyser
 
                         var ensembleLines = GetLinesFromEnsemble(ensemble, false, false, reliabilityThreshold);
                         //get buckets
-                        var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { $"ensemble_unsorted {reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" }, TargetData.TS, BucketingType, ensembleLines, false, false);
+                        var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { $"ensemble_unsorted_{reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" }, TargetData.TS, BucketingType, ensembleLines, false, false);
 
                         //create models
                         OxyPlot.PlotModel ensembleBoxplot = new PlotModel() { Title = "Reliability distribution by progress" };
@@ -323,7 +328,7 @@ namespace Analyser
                             if (item != null)
                                 ensembleBoxplotSeries.Items.Add(item);
                         }
-                        RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { $"ensemble_unsorted {reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" }, 
+                        RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { $"ensemble_unsorted_{reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" }, 
                             $"{EnsembleFolder.FullName}\\{reliabilityThreshold}\\{i}\\{targetFilename}",
                             model_glob_precision_target,
                             model_glob_recall_target,
@@ -362,7 +367,7 @@ namespace Analyser
 
                         var ensembleLines = GetLinesFromEnsemble(ensemble, false, false, reliabilityThreshold);
                         //get buckets
-                        var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { $"ensemble_boosted {reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" }, TargetData.TS, BucketingType, ensembleLines, false, false);
+                        var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { $"ensemble_boosted_{reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" }, TargetData.TS, BucketingType, ensembleLines, false, false);
 
                         LineSeries mccensembleprogressSeries = new LineSeries() { Title = $"mcc ensemble {i}" };
                         LineSeries reliabilityensembleprogressseries = new LineSeries() { Title = $"reliability ensemble {i}" };
@@ -374,7 +379,7 @@ namespace Analyser
                             mccensembleprogressSeries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC_Target));
                             reliabilityensembleprogressseries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, ensemble.GetReliabilityForBucket(bucket.BucketLevel, BucketGranularity)));
                         }
-                        RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { $"ensemble_boosted {reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" }, 
+                        RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { $"ensemble_boosted_{reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" }, 
                             $"{EnsembleFolder.FullName}\\{reliabilityThreshold}\\{i}\\{targetFilename}",
                             model_glob_precision_target,
                             model_glob_recall_target,
@@ -1542,7 +1547,7 @@ namespace Analyser
             Console.WriteLine($"finished file {counter}");
         }
 
-        public static List<Line> GetLinesFromData(String FullPathToFile, TextFieldParser parser, ref int rows, bool IsBinaryPrediction, bool IsRGBencoding)
+        public static List<Line> GetLinesFromData(String FullPathToFile, TextFieldParser parser, ref int rows, bool IsBinaryPrediction, bool IsRGBencoding, bool pPositiveIsViolation)
         {
             bool firstline = true;
             List<Line> output = new List<Line>();
@@ -1606,9 +1611,9 @@ namespace Analyser
                     line.Predicted_Violations = fields[13] == "true";
 
                 //calculate accuracy values
-                line.Violation_Effective = line.GT_Timestamp > line.GT_Planned;
-                line.Violation_PredictedSP = line.SumPrevious > line.GT_Planned;
-                line.Violation_PredictedTS = line.Timestamp > line.GT_Planned;
+                line.Violation_Effective = pPositiveIsViolation == (line.GT_Timestamp > line.GT_Planned);
+                line.Violation_PredictedSP = pPositiveIsViolation == (line.SumPrevious > line.GT_Planned);
+                line.Violation_PredictedTS = pPositiveIsViolation == (line.Timestamp > line.GT_Planned);
                 line.AccuracySumprevious = CalculateAccuracy(line.SumPrevious, line.GT_SumPrevious);
                 line.AccuracyTimestamp = CalculateAccuracy(line.Timestamp, line.GT_Timestamp);
                 output.Add(line);
@@ -1784,7 +1789,7 @@ namespace Analyser
             public double NegativePredictedValueTarget => (double)ViolationStringsTarget.Count(t => t == "TN") / (double)ViolationStringsTarget.Count(t => t == "TN" || t == "TP");
             public double AccuracyTarget => (double)ViolationStringsTarget.Count(t => t == "TN" || t == "TP") / (double)ViolationStringsTarget.Count;
             public double FMeasureTarget => ((1 + Math.Pow(FmetricBeta, 2)) * PrecisionTarget * RecallTarget) / ((Math.Pow(FmetricBeta, 2) * PrecisionTarget) + RecallTarget);
-            public double MCC_Target => (double)((TPcountTarget * TNcountTarget) - (FPcountTarget * FNcountTarget)) / Math.Sqrt((double)(TPcountTarget + FPcountTarget) * (TPcountTarget + FNcountTarget) * (TNcountTarget + FPcountTarget) * (TNcountTarget + FNcountTarget));
+            public double MCC_Target => CheckNaN((double)((TPcountTarget * TNcountTarget) - (FPcountTarget * FNcountTarget)) / Math.Sqrt((double)(TPcountTarget + FPcountTarget) * (TPcountTarget + FNcountTarget) * (TNcountTarget + FPcountTarget) * (TNcountTarget + FNcountTarget)),0);
 
             //regression prediction
             public double PredictionMedianSP => Median(PredictionAccuraciesSP.ToArray());
@@ -2041,6 +2046,15 @@ namespace Analyser
             return Tuple.Create(anovaOutlines, wilcoxOutlines, ttestOutlines);
         }
 
+        /// <summary>
+        /// checks if the value is nan, returns a default value if it does
+        /// </summary>
+        /// <param name="pValue"></param>
+        /// <returns></returns>
+        static double CheckNaN(double pValue, double pDefault)
+        {
+            return double.IsNaN(pValue) ? pDefault : pValue;
+        }
         public enum TargetData { SP, TS }
 
     }

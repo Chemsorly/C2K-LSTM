@@ -34,7 +34,7 @@ namespace Analyser
                 //@"C:\TT\Ensemble Results\c2k\stateless cudnn no_overlap_s8i7", done
                 //@"C:\TT\Ensemble Results\c2k\stateless lstm v2bagging_10_v1.61",
                 //@"C:\TT\Ensemble Results\c2k\stateless lstm v2bagging_09_v1.62",
-                @"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_08_v1.63",
+                //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless lstm v2bagging_08_v1.63",
                 //@"C:\TT\Ensemble Results\c2k\stateless lstm v2bagging_07_v1.64",
                 //@"C:\TT\Ensemble Results\c2k\stateless lstm v2bagging_06_v1.65",
                 //@"C:\TT\Ensemble Results\c2k\stateless lstm v2bagging_05_v1.66",
@@ -82,6 +82,7 @@ namespace Analyser
                 //@"C:\TT\Ensemble Results\c2k\stateless lstm v2bagging_wo-zl_08_v1.88",
                 //@"C:\TT\Ensemble Results\c2k\stateless lstm v2bagging_wo-zl_09_v1.89",
                 //@"C:\TT\Ensemble Results\c2k\stateless lstm v2bagging_wo-zl_010_v1.810",
+                @"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn nosubsequences",
             };
         }
     }
