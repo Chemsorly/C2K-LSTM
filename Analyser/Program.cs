@@ -39,10 +39,15 @@ namespace Analyser
         //C2K dataset: true
         private static readonly bool PositiveIsViolation = false;
 
+        //removes test instances from ensembles if they are below the threshold
+        //true: test instances do not appear in the output (i.e. only instances with r >= R are considered)
+        //false: test instances with r < R have their true predictions turned into false predictions (i.e. no adaptation considered)
+        public static readonly bool RemoveBelowReliabilityThreshold = true;
+
         private static readonly int PlotModelWidth = 512;
         private static readonly int PlotModelHeight = 512;
 
-        static List<String> folders = Folderlist.GetFolderlist(); 
+        static List<String> folders = Folderlist.GetFolderlist();
         private const bool clearFolder = true;
 
         static void Main(string[] args)
@@ -72,7 +77,7 @@ namespace Analyser
                     EnsembleFolder.GetFiles().ToList().ForEach(t => t.Delete());
                     EnsembleFolder.GetDirectories().ToList().ForEach(t => t.Delete(true));
                 }
-                    
+
 
                 //globals
                 int maxSequences = 0;
@@ -184,12 +189,12 @@ namespace Analyser
                 Parallel.ForEach(InFiles, file =>
                 {
                     int rows = 0;
-                //numeric or binary
-                bool IsBinaryPrediction = false;
-                //rgb encoding
-                bool IsRGBencoding = false;
-                //no path encoding
-                bool IsNopathEncoding = false;
+                    //numeric or binary
+                    bool IsBinaryPrediction = false;
+                    //rgb encoding
+                    bool IsRGBencoding = false;
+                    //no path encoding
+                    bool IsNopathEncoding = false;
                     List<String> Parameters = new List<String>();
                     List<Line> output = new List<Line>();
                     TargetData TargetData = TargetData.SP;
@@ -199,8 +204,8 @@ namespace Analyser
                         parser.TextFieldType = FieldType.Delimited;
                         parser.SetDelimiters(",");
 
-                    //List<String> Parameters = ExtractParams(file.Name.Replace("results-", String.Empty).Replace(".csv", String.Empty));
-                    Parameters = ExtractParams(file.Directory.Name);
+                        //List<String> Parameters = ExtractParams(file.Name.Replace("results-", String.Empty).Replace(".csv", String.Empty));
+                        Parameters = ExtractParams(file.Directory.Name);
                         if (Parameters.Any(t => t.Contains("binary")))
                         {
                             IsBinaryPrediction = true;
@@ -229,33 +234,33 @@ namespace Analyser
                         else
                             IsNopathEncoding = false;
 
-                    //add to global
-                    for (int i = 0; i < allParameters.Length; i++)
+                        //add to global
+                        for (int i = 0; i < allParameters.Length; i++)
                             allParameters[i].Add(Parameters[i]);
 
-                    //generate line objects
-                    output = GetLinesFromData(file.FullName, parser, ref rows, IsBinaryPrediction, IsRGBencoding, PositiveIsViolation);
+                        //generate line objects
+                        output = GetLinesFromData(file.FullName, parser, ref rows, IsBinaryPrediction, IsRGBencoding, PositiveIsViolation);
                     }
 
-                //save longest sequence
-                if (rows > maxSequences)
+                    //save longest sequence
+                    if (rows > maxSequences)
                         maxSequences = rows;
 
-                //get buckets
-                var BucketList = Bucketing.CreateBuckets(BucketGranularity, Parameters, TargetData, BucketingType, output, IsRGBencoding, IsNopathEncoding);
+                    //get buckets
+                    var BucketList = Bucketing.CreateBuckets(BucketGranularity, Parameters, TargetData, BucketingType, output, IsRGBencoding, IsNopathEncoding);
 
-                //run workload
-                RunPerFileWorkload(output, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, Parameters, file.FullName,
-                model_glob_precision_target,
-                model_glob_recall_target,
-                model_glob_speceficity_target,
-                model_glob_falsepositives_target,
-                model_glob_negativepredictions_target,
-                model_glob_accuracy_target,
-                model_glob_mcc_target, model_glob_fmetric_target,
-                ref validSequences,
-                ref predictedSequences,
-                ref counter);
+                    //run workload
+                    RunPerFileWorkload(output, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, Parameters, file.FullName,
+                    model_glob_precision_target,
+                    model_glob_recall_target,
+                    model_glob_speceficity_target,
+                    model_glob_falsepositives_target,
+                    model_glob_negativepredictions_target,
+                    model_glob_accuracy_target,
+                    model_glob_mcc_target, model_glob_fmetric_target,
+                    ref validSequences,
+                    ref predictedSequences,
+                    ref counter);
                 });
 
                 //add ensembles on top
@@ -311,7 +316,7 @@ namespace Analyser
                         Directory.CreateDirectory($"{EnsembleFolder.FullName}\\{reliabilityThreshold}\\{i}");
                         File.WriteAllLines($"{EnsembleFolder.FullName}\\{reliabilityThreshold}\\{i}\\{targetFilename}", ensemble.ExportToCsv());
 
-                        var ensembleLines = GetLinesFromEnsemble(ensemble, false, false, reliabilityThreshold);
+                        var ensembleLines = GetLinesFromEnsemble(ensemble, false, false, reliabilityThreshold, RemoveBelowReliabilityThreshold);
                         //get buckets
                         var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { $"ensemble_unsorted_{reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" }, TargetData.TS, BucketingType, ensembleLines, false, false);
 
@@ -335,7 +340,7 @@ namespace Analyser
                             if (item != null)
                                 ensembleBoxplotSeries.Items.Add(item);
                         }
-                        RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { $"ensemble_unsorted_{reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" }, 
+                        RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { $"ensemble_unsorted_{reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" },
                             $"{EnsembleFolder.FullName}\\{reliabilityThreshold}\\{i}\\{targetFilename}",
                             model_glob_precision_target,
                             model_glob_recall_target,
@@ -372,7 +377,7 @@ namespace Analyser
                         //export to csv
                         File.WriteAllLines($"{EnsembleFolder.FullName}\\{reliabilityThreshold}\\{i}\\{targetFilename}", ensemble.ExportToCsv());
 
-                        var ensembleLines = GetLinesFromEnsemble(ensemble, false, false, reliabilityThreshold);
+                        var ensembleLines = GetLinesFromEnsemble(ensemble, false, false, reliabilityThreshold, RemoveBelowReliabilityThreshold);
                         //get buckets
                         var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { $"ensemble_boosted_{reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" }, TargetData.TS, BucketingType, ensembleLines, false, false);
 
@@ -386,7 +391,7 @@ namespace Analyser
                             mccensembleprogressSeries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC_Target));
                             reliabilityensembleprogressseries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, ensemble.GetReliabilityForBucket(bucket.BucketLevel, BucketGranularity)));
                         }
-                        RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { $"ensemble_boosted_{reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" }, 
+                        RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { $"ensemble_boosted_{reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" },
                             $"{EnsembleFolder.FullName}\\{reliabilityThreshold}\\{i}\\{targetFilename}",
                             model_glob_precision_target,
                             model_glob_recall_target,
@@ -422,7 +427,7 @@ namespace Analyser
                         OxyPlot.PdfExporter.Export(ensemblePlot_byprogressBoosted, filestream, PlotModelWidth * 2, PlotModelHeight);
                         filestream.Close();
                     }
-                });            
+                });
 
                 #endregion
                 //create aggregated file
@@ -1612,7 +1617,7 @@ namespace Analyser
                     GT_InstanceID = int.Parse(fields[9]),
                     PrefixActivities = fields[10],
                     //PredictedActivities = fields[11],
-                    SuffixActivities = fields[11]                
+                    SuffixActivities = fields[11]
                 };
                 if (IsBinaryPrediction)
                     line.Predicted_Violations = fields[13] == "true";
@@ -1628,12 +1633,12 @@ namespace Analyser
             return output;
         }
 
-        public static List<Line> GetLinesFromEnsemble(Ensemble ensemble, bool IsBinaryPrediction, bool IsRGBencoding, double pReliabilityThreshold)
+        public static List<Line> GetLinesFromEnsemble(Ensemble ensemble, bool IsBinaryPrediction, bool IsRGBencoding, double pReliabilityThreshold, bool pRemoveBelowReliabilityThreshold)
         {
             List<Line> output = new List<Line>();
             foreach (var enLine in ensemble.EnsembleLines)
             {
-                if(enLine.Reliability >= pReliabilityThreshold)
+                if (!pRemoveBelowReliabilityThreshold || enLine.Reliability >= pReliabilityThreshold)
                 {
                     var line = new Line()
                     {
@@ -1796,7 +1801,7 @@ namespace Analyser
             public double NegativePredictedValueTarget => (double)ViolationStringsTarget.Count(t => t == "TN") / (double)ViolationStringsTarget.Count(t => t == "TN" || t == "TP");
             public double AccuracyTarget => (double)ViolationStringsTarget.Count(t => t == "TN" || t == "TP") / (double)ViolationStringsTarget.Count;
             public double FMeasureTarget => ((1 + Math.Pow(FmetricBeta, 2)) * PrecisionTarget * RecallTarget) / ((Math.Pow(FmetricBeta, 2) * PrecisionTarget) + RecallTarget);
-            public double MCC_Target => CheckNaN((double)((TPcountTarget * TNcountTarget) - (FPcountTarget * FNcountTarget)) / Math.Sqrt((double)(TPcountTarget + FPcountTarget) * (TPcountTarget + FNcountTarget) * (TNcountTarget + FPcountTarget) * (TNcountTarget + FNcountTarget)),0);
+            public double MCC_Target => CheckNaN((double)((TPcountTarget * TNcountTarget) - (FPcountTarget * FNcountTarget)) / Math.Sqrt((double)(TPcountTarget + FPcountTarget) * (TPcountTarget + FNcountTarget) * (TNcountTarget + FPcountTarget) * (TNcountTarget + FNcountTarget)), 0);
 
             //regression prediction
             public double PredictionMedianSP => Median(PredictionAccuraciesSP.ToArray());
