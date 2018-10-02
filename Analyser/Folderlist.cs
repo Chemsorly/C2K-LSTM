@@ -83,7 +83,26 @@ namespace Analyser
                 //@"C:\TT\Ensemble Results\c2k\stateless lstm v2bagging_wo-zl_09_v1.89",
                 //@"C:\TT\Ensemble Results\c2k\stateless lstm v2bagging_wo-zl_010_v1.810",
                 //@"D:\Sciebo\TT\Ensemble Results\c2k\stateless cudnn nosubsequences",
-                @"D:\Sciebo\TT\Ensemble Results\tt\v2.11"
+                //@"C:\TT\Ensemble Results\tt\v2.11",
+                //@"C:\TT\Ensemble Results\tt\v2.12",
+                @"C:\TT\Ensemble Results\c2k\stateless networksize 100 1",
+                @"C:\TT\Ensemble Results\c2k\stateless networksize 100 2",
+                @"C:\TT\Ensemble Results\c2k\stateless networksize 100 3",
+                @"C:\TT\Ensemble Results\c2k\stateless networksize 100 4",
+                @"C:\TT\Ensemble Results\c2k\stateless networksize 100 5",
+                @"C:\TT\Ensemble Results\c2k\stateless networksize 200 1",
+                @"C:\TT\Ensemble Results\c2k\stateless networksize 200 2",
+                @"C:\TT\Ensemble Results\c2k\stateless networksize 200 3",
+                @"C:\TT\Ensemble Results\c2k\stateless networksize 200 4",
+                @"C:\TT\Ensemble Results\c2k\stateless networksize 200 5",
+                @"C:\TT\Ensemble Results\c2k\stateless networksize 300 1",
+                @"C:\TT\Ensemble Results\c2k\stateless networksize 300 2",
+                @"C:\TT\Ensemble Results\c2k\stateless networksize 300 3",
+                @"C:\TT\Ensemble Results\c2k\stateless networksize 300 4",
+                @"C:\TT\Ensemble Results\c2k\stateless cudnn gru",
+                @"C:\TT\Ensemble Results\c2k\stateless gru",
+                @"C:\TT\Ensemble Results\c2k\stateless lstm nolabel",
+                @"C:\TT\Ensemble Results\c2k\stateless rnn",
             };
         }
     }

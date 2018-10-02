@@ -21,11 +21,11 @@ namespace Analyser
         private static readonly double BucketGranularity = 0.1; //creates a bucket every 0.1 of completion
         private static readonly double FmetricBeta = 1;
         private static readonly double[] ReliabilityThresholds = {
-            0.5, 0.52, 0.54, 0.56, 0.58,
-            0.6, 0.62, 0.64, 0.66, 0.68,
-            0.7, 0.72, 0.74, 0.76, 0.78,
-            0.8, 0.82, 0.84, 0.86, 0.88,
-            0.9, 0.92, 0.94, 0.96, 0.98,
+            0.5, //0.52, 0.54, 0.56, 0.58,
+            0.6, //0.62, 0.64, 0.66, 0.68,
+            0.7, //0.72, 0.74, 0.76, 0.78,
+            0.8, //0.82, 0.84, 0.86, 0.88,
+            0.9, //0.92, 0.94, 0.96, 0.98,
             1.0
         }; //turns true predictions to false if below threshold (values between 0.5 and 1; 0.5 = no prediction changes)
 
@@ -1291,9 +1291,9 @@ namespace Analyser
                                $"{line.GT_Timestamp}," +
                                $"{line.GT_Planned}," +
                                $"{line.GT_InstanceID}," +
-                               $"{line.PrefixActivities}," +
-                               $"{line.PredictedActivities}," +
-                               $"{line.SuffixActivities}," +
+                               $"null," + //{line.PrefixActivities}
+                               $"null," + //{line.PredictedActivities}
+                               $"null," + //{line.SuffixActivities}
                                $"{line.AccuracySumprevious}," +
                                $"{line.AccuracyTimestamp}," +
                                $"{line.Violation_Effective}," +
@@ -1409,35 +1409,35 @@ namespace Analyser
                            $"{BucketList.Sum(t => t.FNcountTS)}," +
                            $"{BucketList.Where(t => t.ViolationStringsSP.Count > 0).Sum(t => t.PredictionMedianSP) / (double)BucketList.Count(t => t.ViolationStringsSP.Any())}," +
                            $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Sum(t => t.PredictionMedianTS) / (double)BucketList.Count(t => t.ViolationStringsTS.Any())}," +
-                           $"{BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.MSE_SP)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.RMSE_SP)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.MAE_SP)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.RSE_SP)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.RRSE_SP)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.RAE_SP)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.PrecisionSP)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.RecallSP)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.SpecificitySP)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.FalsePositiveRateSP)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.NegativePredictedValueSP)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.AccuracySP)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.FMeasureSP)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.MCC_SP)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.MSE_TS)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.RMSE_TS)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.MAE_TS)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.RSE_TS)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.RRSE_TS)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.RAE_TS)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.PrecisionTS)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.RecallTS)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.SpecificityTS)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.FalsePositiveRateTS)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.NegativePredictedValueTS)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.AccuracyTS)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.FMeasureTS)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.MCC_TS)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.AvgReliability)}"
+                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.MSE_SP) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.RMSE_SP) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.MAE_SP) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.RSE_SP) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.RRSE_SP) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.RAE_SP) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.PrecisionSP) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.RecallSP) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.SpecificitySP) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.FalsePositiveRateSP) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.NegativePredictedValueSP) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.AccuracySP) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.FMeasureSP) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.MCC_SP) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.MSE_TS) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.RMSE_TS) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.MAE_TS) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.RSE_TS) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.RRSE_TS) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.RAE_TS) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.PrecisionTS) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.RecallTS) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.SpecificityTS) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.FalsePositiveRateTS) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.NegativePredictedValueTS) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.AccuracyTS) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.FMeasureTS) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.MCC_TS) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.AvgReliability) : double.NaN)}"
             );
 
             ////export as csv to match LSTM input examples
