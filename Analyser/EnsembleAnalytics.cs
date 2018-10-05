@@ -31,7 +31,7 @@ namespace Analyser
 
         public double MCC => (double)((TPcount * TNcount) - (FPcount * FNcount)) / Math.Sqrt((double)(TPcount + FPcount) * (double)(TPcount + FNcount) * (double)(TNcount + FPcount) * (double)(TNcount + FNcount));
 
-        public double Reliability => EnsembleLines.Average(t => t.Reliability);
+        public double Reliability => EnsembleLines.Any() ? EnsembleLines.Average(t => t.Reliability) : 0;
 
         public double GetReliabilityForBucket(double pBucketLevel, double pBucketGranularity)
         {

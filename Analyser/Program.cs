@@ -32,17 +32,17 @@ namespace Analyser
         //bucketing type: defines how results are bucketet
         //1 = normal bucketing over all results
         //2 = triple ranged: 0% - 50%, 50%, 50% - 100%
-        private static readonly int BucketingType = 1;
+        private static readonly int BucketingType = 2;
 
         //violation type: predictions bigger than ground truth equal violation
         //TT dataset: false
         //C2K dataset: true
-        private static readonly bool PositiveIsViolation = false;
+        private static readonly bool PositiveIsViolation = true;
 
         //removes test instances from ensembles if they are below the threshold
         //true: test instances do not appear in the output (i.e. only instances with r >= R are considered)
         //false: test instances with r < R have their true predictions turned into false predictions (i.e. no adaptation considered)
-        public static readonly bool RemoveBelowReliabilityThreshold = true;
+        public static readonly bool RemoveBelowReliabilityThreshold = false;
 
         private static readonly int PlotModelWidth = 512;
         private static readonly int PlotModelHeight = 512;
@@ -57,7 +57,7 @@ namespace Analyser
             customCulture.NumberFormat.NumberDecimalSeparator = ".";
             CultureInfo.DefaultThreadCurrentCulture = customCulture;
 
-            Parallel.ForEach(folders, folder =>
+            foreach (var folder in folders)
             {
                 //target folders
                 DirectoryInfo ResultsFolder = new DirectoryInfo(folder);
@@ -1238,7 +1238,7 @@ namespace Analyser
                 //File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_wilcox_rows.csv", wilcoxRowOutlines);
                 //File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_ttest_rows.csv", ttestRowOutlines);
                 //#endregion statistics                
-            });
+            }
         }
 
         public static void RunPerFileWorkload(List<Line> output, ref ConcurrentBag<List<Line>> bagLines, List<Bucket> BucketList, ref List<Bucket> allBuckets, ref List<List<Bucket>> ensembleBuckets, List<String> Parameters, String file,
