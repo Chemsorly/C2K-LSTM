@@ -111,7 +111,7 @@ namespace Analyser
         public bool PredictedViolation => ((double)EnsembleVotes.Count(t => t.Violation == true) / (double)EnsembleVotes.Count) >= reliabilityThreshold; //>= 0.5;
         public double MedianPrediction => Program.Median(EnsembleVotes.Select(t => t.Prediction).ToArray());
         public double AveragePrediction => EnsembleVotes.Average(t => t.Prediction);
-        public double Reliability => PredictedViolation ?
+        public double Reliability => ((double)EnsembleVotes.Count(t => t.Violation == true) / (double)EnsembleVotes.Count) >= 0.5 ?
             ((double)EnsembleVotes.Count(t => t.Violation == true) / (double)EnsembleVotes.Count) :
             ((double)EnsembleVotes.Count(t => t.Violation == false) / (double)EnsembleVotes.Count);
     }
