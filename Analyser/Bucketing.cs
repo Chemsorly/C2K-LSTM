@@ -43,6 +43,7 @@ namespace Analyser
                             line.Completion < (i + 1) * BucketGranularity)
                         {
                             BucketList[i].Lines.Add(line);
+                            line.Bucket = BucketList[i];
                             BucketList[i].Prediction_SP.Add(line.SumPrevious);
                             BucketList[i].Prediction_TS.Add(line.Timestamp);
                             BucketList[i].ViolationStringsSP.Add(line.Violation_StringSP);
@@ -85,6 +86,7 @@ namespace Analyser
                     {
                         line.Completion = 0.5d;
                         midbucket.Lines.Add(line);
+                        line.Bucket = midbucket;
                         midbucket.Prediction_SP.Add(line.SumPrevious);
                         midbucket.Prediction_TS.Add(line.Timestamp);
                         midbucket.ViolationStringsSP.Add(line.Violation_StringSP);
@@ -109,6 +111,7 @@ namespace Analyser
                             if (completion >= i * BucketGranularity && completion < (i + 1) * BucketGranularity)
                             {
                                 BucketList[i].Lines.Add(line);
+                                line.Bucket = BucketList[i];
                                 BucketList[i].Prediction_SP.Add(line.SumPrevious);
                                 BucketList[i].Prediction_TS.Add(line.Timestamp);
                                 BucketList[i].ViolationStringsSP.Add(line.Violation_StringSP);
@@ -139,6 +142,7 @@ namespace Analyser
                                 if (BucketList[i] == midbucket)
                                     i++;
                                 BucketList[i].Lines.Add(line);
+                                line.Bucket = BucketList[i];
                                 BucketList[i].Prediction_SP.Add(line.SumPrevious);
                                 BucketList[i].Prediction_TS.Add(line.Timestamp);
                                 BucketList[i].ViolationStringsSP.Add(line.Violation_StringSP);

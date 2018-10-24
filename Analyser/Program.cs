@@ -22,11 +22,11 @@ namespace Analyser
         private static readonly double FmetricBeta = 1;
         private static readonly double[] ReliabilityThresholds = {
             0.5, //0.52, 0.54, 0.56, 0.58,
-            0.6, //0.62, 0.64, 0.66, 0.68,
-            0.7, //0.72, 0.74, 0.76, 0.78,
-            0.8, //0.82, 0.84, 0.86, 0.88,
-            0.9, //0.92, 0.94, 0.96, 0.98,
-            1.0
+            //0.6, //0.62, 0.64, 0.66, 0.68,
+            //0.7, //0.72, 0.74, 0.76, 0.78,
+            //0.8, //0.82, 0.84, 0.86, 0.88,
+            //0.9, //0.92, 0.94, 0.96, 0.98,
+            //1.0
         }; //turns true predictions to false if below threshold (values between 0.5 and 1; 0.5 = no prediction changes)
 
         //bucketing type: defines how results are bucketet
@@ -446,20 +446,20 @@ namespace Analyser
                 Dictionary<String, List<String>> sortedbucketsRRSE = new Dictionary<String, List<String>>();
                 Dictionary<String, List<String>> sortedbucketsRAE = new Dictionary<String, List<String>>();
                 List<Dictionary<String, List<String>>> sortedbucketsList = new List<Dictionary<string, List<string>>>()
-            {
-                sortedbucketsPrecision, sortedbucketsRecall, sortedbucketsSpeceficity, sortedbucketsFalsepositives,
-                sortedbucketsNegativepredictions, sortedbucketsAccuracy, sortedbucketsFmetric, sortedbucketsMCC,
-                sortedbucketsMSE,sortedbucketsRMSE,sortedbucketsMAE,sortedbucketsRSE,sortedbucketsRRSE,sortedbucketsRAE
-            };
+                {
+                    sortedbucketsPrecision, sortedbucketsRecall, sortedbucketsSpeceficity, sortedbucketsFalsepositives,
+                    sortedbucketsNegativepredictions, sortedbucketsAccuracy, sortedbucketsFmetric, sortedbucketsMCC,
+                    sortedbucketsMSE,sortedbucketsRMSE,sortedbucketsMAE,sortedbucketsRSE,sortedbucketsRRSE,sortedbucketsRAE
+                };
                 List<String> sortedbucketsListParameters = new List<string>()
-            {
-                "Precision","Recall","Speceficity","Falsepositives","Negativepredictions","Accuracy","Fmetric","MCC",
-                "MSE","RMSE","MAE","RSE","RRSE","RAE"
-            };
+                {
+                    "Precision","Recall","Speceficity","Falsepositives","Negativepredictions","Accuracy","Fmetric","MCC",
+                    "MSE","RMSE","MAE","RSE","RRSE","RAE"
+                };
 
                 foreach (var bucket in allBuckets)
                 {
-                    if(bucket != null)
+                    if (bucket != null)
                     {
                         if (!sortedbucketsPrecision.ContainsKey(String.Join(" ", bucket.Parameters)))
                             sortedbucketsPrecision.Add(String.Join(" ", bucket.Parameters), new List<String>());
@@ -489,13 +489,13 @@ namespace Analyser
                             sortedbucketsRRSE.Add(String.Join(" ", bucket.Parameters), new List<String>());
                         if (!sortedbucketsRAE.ContainsKey(String.Join(" ", bucket.Parameters)))
                             sortedbucketsRAE.Add(String.Join(" ", bucket.Parameters), new List<String>());
-                    }                    
+                    }
                 }
 
                 //generate values
                 for (int i = 0; i * BucketGranularity < 1; i++)
                 {
-                    var buckets = allBuckets.Where(t => t.BucketLevel == i);
+                    var buckets = allBuckets.Where(t => t != null && t.BucketLevel == i);
                     foreach (var bucket in buckets)
                     {
                         sortedbucketsPrecision[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.PrecisionTarget) ? "0" : bucket.PrecisionTarget.ToString());
@@ -1241,6 +1241,8 @@ namespace Analyser
                 //File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_wilcox_rows.csv", wilcoxRowOutlines);
                 //File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_ttest_rows.csv", ttestRowOutlines);
                 #endregion statistics                
+
+                Console.WriteLine($"finished folder {folder}");
             }
         }
 
@@ -1281,7 +1283,8 @@ namespace Analyser
                            "deviation_abs_sp," +
                            "deviation_abs_ts," +
                            "valid_suffix," +
-                           "reliability");
+                           "reliability," +
+                           "bucket_level");
             foreach (var line in output)
             {
                 exportrows.Add($"{line.SequenceID}," +
@@ -1294,9 +1297,9 @@ namespace Analyser
                                $"{line.GT_Timestamp}," +
                                $"{line.GT_Planned}," +
                                $"{line.GT_InstanceID}," +
-                               $"null," + //{line.PrefixActivities}
-                               $"null," + //{line.PredictedActivities}
-                               $"null," + //{line.SuffixActivities}
+                               $"{line.PrefixActivities}," +
+                               $"{line.PredictedActivities}," +
+                               $"{line.SuffixActivities}," +
                                $"{line.AccuracySumprevious}," +
                                $"{line.AccuracyTimestamp}," +
                                $"{line.Violation_Effective}," +
@@ -1307,7 +1310,8 @@ namespace Analyser
                                $"{line.DeviationAbsoluteSumprevious}," +
                                $"{line.DeviationAbsoluteTimestamp}," +
                                $"{line.IsValidPrediction}," +
-                               $"{line.Reliability}");
+                               $"{line.Reliability},"+
+                               $"{line.Bucket.BucketLevel}");
             }
 
             //add buckets
@@ -1712,6 +1716,8 @@ namespace Analyser
 
             public bool IsBinaryPrediction { get; set; }
             public bool IsRGBEncoding { get; set; }
+
+            public Bucket Bucket { get; set; }
 
             //input
             public int SequenceID { get; set; }
