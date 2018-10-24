@@ -61,18 +61,19 @@ namespace Analyser
             {
                 //target folders
                 DirectoryInfo ResultsFolder = new DirectoryInfo(folder);
-                DirectoryInfo InFolder = new DirectoryInfo(ResultsFolder.FullName + @"\raw");
+                DirectoryInfo InFolder = new DirectoryInfo(ResultsFolder.FullName + @"\models");
+                DirectoryInfo OutFolder = new DirectoryInfo(ResultsFolder.FullName + @"\evaluation");
 
                 //create ensemble folder (if not exist)
-                Directory.CreateDirectory(ResultsFolder.FullName + @"\ensembles");
-                DirectoryInfo EnsembleFolder = new DirectoryInfo(ResultsFolder.FullName + @"\ensembles");
-                List<FileInfo> InFiles = InFolder.EnumerateFiles("*", SearchOption.AllDirectories).Where(t => t.Name.Contains(".csv") && !t.Name.Contains(".edited.csv")).ToList();
+                Directory.CreateDirectory(OutFolder.FullName + @"\ensembles");
+                DirectoryInfo EnsembleFolder = new DirectoryInfo(OutFolder.FullName + @"\ensembles");
+                List<FileInfo> InFiles = InFolder.EnumerateFiles("*", SearchOption.AllDirectories).Where(t => t.Name.Contains("results.csv") && !t.Name.Contains(".edited.csv")).ToList();
 
                 //clear folder if defined //WARNING: WILL DELETE ALL FILES IN SAID FOLDER
                 if (clearFolder)
                 {
                     //clear root
-                    ResultsFolder.GetFiles().ToList().ForEach(t => t.Delete());
+                    OutFolder.GetFiles().ToList().ForEach(t => t.Delete());
                     //clear ensemble folders
                     EnsembleFolder.GetFiles().ToList().ForEach(t => t.Delete());
                     EnsembleFolder.GetDirectories().ToList().ForEach(t => t.Delete(true));
@@ -544,47 +545,47 @@ namespace Analyser
                     foreach (var dict in dictOutlinesMCC)
                         outLines2.Add($"{dict.Key},{String.Join(",", dict.Value)}");
 
-                    File.WriteAllLines($"{ResultsFolder.FullName}\\raw_{sortedbucketsListParameters[i]}.csv", outLines);
-                    File.WriteAllLines($"{ResultsFolder.FullName}\\raw_{sortedbucketsListParameters[i]}2.csv", outLines2);
+                    File.WriteAllLines($"{OutFolder.FullName}\\raw_{sortedbucketsListParameters[i]}.csv", outLines);
+                    File.WriteAllLines($"{OutFolder.FullName}\\raw_{sortedbucketsListParameters[i]}2.csv", outLines2);
                 }
 
                 #region print global
-                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_precision_target.pdf", FileMode.OpenOrCreate))
+                using (var filestream = new FileStream($"{OutFolder.FullName}\\global_precision_target.pdf", FileMode.OpenOrCreate))
                 {
                     OxyPlot.PdfExporter.Export(model_glob_precision_target, filestream, PlotModelWidth, PlotModelHeight);
                     filestream.Close();
                 }
-                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_recall_target.pdf", FileMode.OpenOrCreate))
+                using (var filestream = new FileStream($"{OutFolder.FullName}\\global_recall_target.pdf", FileMode.OpenOrCreate))
                 {
                     OxyPlot.PdfExporter.Export(model_glob_recall_target, filestream, PlotModelWidth, PlotModelHeight);
                     filestream.Close();
                 }
-                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_speceficity_target.pdf", FileMode.OpenOrCreate))
+                using (var filestream = new FileStream($"{OutFolder.FullName}\\global_speceficity_target.pdf", FileMode.OpenOrCreate))
                 {
                     OxyPlot.PdfExporter.Export(model_glob_speceficity_target, filestream, PlotModelWidth, PlotModelHeight);
                     filestream.Close();
                 }
-                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_falsepositives_target.pdf", FileMode.OpenOrCreate))
+                using (var filestream = new FileStream($"{OutFolder.FullName}\\global_falsepositives_target.pdf", FileMode.OpenOrCreate))
                 {
                     OxyPlot.PdfExporter.Export(model_glob_falsepositives_target, filestream, PlotModelWidth, PlotModelHeight);
                     filestream.Close();
                 }
-                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_negativepredictions_target.pdf", FileMode.OpenOrCreate))
+                using (var filestream = new FileStream($"{OutFolder.FullName}\\global_negativepredictions_target.pdf", FileMode.OpenOrCreate))
                 {
                     OxyPlot.PdfExporter.Export(model_glob_negativepredictions_target, filestream, PlotModelWidth, PlotModelHeight);
                     filestream.Close();
                 }
-                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_accuracy_target.pdf", FileMode.OpenOrCreate))
+                using (var filestream = new FileStream($"{OutFolder.FullName}\\global_accuracy_target.pdf", FileMode.OpenOrCreate))
                 {
                     OxyPlot.PdfExporter.Export(model_glob_accuracy_target, filestream, PlotModelWidth, PlotModelHeight);
                     filestream.Close();
                 }
-                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_fmetric_target.pdf", FileMode.OpenOrCreate))
+                using (var filestream = new FileStream($"{OutFolder.FullName}\\global_fmetric_target.pdf", FileMode.OpenOrCreate))
                 {
                     OxyPlot.PdfExporter.Export(model_glob_fmetric_target, filestream, PlotModelWidth, PlotModelHeight);
                     filestream.Close();
                 }
-                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_mcc_target.pdf", FileMode.OpenOrCreate))
+                using (var filestream = new FileStream($"{OutFolder.FullName}\\global_mcc_target.pdf", FileMode.OpenOrCreate))
                 {
                     OxyPlot.PdfExporter.Export(model_glob_mcc_target, filestream, PlotModelWidth, PlotModelHeight);
                     filestream.Close();
@@ -598,7 +599,7 @@ namespace Analyser
                     model_glob_validsequences_cataxis.ActualLabels.Add(entry.Key);
                     validpredictionSeries.Items.Add(new ColumnItem() { Value = (double)entry.Value / (double)maxSequences });
                 }
-                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_valid_sequences.pdf", FileMode.OpenOrCreate))
+                using (var filestream = new FileStream($"{OutFolder.FullName}\\global_valid_sequences.pdf", FileMode.OpenOrCreate))
                 {
                     OxyPlot.PdfExporter.Export(model_glob_validsequences, filestream, PlotModelWidth * 6, PlotModelHeight);
                     filestream.Close();
@@ -611,7 +612,7 @@ namespace Analyser
                     model_glob_predictedsequences_cataxis.ActualLabels.Add(entry.Key);
                     predictionsSeries.Items.Add(new ColumnItem() { Value = (double)entry.Value / (double)maxSequences });
                 }
-                using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_predicted_sequences.pdf", FileMode.OpenOrCreate))
+                using (var filestream = new FileStream($"{OutFolder.FullName}\\global_predicted_sequences.pdf", FileMode.OpenOrCreate))
                 {
                     OxyPlot.PdfExporter.Export(model_glob_predictedsequences, filestream, PlotModelWidth * 6, PlotModelHeight);
                     filestream.Close();
@@ -663,7 +664,7 @@ namespace Analyser
                 //    model_glob_boxplot_neurons_target_cataxis.ActualLabels.Add($"MCC {parameters[i]}");
                 //    boxplotSeries_target_neurons.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[0] == parameters[i].ToString()).Select(t => t.MCC_Target).ToList(), i + (parameters.Count * 7)));
                 //}
-                //using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_neurons_target.pdf", FileMode.OpenOrCreate))
+                //using (var filestream = new FileStream($"{OutFolder.FullName}\\global_boxplot_neurons_target.pdf", FileMode.OpenOrCreate))
                 //{
                 //    OxyPlot.PdfExporter.Export(model_glob_boxplot_neurons_target, filestream, PlotModelWidth * 3, PlotModelHeight);
                 //    filestream.Close();
@@ -713,7 +714,7 @@ namespace Analyser
                 //    model_glob_boxplot_dropout_target_cataxis.ActualLabels.Add($"MCC {parameters[i]}");
                 //    boxplotSeries_target_dropout.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[1] == parameters[i].ToString()).Select(t => t.MCC_Target).ToList(), i + (parameters.Count * 7)));
                 //}
-                //using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_dropout_target.pdf", FileMode.OpenOrCreate))
+                //using (var filestream = new FileStream($"{OutFolder.FullName}\\global_boxplot_dropout_target.pdf", FileMode.OpenOrCreate))
                 //{
                 //    OxyPlot.PdfExporter.Export(model_glob_boxplot_dropout_target, filestream, PlotModelWidth * 3, PlotModelHeight);
                 //    filestream.Close();
@@ -763,7 +764,7 @@ namespace Analyser
                 //    model_glob_boxplot_patience_target_cataxis.ActualLabels.Add($"MCC {parameters[i]}");
                 //    boxplotSeries_target_patience.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[2] == parameters[i].ToString()).Select(t => t.MCC_Target).ToList(), i + (parameters.Count * 7)));
                 //}
-                //using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_patience_target.pdf", FileMode.OpenOrCreate))
+                //using (var filestream = new FileStream($"{OutFolder.FullName}\\global_boxplot_patience_target.pdf", FileMode.OpenOrCreate))
                 //{
                 //    OxyPlot.PdfExporter.Export(model_glob_boxplot_patience_target, filestream, PlotModelWidth * 3, PlotModelHeight);
                 //    filestream.Close();
@@ -813,7 +814,7 @@ namespace Analyser
                 //    model_glob_boxplot_algorithm_target_cataxis.ActualLabels.Add($"MCC {parameters[i]}");
                 //    boxplotSeries_target_algorithm.Items.Add(CreateBoxplot(allBuckets.Where(t => (t.BucketLevel * BucketGranularity >= 0.5) && t.Parameters[3] == parameters[i].ToString()).Select(t => t.MCC_Target).ToList(), i + (parameters.Count * 7)));
                 //}
-                //using (var filestream = new FileStream($"{ResultsFolder.FullName}\\global_boxplot_algorithm_target.pdf", FileMode.OpenOrCreate))
+                //using (var filestream = new FileStream($"{OutFolder.FullName}\\global_boxplot_algorithm_target.pdf", FileMode.OpenOrCreate))
                 //{
                 //    OxyPlot.PdfExporter.Export(model_glob_boxplot_algorithm_target, filestream, PlotModelWidth * 3, PlotModelHeight);
                 //    filestream.Close();
@@ -1044,103 +1045,103 @@ namespace Analyser
                 //        grouping0rec_out.Add(String.Join(",", grouping0line_rec));
                 //        grouping0spec_out.Add(String.Join(",", grouping0line_spec));
                 //        grouping0mcc_out.Add(String.Join(",", grouping0line_mcc));
-                //        using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_acc.pdf", FileMode.OpenOrCreate))
+                //        using (var filestream = new FileStream($"{OutFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_acc.pdf", FileMode.OpenOrCreate))
                 //        {
                 //            OxyPlot.PdfExporter.Export(groupingboxplotmodel_acc, filestream, PlotModelWidth, PlotModelHeight);
                 //            filestream.Close();
                 //        }
-                //        using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_fpr.pdf", FileMode.OpenOrCreate))
+                //        using (var filestream = new FileStream($"{OutFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_fpr.pdf", FileMode.OpenOrCreate))
                 //        {
                 //            OxyPlot.PdfExporter.Export(groupingboxplotmodel_fpr, filestream, PlotModelWidth, PlotModelHeight);
                 //            filestream.Close();
                 //        }
-                //        using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_fmetric.pdf", FileMode.OpenOrCreate))
+                //        using (var filestream = new FileStream($"{OutFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_fmetric.pdf", FileMode.OpenOrCreate))
                 //        {
                 //            OxyPlot.PdfExporter.Export(groupingboxplotmodel_fmetric, filestream, PlotModelWidth, PlotModelHeight);
                 //            filestream.Close();
                 //        }
-                //        using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_npr.pdf", FileMode.OpenOrCreate))
+                //        using (var filestream = new FileStream($"{OutFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_npr.pdf", FileMode.OpenOrCreate))
                 //        {
                 //            OxyPlot.PdfExporter.Export(groupingboxplotmodel_npr, filestream, PlotModelWidth, PlotModelHeight);
                 //            filestream.Close();
                 //        }
-                //        using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_prec.pdf", FileMode.OpenOrCreate))
+                //        using (var filestream = new FileStream($"{OutFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_prec.pdf", FileMode.OpenOrCreate))
                 //        {
                 //            OxyPlot.PdfExporter.Export(groupingboxplotmodel_prec, filestream, PlotModelWidth, PlotModelHeight);
                 //            filestream.Close();
                 //        }
-                //        using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_rec.pdf", FileMode.OpenOrCreate))
+                //        using (var filestream = new FileStream($"{OutFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_rec.pdf", FileMode.OpenOrCreate))
                 //        {
                 //            OxyPlot.PdfExporter.Export(groupingboxplotmodel_rec, filestream, PlotModelWidth, PlotModelHeight);
                 //            filestream.Close();
                 //        }
-                //        using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_spec.pdf", FileMode.OpenOrCreate))
+                //        using (var filestream = new FileStream($"{OutFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_spec.pdf", FileMode.OpenOrCreate))
                 //        {
                 //            OxyPlot.PdfExporter.Export(groupingboxplotmodel_spec, filestream, PlotModelWidth, PlotModelHeight);
                 //            filestream.Close();
                 //        }
-                //        using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_mcc.pdf", FileMode.OpenOrCreate))
+                //        using (var filestream = new FileStream($"{OutFolder.FullName}\\grouping{group}_boxplot_{parameters[i]}_mcc.pdf", FileMode.OpenOrCreate))
                 //        {
                 //            OxyPlot.PdfExporter.Export(groupingboxplotmodel_mcc, filestream, PlotModelWidth, PlotModelHeight);
                 //            filestream.Close();
                 //        }
 
                 //    }
-                //    using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_acc.pdf", FileMode.OpenOrCreate))
+                //    using (var filestream = new FileStream($"{OutFolder.FullName}\\grouping{group}_acc.pdf", FileMode.OpenOrCreate))
                 //    {
                 //        OxyPlot.PdfExporter.Export(model_groupings0accuracy, filestream, PlotModelWidth, PlotModelHeight);
                 //        filestream.Close();
                 //    }
-                //    File.WriteAllLines($"{ResultsFolder.FullName}\\grouping{group}_acc.csv", grouping0acc_out);
+                //    File.WriteAllLines($"{OutFolder.FullName}\\grouping{group}_acc.csv", grouping0acc_out);
 
-                //    using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_fpr.pdf", FileMode.OpenOrCreate))
+                //    using (var filestream = new FileStream($"{OutFolder.FullName}\\grouping{group}_fpr.pdf", FileMode.OpenOrCreate))
                 //    {
                 //        OxyPlot.PdfExporter.Export(model_groupings0falsepositives, filestream, PlotModelWidth, PlotModelHeight);
                 //        filestream.Close();
                 //    }
-                //    File.WriteAllLines($"{ResultsFolder.FullName}\\grouping{group}_fpr.csv", grouping0fpr_out);
+                //    File.WriteAllLines($"{OutFolder.FullName}\\grouping{group}_fpr.csv", grouping0fpr_out);
 
-                //    using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_fmetric.pdf", FileMode.OpenOrCreate))
+                //    using (var filestream = new FileStream($"{OutFolder.FullName}\\grouping{group}_fmetric.pdf", FileMode.OpenOrCreate))
                 //    {
                 //        OxyPlot.PdfExporter.Export(model_groupings0fmetric, filestream, PlotModelWidth, PlotModelHeight);
                 //        filestream.Close();
                 //    }
-                //    File.WriteAllLines($"{ResultsFolder.FullName}\\grouping{group}_fmetric.csv", grouping0fmetric_out);
+                //    File.WriteAllLines($"{OutFolder.FullName}\\grouping{group}_fmetric.csv", grouping0fmetric_out);
 
-                //    using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_npr.pdf", FileMode.OpenOrCreate))
+                //    using (var filestream = new FileStream($"{OutFolder.FullName}\\grouping{group}_npr.pdf", FileMode.OpenOrCreate))
                 //    {
                 //        OxyPlot.PdfExporter.Export(model_groupings0negativepredictions, filestream, PlotModelWidth, PlotModelHeight);
                 //        filestream.Close();
                 //    }
-                //    File.WriteAllLines($"{ResultsFolder.FullName}\\grouping{group}_npr.csv", grouping0npr_out);
+                //    File.WriteAllLines($"{OutFolder.FullName}\\grouping{group}_npr.csv", grouping0npr_out);
 
-                //    using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_prec.pdf", FileMode.OpenOrCreate))
+                //    using (var filestream = new FileStream($"{OutFolder.FullName}\\grouping{group}_prec.pdf", FileMode.OpenOrCreate))
                 //    {
                 //        OxyPlot.PdfExporter.Export(model_groupings0precision, filestream, PlotModelWidth, PlotModelHeight);
                 //        filestream.Close();
                 //    }
-                //    File.WriteAllLines($"{ResultsFolder.FullName}\\grouping{group}_prec.csv", grouping0prec_out);
+                //    File.WriteAllLines($"{OutFolder.FullName}\\grouping{group}_prec.csv", grouping0prec_out);
 
-                //    using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_rec.pdf", FileMode.OpenOrCreate))
+                //    using (var filestream = new FileStream($"{OutFolder.FullName}\\grouping{group}_rec.pdf", FileMode.OpenOrCreate))
                 //    {
                 //        OxyPlot.PdfExporter.Export(model_groupings0recall, filestream, PlotModelWidth, PlotModelHeight);
                 //        filestream.Close();
                 //    }
-                //    File.WriteAllLines($"{ResultsFolder.FullName}\\grouping{group}_rec.csv", grouping0rec_out);
+                //    File.WriteAllLines($"{OutFolder.FullName}\\grouping{group}_rec.csv", grouping0rec_out);
 
-                //    using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_spec.pdf", FileMode.OpenOrCreate))
+                //    using (var filestream = new FileStream($"{OutFolder.FullName}\\grouping{group}_spec.pdf", FileMode.OpenOrCreate))
                 //    {
                 //        OxyPlot.PdfExporter.Export(model_groupings0speceficity, filestream, PlotModelWidth, PlotModelHeight);
                 //        filestream.Close();
                 //    }
-                //    File.WriteAllLines($"{ResultsFolder.FullName}\\grouping{group}_spec.csv", grouping0spec_out);
+                //    File.WriteAllLines($"{OutFolder.FullName}\\grouping{group}_spec.csv", grouping0spec_out);
 
-                //    using (var filestream = new FileStream($"{ResultsFolder.FullName}\\grouping{group}_mcc.pdf", FileMode.OpenOrCreate))
+                //    using (var filestream = new FileStream($"{OutFolder.FullName}\\grouping{group}_mcc.pdf", FileMode.OpenOrCreate))
                 //    {
                 //        OxyPlot.PdfExporter.Export(model_groupings0mcc, filestream, PlotModelWidth, PlotModelHeight);
                 //        filestream.Close();
                 //    }
-                //    File.WriteAllLines($"{ResultsFolder.FullName}\\grouping{group}_mcc.csv", grouping0mcc_out);
+                //    File.WriteAllLines($"{OutFolder.FullName}\\grouping{group}_mcc.csv", grouping0mcc_out);
 
                 //}
                 #endregion
@@ -1234,12 +1235,12 @@ namespace Analyser
                 //    }
                 //}
 
-                //File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_anova_block.csv", anovaBlockOutlines);
-                //File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_wilcox_block.csv", wilcoxBlockOutlines);
-                //File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_ttest_block.csv", ttestBlockOutlines);
-                //File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_anova_rows.csv", anovaRowOutlines);
-                //File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_wilcox_rows.csv", wilcoxRowOutlines);
-                //File.WriteAllLines($"{ResultsFolder.FullName}\\pvalues_ttest_rows.csv", ttestRowOutlines);
+                //File.WriteAllLines($"{OutFolder.FullName}\\pvalues_anova_block.csv", anovaBlockOutlines);
+                //File.WriteAllLines($"{OutFolder.FullName}\\pvalues_wilcox_block.csv", wilcoxBlockOutlines);
+                //File.WriteAllLines($"{OutFolder.FullName}\\pvalues_ttest_block.csv", ttestBlockOutlines);
+                //File.WriteAllLines($"{OutFolder.FullName}\\pvalues_anova_rows.csv", anovaRowOutlines);
+                //File.WriteAllLines($"{OutFolder.FullName}\\pvalues_wilcox_rows.csv", wilcoxRowOutlines);
+                //File.WriteAllLines($"{OutFolder.FullName}\\pvalues_ttest_rows.csv", ttestRowOutlines);
                 #endregion statistics                
 
                 Console.WriteLine($"finished folder {folder}");
