@@ -34,7 +34,7 @@ namespace Analyser
         //2 = triple ranged: 0% - 50%, 50%, 50% - 100%
         private static readonly int BucketingType = 2;
 
-        //violation type: predictions bigger than ground truth equal violation
+        //violation type: predictions bigger than planned equal violation
         //TT dataset: false
         //C2K dataset: true
         private static readonly bool PositiveIsViolation = true;
@@ -68,6 +68,13 @@ namespace Analyser
                 Directory.CreateDirectory(OutFolder.FullName + @"\ensembles");
                 DirectoryInfo EnsembleFolder = new DirectoryInfo(OutFolder.FullName + @"\ensembles");
                 List<FileInfo> InFiles = InFolder.EnumerateFiles("*", SearchOption.AllDirectories).Where(t => t.Name.Contains("results.csv") && !t.Name.Contains(".edited.csv")).ToList();
+
+                if (!InFiles.Any())
+                {
+                    Console.WriteLine($"ERROR: no files found in {ResultsFolder.FullName}");
+                    continue;
+                }
+                   
 
                 //clear folder if defined //WARNING: WILL DELETE ALL FILES IN SAID FOLDER
                 if (clearFolder)
@@ -261,7 +268,9 @@ namespace Analyser
                     model_glob_mcc_target, model_glob_fmetric_target,
                     ref validSequences,
                     ref predictedSequences,
-                    ref counter);
+                    ref counter,
+                    folder,
+                    "raw");
                 });
 
                 //add ensembles on top
@@ -352,7 +361,9 @@ namespace Analyser
                             model_glob_mcc_target, model_glob_fmetric_target,
                             ref validSequences,
                             ref predictedSequences,
-                            ref counter);
+                            ref counter,
+                            folder,
+                            "ensemble");
 
                         using (var filestream = new FileStream($"{EnsembleFolder.FullName}\\{reliabilityThreshold}\\{i}\\ensemble_boxplot_unsorted_{i} .pdf", FileMode.OpenOrCreate))
                         {
@@ -403,7 +414,9 @@ namespace Analyser
                             model_glob_mcc_target, model_glob_fmetric_target,
                             ref validSequences,
                             ref predictedSequences,
-                            ref counter);
+                            ref counter, 
+                            folder,
+                            "ensemble boosted");
                     });
                     mccensemblesizeBoostedSeries.Points.Sort((x, y) => x.X.CompareTo(y.X));
                     reliabilityensemblesizeBoostedSeries.Points.Sort((x, y) => x.X.CompareTo(y.X));
@@ -1258,7 +1271,9 @@ namespace Analyser
             OxyPlot.PlotModel model_glob_fmetric_target,
             ref Dictionary<String, int> validSequences,
             ref Dictionary<String, int> predictedSequences,
-            ref int counter
+            ref int counter,
+            String folder, 
+            String type
             )
         {
             //writelines
@@ -1564,7 +1579,7 @@ namespace Analyser
             ensembleBuckets.Add(BucketList);
             bagLines.Add(output);
             counter++;
-            Console.WriteLine($"finished file {counter}");
+            Console.WriteLine($"[{type}] finished file {counter} in folder {folder}");
         }
 
         public static List<Line> GetLinesFromData(String FullPathToFile, TextFieldParser parser, ref int rows, bool IsBinaryPrediction, bool IsRGBencoding, bool pPositiveIsViolation)
@@ -1613,6 +1628,7 @@ namespace Analyser
                     IsBinaryPrediction = IsBinaryPrediction,
                     IsRGBEncoding = IsRGBencoding,
 
+                    //c2k
                     SequenceID = int.Parse(fields[0]),
                     SequenceLength = int.Parse(fields[1]),
                     Prefix = int.Parse(fields[2]),
@@ -1626,6 +1642,21 @@ namespace Analyser
                     PrefixActivities = fields[10],
                     //PredictedActivities = fields[11],
                     SuffixActivities = fields[11]
+
+                    //bpi2012
+                    //SequenceID = int.Parse(fields[0]),
+                    //SequenceLength = int.Parse(fields[1]),
+                    //Prefix = int.Parse(fields[2]),
+                    //SumPrevious = double.Parse(fields[3], CultureInfo.InvariantCulture),
+                    //Timestamp = double.Parse(fields[3], CultureInfo.InvariantCulture),
+                    //Completion = double.Parse(fields[4], CultureInfo.InvariantCulture),
+                    //GT_SumPrevious = fields[5] == "True" ? 1 : 0,
+                    //GT_Timestamp = fields[5] == "True" ? 1 : 0,
+                    //GT_Planned = 0.5d,
+                    //GT_InstanceID = int.Parse(fields[6]),
+                    //PrefixActivities = fields[7],
+                    ////PredictedActivities = fields[11],
+                    //SuffixActivities = fields[8]
                 };
                 if (IsBinaryPrediction)
                     line.Predicted_Violations = fields[13] == "true";
@@ -1661,9 +1692,9 @@ namespace Analyser
                         SumPrevious = enLine.MedianPrediction,
                         Timestamp = enLine.MedianPrediction,
                         Completion = enLine.Completion,
-                        GT_SumPrevious = (int)enLine.ActualValue,
-                        GT_Timestamp = (int)enLine.ActualValue,
-                        GT_Planned = (int)enLine.ActualPlanned,
+                        GT_SumPrevious = enLine.ActualValue,
+                        GT_Timestamp = enLine.ActualValue,
+                        GT_Planned = enLine.ActualPlanned,
                         GT_InstanceID = enLine.InstanceId,
                         PrefixActivities = enLine.PrefixActivities,
                         //PredictedActivities = fields[11],
@@ -1705,7 +1736,8 @@ namespace Analyser
 
         public static List<String> ExtractParams(String pParameterString)
         {
-            return pParameterString.Split(' ').ToList();
+            return new List<string>() { pParameterString, "100","0.1","20","1" };
+            //return pParameterString.Split(' ').ToList();
         }
 
         public class Line
@@ -1727,9 +1759,9 @@ namespace Analyser
             public double SumPrevious { get; set; }
             public double Timestamp { get; set; }
             public double Completion { get; set; }
-            public int GT_SumPrevious { get; set; }
-            public int GT_Timestamp { get; set; }
-            public int GT_Planned { get; set; }
+            public double GT_SumPrevious { get; set; }
+            public double GT_Timestamp { get; set; }
+            public double GT_Planned { get; set; }
             public int GT_InstanceID { get; set; }
             public String PrefixActivities { get; set; }
             public String PredictedActivities { get; set; }
