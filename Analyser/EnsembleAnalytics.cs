@@ -86,6 +86,7 @@ namespace Analyser
                 EnsembleVotes.Add(new EnsembleVote(line.Violation_PredictedTS, line.Timestamp));
 
             //set ground truth values; should be equal across all input lines
+            SequenceId = pLines.First().SequenceID;
             ActualViolation = pLines.First().Violation_Effective;
             ActualValue = pLines.First().GT_Timestamp;
             Prefix = pLines.First().Prefix;
@@ -97,6 +98,7 @@ namespace Analyser
             Completion = pLines.First().Completion;
         }
 
+        public int SequenceId { get; set; }
         List<EnsembleVote> EnsembleVotes { get; } = new List<EnsembleVote>();
         public bool ActualViolation { get; }
         public double ActualValue { get; }
@@ -104,7 +106,7 @@ namespace Analyser
         public double Completion { get; }
         public int Prefix { get; }
         public int InstanceLength { get; }
-        public int InstanceId { get; }
+        public String InstanceId { get; }
         public String PrefixActivities { get; }
         public String SuffixActivities { get; }
 

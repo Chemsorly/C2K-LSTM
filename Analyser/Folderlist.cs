@@ -59,13 +59,13 @@ namespace Analyser
                 //@"C:\TT\Ensemble Results\master\stateless cudnn lstm networksize 500 5",
                 
                 //@"C:\TT\Ensemble Results\master\stateless cudnn bpi2012",
-                //@"C:\TT\Ensemble Results\master\stateless cudnn bpi2017",
+                @"C:\TT\Ensemble Results\master\stateless cudnn bpi2017",
                 //@"C:\TT\Ensemble Results\master\stateless cudnn bpi2018",
 
-                @"C:\TT\Ensemble Results\master\stateless cudnn airportcode test1",
-                @"C:\TT\Ensemble Results\master\stateless cudnn generator1 baseline",
-                @"C:\TT\Ensemble Results\master\stateless cudnn generator1 generator",
-                @"C:\TT\Ensemble Results\master\stateless cudnn generator1 generator multi",
+                //@"C:\TT\Ensemble Results\master\stateless cudnn airportcode test1",
+                //@"C:\TT\Ensemble Results\master\stateless cudnn generator1 baseline",
+                //@"C:\TT\Ensemble Results\master\stateless cudnn generator1 generator",
+                //@"C:\TT\Ensemble Results\master\stateless cudnn generator1 generator multi",
                 //@"C:\TT\Ensemble Results\master\stateless cudnn patience 10 10",
                 //@"C:\TT\Ensemble Results\master\stateless cudnn patience 20 10",
                 //@"C:\TT\Ensemble Results\master\stateless cudnn patience 30 10",

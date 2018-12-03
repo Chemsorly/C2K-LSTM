@@ -18,6 +18,7 @@ namespace Analyser
 {
     public class Program
     {
+        private static readonly int MaxTasks = 12;
         private static readonly double BucketGranularity = 0.1; //creates a bucket every 0.1 of completion
         private static readonly double FmetricBeta = 1;
         private static readonly double[] ReliabilityThresholds = {
@@ -32,12 +33,12 @@ namespace Analyser
         //bucketing type: defines how results are bucketet
         //1 = normal bucketing over all results
         //2 = triple ranged: 0% - 50%, 50%, 50% - 100%
-        private static readonly int BucketingType = 2;
+        private static readonly int BucketingType = 1;
 
         //violation type: predictions bigger than planned equal violation
         //TT dataset: false
         //C2K dataset: true
-        private static readonly bool PositiveIsViolation = true;
+        private static readonly bool PositiveIsViolation = false;
 
         //removes test instances from ensembles if they are below the threshold
         //true: test instances do not appear in the output (i.e. only instances with r >= R are considered)
@@ -56,6 +57,11 @@ namespace Analyser
             System.Globalization.CultureInfo customCulture = (System.Globalization.CultureInfo)System.Threading.Thread.CurrentThread.CurrentCulture.Clone();
             customCulture.NumberFormat.NumberDecimalSeparator = ".";
             CultureInfo.DefaultThreadCurrentCulture = customCulture;
+
+            ParallelOptions options = new ParallelOptions()
+            {
+                MaxDegreeOfParallelism = MaxTasks
+            };
 
             foreach (var folder in folders)
             {
@@ -194,7 +200,7 @@ namespace Analyser
 
                 int counter = 0;
                 ConcurrentBag<List<Line>> bagLines = new ConcurrentBag<List<Line>>();
-                Parallel.ForEach(InFiles, file =>
+                Parallel.ForEach(InFiles, options, file =>
                 {
                     int rows = 0;
                     //numeric or binary
@@ -311,7 +317,7 @@ namespace Analyser
                 ReliabilityThresholds.ToList().ForEach(reliabilityThreshold =>
                 {
                     //run for unsorted
-                    Parallel.For(0, allLines.Count, i =>  //(int i = 0; i < allLines.Count; i++)
+                    Parallel.For(0, allLines.Count, options, i =>  //(int i = 0; i < allLines.Count; i++)
                     {
                         String targetFilename = $"raw_ensemble_size_unsorted{i}_mcc.csv";
 
@@ -375,7 +381,7 @@ namespace Analyser
                     reliabilityensemblesizeUnsortedSeries.Points.Sort((x, y) => x.X.CompareTo(y.X));
 
                     //run for mcc sorted (aka boosted)
-                    Parallel.For(0, mccsortedAllLines.Count, i => //for (int i = 0; i < mccsortedAllLines.Count; i++)
+                    Parallel.For(0, mccsortedAllLines.Count, options, i => //for (int i = 0; i < mccsortedAllLines.Count; i++)
                     {
                         String targetFilename = $"raw_ensemble_size_boosted{i}_mcc.csv";
 
@@ -1629,34 +1635,34 @@ namespace Analyser
                     IsRGBEncoding = IsRGBencoding,
 
                     //c2k
-                    SequenceID = int.Parse(fields[0]),
-                    SequenceLength = int.Parse(fields[1]),
-                    Prefix = int.Parse(fields[2]),
-                    SumPrevious = double.Parse(fields[3], CultureInfo.InvariantCulture),
-                    Timestamp = double.Parse(fields[4], CultureInfo.InvariantCulture),
-                    Completion = double.Parse(fields[5], CultureInfo.InvariantCulture),
-                    GT_SumPrevious = (int)double.Parse(fields[6]),
-                    GT_Timestamp = (int)double.Parse(fields[7]),
-                    GT_Planned = (int)double.Parse(fields[8]),
-                    GT_InstanceID = int.Parse(fields[9]),
-                    PrefixActivities = fields[10],
-                    //PredictedActivities = fields[11],
-                    SuffixActivities = fields[11]
-
-                    //bpi2012
                     //SequenceID = int.Parse(fields[0]),
                     //SequenceLength = int.Parse(fields[1]),
                     //Prefix = int.Parse(fields[2]),
                     //SumPrevious = double.Parse(fields[3], CultureInfo.InvariantCulture),
-                    //Timestamp = double.Parse(fields[3], CultureInfo.InvariantCulture),
-                    //Completion = double.Parse(fields[4], CultureInfo.InvariantCulture),
-                    //GT_SumPrevious = fields[5] == "True" ? 1 : 0,
-                    //GT_Timestamp = fields[5] == "True" ? 1 : 0,
-                    //GT_Planned = 0.5d,
-                    //GT_InstanceID = int.Parse(fields[6]),
-                    //PrefixActivities = fields[7],
+                    //Timestamp = double.Parse(fields[4], CultureInfo.InvariantCulture),
+                    //Completion = double.Parse(fields[5], CultureInfo.InvariantCulture),
+                    //GT_SumPrevious = (int)double.Parse(fields[6]),
+                    //GT_Timestamp = (int)double.Parse(fields[7]),
+                    //GT_Planned = (int)double.Parse(fields[8]),
+                    //GT_InstanceID = fields[9],
+                    //PrefixActivities = fields[10],
                     ////PredictedActivities = fields[11],
-                    //SuffixActivities = fields[8]
+                    //SuffixActivities = fields[11]
+
+                    //bpi2012
+                    SequenceID = int.Parse(fields[0]),
+                    SequenceLength = int.Parse(fields[1]),
+                    Prefix = int.Parse(fields[2]),
+                    SumPrevious = double.Parse(fields[3], CultureInfo.InvariantCulture),
+                    Timestamp = double.Parse(fields[3], CultureInfo.InvariantCulture),
+                    Completion = double.Parse(fields[4], CultureInfo.InvariantCulture),
+                    GT_SumPrevious = fields[5] == "True" ? 1 : 0,
+                    GT_Timestamp = fields[5] == "True" ? 1 : 0,
+                    GT_Planned = 0.5d,
+                    GT_InstanceID = fields[6],
+                    PrefixActivities = fields[7],
+                    //PredictedActivities = fields[11],
+                    SuffixActivities = fields[8]
                 };
                 if (IsBinaryPrediction)
                     line.Predicted_Violations = fields[13] == "true";
@@ -1686,7 +1692,7 @@ namespace Analyser
                         IsBinaryPrediction = IsBinaryPrediction,
                         IsRGBEncoding = IsRGBencoding,
 
-                        SequenceID = enLine.InstanceId,
+                        SequenceID = enLine.SequenceId,
                         SequenceLength = enLine.InstanceLength,
                         Prefix = enLine.Prefix,
                         SumPrevious = enLine.MedianPrediction,
@@ -1762,7 +1768,7 @@ namespace Analyser
             public double GT_SumPrevious { get; set; }
             public double GT_Timestamp { get; set; }
             public double GT_Planned { get; set; }
-            public int GT_InstanceID { get; set; }
+            public String GT_InstanceID { get; set; }
             public String PrefixActivities { get; set; }
             public String PredictedActivities { get; set; }
             public String SuffixActivities { get; set; }
