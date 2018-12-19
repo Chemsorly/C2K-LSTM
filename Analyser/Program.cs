@@ -33,12 +33,12 @@ namespace Analyser
         //bucketing type: defines how results are bucketet
         //1 = normal bucketing over all results
         //2 = triple ranged: 0% - 50%, 50%, 50% - 100%
-        private static readonly int BucketingType = 1;
+        private static readonly int BucketingType = 2;
 
         //violation type: predictions bigger than planned equal violation
         //TT dataset: false
         //C2K dataset: true
-        private static readonly bool PositiveIsViolation = false;
+        private static readonly bool PositiveIsViolation = true;
 
         //removes test instances from ensembles if they are below the threshold
         //true: test instances do not appear in the output (i.e. only instances with r >= R are considered)
@@ -1283,7 +1283,7 @@ namespace Analyser
                                    $"{bucket.TNcount}," +
                                    $"{bucket.FNcount}," +
                                    $"{bucket.PredictionMedian}," +
-                                   $"{bucket.DeviationsAbsolute}," +
+                                   $"{bucket.DeviationsAbsolute.Average()}," +
                                    $"{bucket.MSE}," +
                                    $"{bucket.RMSE}," +
                                    $"{bucket.MAE}," +
@@ -1307,6 +1307,7 @@ namespace Analyser
                            $"{BucketList.Sum(t => t.TNcount)}," +
                            $"{BucketList.Sum(t => t.FNcount)}," +
                            $"{BucketList.Where(t => t.ViolationStrings.Count > 0).Sum(t => t.PredictionMedian) / (double)BucketList.Count(t => t.ViolationStrings.Any())}," +
+                           $"{BucketList.Where(t => t.ViolationStrings.Count > 0).Sum(t => t.DeviationsAbsolute.Average()) / (double)BucketList.Count(t => t.ViolationStrings.Any())}," +
                            $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.MSE) : double.NaN)}," +
                            $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.RMSE) : double.NaN)}," +
                            $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.MAE) : double.NaN)}," +
@@ -1320,7 +1321,8 @@ namespace Analyser
                            $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.NegativePredictedValue) : double.NaN)}," +
                            $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.Accuracy) : double.NaN)}," +
                            $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.FMeasure) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.MCC) : double.NaN)}"
+                           $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.MCC) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.AvgReliability) : double.NaN)}"
             );
 
             ////export as csv to match LSTM input examples
@@ -1638,7 +1640,8 @@ namespace Analyser
             public double FMeasure => ((1 + Math.Pow(FmetricBeta, 2)) * Precision * Recall) / ((Math.Pow(FmetricBeta, 2) * Precision) + Recall);
             public double MCC => (double)((TPcount * TNcount) - (FPcount * FNcount)) / Math.Sqrt((double)(TPcount + FPcount) * (TPcount + FNcount) * (TNcount + FPcount) * (TNcount + FNcount));
             //regression prediction
-            public double PredictionMedian => Median(PredictionAccuracies.ToArray());
+            public double PredictionAccuraciesMedian => Median(PredictionAccuracies.ToArray());
+            public double PredictionMedian => Median(Prediction.ToArray());
 
             //numeric metrics
             public double MSE => DeviationsAbsolute.Sum(t => Math.Pow(t, 2)) / DeviationsAbsolute.Count;
