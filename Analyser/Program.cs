@@ -97,9 +97,6 @@ namespace Analyser
                 int maxSequences = 0;
                 List<Bucket> allBuckets = new List<Bucket>();
                 List<List<Bucket>> ensembleBuckets = new List<List<Bucket>>();
-                List<String>[] allParameters = new List<String>[5];
-                for (int i = 0; i < allParameters.Length; i++)
-                    allParameters[i] = new List<string>();
 
                 #region init global models
                 OxyPlot.PlotModel model_glob_precision_target = new PlotModel() { Title = "Results: Precision target" };
@@ -175,27 +172,6 @@ namespace Analyser
                 model_glob_boxplot_algorithm_target.Axes.Add(model_glob_boxplot_algorithm_target_cataxis);
                 model_glob_boxplot_algorithm_target.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (Percentage)" });
 
-                //boxplots
-                OxyPlot.PlotModel model_glob_boxplot_neurons_ts = new PlotModel() { Title = "Number of Neurons comparison (t >= 0.5)" };
-                var model_glob_boxplot_neurons_ts_cataxis = new CategoryAxis { Position = AxisPosition.Bottom, Title = "Parameters", Angle = 45, FontSize = 8 };
-                model_glob_boxplot_neurons_ts.Axes.Add(model_glob_boxplot_neurons_ts_cataxis);
-                model_glob_boxplot_neurons_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (Percentage)" });
-
-                OxyPlot.PlotModel model_glob_boxplot_dropout_ts = new PlotModel() { Title = "Dropout comparison (t >= 0.5)" };
-                var model_glob_boxplot_dropout_ts_cataxis = new CategoryAxis { Position = AxisPosition.Bottom, Title = "Parameters", Angle = 45, FontSize = 8 };
-                model_glob_boxplot_dropout_ts.Axes.Add(model_glob_boxplot_dropout_ts_cataxis);
-                model_glob_boxplot_dropout_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (Percentage)" });
-
-                OxyPlot.PlotModel model_glob_boxplot_patience_ts = new PlotModel() { Title = "Patience comparison (t >= 0.5)" };
-                var model_glob_boxplot_patience_ts_cataxis = new CategoryAxis { Position = AxisPosition.Bottom, Title = "Parameters", Angle = 45, FontSize = 8 };
-                model_glob_boxplot_patience_ts.Axes.Add(model_glob_boxplot_patience_ts_cataxis);
-                model_glob_boxplot_patience_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (Percentage)" });
-
-                OxyPlot.PlotModel model_glob_boxplot_algorithm_ts = new PlotModel() { Title = "Algorithm comparison (t >= 0.5)" };
-                var model_glob_boxplot_algorithm_ts_cataxis = new CategoryAxis() { Position = AxisPosition.Bottom, Title = "Parameters", Angle = 45, FontSize = 8 };
-                model_glob_boxplot_algorithm_ts.Axes.Add(model_glob_boxplot_algorithm_ts_cataxis);
-                model_glob_boxplot_algorithm_ts.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "Value (Percentage)" });
-
                 #endregion
 
                 int counter = 0;
@@ -203,57 +179,16 @@ namespace Analyser
                 Parallel.ForEach(InFiles, options, file =>
                 {
                     int rows = 0;
-                    //numeric or binary
-                    bool IsBinaryPrediction = false;
-                    //rgb encoding
-                    bool IsRGBencoding = false;
-                    //no path encoding
-                    bool IsNopathEncoding = false;
-                    List<String> Parameters = new List<String>();
                     List<Line> output = new List<Line>();
-                    TargetData TargetData = TargetData.SP;
+                    List<String> Parameters = ExtractParams(file.Directory.Name);
 
                     using (TextFieldParser parser = new TextFieldParser(file.FullName))
                     {
                         parser.TextFieldType = FieldType.Delimited;
                         parser.SetDelimiters(",");
 
-                        //List<String> Parameters = ExtractParams(file.Name.Replace("results-", String.Empty).Replace(".csv", String.Empty));
-                        Parameters = ExtractParams(file.Directory.Name);
-                        if (Parameters.Any(t => t.Contains("binary")))
-                        {
-                            IsBinaryPrediction = true;
-                            TargetData = TargetData.SP;
-                        }
-                        else if (Parameters.Any(t => t.Contains("numeric")))
-                        {
-                            IsBinaryPrediction = false;
-                            if (Parameters.Any(t => t.Contains("s2s")))
-                                TargetData = TargetData.SP;
-                            else if (Parameters.Any(t => t.Contains("s2e")))
-                                TargetData = TargetData.TS;
-                            else
-                                Console.WriteLine("sequencer not found");
-                        }
-                        else
-                            Console.WriteLine("classifier not found");
-
-                        if (Parameters.Any(t => t.Contains("rgb")))
-                            IsRGBencoding = true;
-                        else
-                            IsRGBencoding = false;
-
-                        if (Parameters.Any(t => t.Contains("nopath")))
-                            IsNopathEncoding = true;
-                        else
-                            IsNopathEncoding = false;
-
-                        //add to global
-                        for (int i = 0; i < allParameters.Length; i++)
-                            allParameters[i].Add(Parameters[i]);
-
                         //generate line objects
-                        output = GetLinesFromData(file.FullName, parser, ref rows, IsBinaryPrediction, IsRGBencoding, PositiveIsViolation);
+                        output = GetLinesFromData(file.FullName, parser, ref rows, PositiveIsViolation);
                     }
 
                     //save longest sequence
@@ -261,7 +196,7 @@ namespace Analyser
                         maxSequences = rows;
 
                     //get buckets
-                    var BucketList = Bucketing.CreateBuckets(BucketGranularity, Parameters, TargetData, BucketingType, output, IsRGBencoding, IsNopathEncoding);
+                    var BucketList = Bucketing.CreateBuckets(BucketGranularity, Parameters, BucketingType, output);
 
                     //run workload
                     RunPerFileWorkload(output, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, Parameters, file.FullName,
@@ -272,8 +207,6 @@ namespace Analyser
                     model_glob_negativepredictions_target,
                     model_glob_accuracy_target,
                     model_glob_mcc_target, model_glob_fmetric_target,
-                    ref validSequences,
-                    ref predictedSequences,
                     ref counter,
                     folder,
                     "raw");
@@ -305,13 +238,13 @@ namespace Analyser
                 ensemblePlot_byprogressUnsorted.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "MCC / Reliability" });
                 ensemblePlot_byprogressUnsorted.IsLegendVisible = true;
 
-                OxyPlot.PlotModel ensemblePlot_byprogressBoosted = new PlotModel() { Title = "Results: unsorted ensemble majority vote by process progress" };
+                OxyPlot.PlotModel ensemblePlot_byprogressBoosted = new PlotModel() { Title = "Results: boosted ensemble majority vote by process progress" };
                 ensemblePlot_byprogressBoosted.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = 0, Maximum = 1, Title = "Progress" });
                 ensemblePlot_byprogressBoosted.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Maximum = 1, Title = "MCC / Reliability" });
                 ensemblePlot_byprogressBoosted.IsLegendVisible = true;
 
                 var allLines = bagLines.ToList();
-                var mccsortedBuckets = ensembleBuckets.Select(t => t.Where(u => !double.IsNaN(u.MCC_Target))).OrderByDescending(t => t.Sum(u => u.MCC_Target)); //.OrderBy(t => t.Where(u => !double.IsNaN(u.MCC_Target)).Sum(u => u.MCC_Target));
+                var mccsortedBuckets = ensembleBuckets.Select(t => t.Where(u => !double.IsNaN(u.MCC))).OrderByDescending(t => t.Sum(u => u.MCC)); //.OrderBy(t => t.Where(u => !double.IsNaN(u.MCC_Target)).Sum(u => u.MCC_Target));
                 var mccsortedAllLines = mccsortedBuckets.Select(t => t.SelectMany(u => u.Lines).ToList()).ToList();
 
                 ReliabilityThresholds.ToList().ForEach(reliabilityThreshold =>
@@ -334,7 +267,7 @@ namespace Analyser
 
                         var ensembleLines = GetLinesFromEnsemble(ensemble, false, false, reliabilityThreshold, RemoveBelowReliabilityThreshold);
                         //get buckets
-                        var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { $"ensemble_unsorted_{reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" }, TargetData.TS, BucketingType, ensembleLines, false, false);
+                        var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { $"ensemble_unsorted_{reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" }, BucketingType, ensembleLines);
 
                         //create models
                         OxyPlot.PlotModel ensembleBoxplot = new PlotModel() { Title = "Reliability distribution by progress" };
@@ -350,13 +283,13 @@ namespace Analyser
                         foreach (var bucket in BucketList)
                         {
                             //add buckets to chart
-                            mccensembleprogressSeries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC_Target));
+                            mccensembleprogressSeries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC));
                             reliabilityensembleprogressseries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, ensemble.GetReliabilityForBucket(bucket.BucketLevel, BucketGranularity)));
                             var item = CreateBoxplot(ensemble.GetReliabilitiesForBucket(bucket.BucketLevel, BucketGranularity), bucket.BucketLevel * BucketGranularity);
                             if (item != null)
                                 ensembleBoxplotSeries.Items.Add(item);
                         }
-                        RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { $"ensemble_unsorted_{reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" },
+                        RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { "ensemble unsorted" },
                             $"{EnsembleFolder.FullName}\\{reliabilityThreshold}\\{i}\\{targetFilename}",
                             model_glob_precision_target,
                             model_glob_recall_target,
@@ -365,8 +298,6 @@ namespace Analyser
                             model_glob_negativepredictions_target,
                             model_glob_accuracy_target,
                             model_glob_mcc_target, model_glob_fmetric_target,
-                            ref validSequences,
-                            ref predictedSequences,
                             ref counter,
                             folder,
                             "ensemble");
@@ -397,7 +328,7 @@ namespace Analyser
 
                         var ensembleLines = GetLinesFromEnsemble(ensemble, false, false, reliabilityThreshold, RemoveBelowReliabilityThreshold);
                         //get buckets
-                        var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { $"ensemble_boosted_{reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" }, TargetData.TS, BucketingType, ensembleLines, false, false);
+                        var BucketList = Bucketing.CreateBuckets(BucketGranularity, new List<string>() { $"ensemble_boosted_{reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" }, BucketingType, ensembleLines);
 
                         LineSeries mccensembleprogressSeries = new LineSeries() { Title = $"mcc ensemble {i}" };
                         LineSeries reliabilityensembleprogressseries = new LineSeries() { Title = $"reliability ensemble {i}" };
@@ -406,10 +337,10 @@ namespace Analyser
                         foreach (var bucket in BucketList)
                         {
                             //add buckets to chart
-                            mccensembleprogressSeries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC_Target));
+                            mccensembleprogressSeries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC));
                             reliabilityensembleprogressseries.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, ensemble.GetReliabilityForBucket(bucket.BucketLevel, BucketGranularity)));
                         }
-                        RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { $"ensemble_boosted_{reliabilityThreshold}", i.ToString(), "100", "0.1", "20", "1" },
+                        RunPerFileWorkload(ensembleLines, ref bagLines, BucketList, ref allBuckets, ref ensembleBuckets, new List<string>() { "ensemble boosted" },
                             $"{EnsembleFolder.FullName}\\{reliabilityThreshold}\\{i}\\{targetFilename}",
                             model_glob_precision_target,
                             model_glob_recall_target,
@@ -418,8 +349,6 @@ namespace Analyser
                             model_glob_negativepredictions_target,
                             model_glob_accuracy_target,
                             model_glob_mcc_target, model_glob_fmetric_target,
-                            ref validSequences,
-                            ref predictedSequences,
                             ref counter, 
                             folder,
                             "ensemble boosted");
@@ -518,20 +447,20 @@ namespace Analyser
                     var buckets = allBuckets.Where(t => t != null && t.BucketLevel == i);
                     foreach (var bucket in buckets)
                     {
-                        sortedbucketsPrecision[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.PrecisionTarget) ? "0" : bucket.PrecisionTarget.ToString());
-                        sortedbucketsRecall[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.RecallTarget) ? "0" : bucket.RecallTarget.ToString());
-                        sortedbucketsSpeceficity[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.SpecificityTarget) ? "0" : bucket.SpecificityTarget.ToString());
-                        sortedbucketsFalsepositives[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.FalsePositiveRateTarget) ? "0" : bucket.FalsePositiveRateTarget.ToString());
-                        sortedbucketsNegativepredictions[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.NegativePredictedValueTarget) ? "0" : bucket.NegativePredictedValueTarget.ToString());
-                        sortedbucketsAccuracy[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.AccuracyTarget) ? "0" : bucket.AccuracyTarget.ToString());
-                        sortedbucketsFmetric[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.FMeasureTarget) ? "0" : bucket.FMeasureTarget.ToString());
-                        sortedbucketsMCC[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.MCC_Target) ? "0" : bucket.MCC_Target.ToString());
-                        sortedbucketsMSE[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.MSE_Target) ? "0" : bucket.MSE_Target.ToString());
-                        sortedbucketsRMSE[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.RMSE_Target) ? "0" : bucket.RMSE_Target.ToString());
-                        sortedbucketsMAE[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.MAE_Target) ? "0" : bucket.MAE_Target.ToString());
-                        sortedbucketsRSE[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.RSE_Target) ? "0" : bucket.RSE_Target.ToString());
-                        sortedbucketsRRSE[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.RRSE_Target) ? "0" : bucket.RRSE_Target.ToString());
-                        sortedbucketsRAE[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.RAE_Target) ? "0" : bucket.RAE_Target.ToString());
+                        sortedbucketsPrecision[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.Precision) ? "0" : bucket.Precision.ToString());
+                        sortedbucketsRecall[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.Recall) ? "0" : bucket.Recall.ToString());
+                        sortedbucketsSpeceficity[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.Specificity) ? "0" : bucket.Specificity.ToString());
+                        sortedbucketsFalsepositives[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.FalsePositiveRate) ? "0" : bucket.FalsePositiveRate.ToString());
+                        sortedbucketsNegativepredictions[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.NegativePredictedValue) ? "0" : bucket.NegativePredictedValue.ToString());
+                        sortedbucketsAccuracy[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.Accuracy) ? "0" : bucket.Accuracy.ToString());
+                        sortedbucketsFmetric[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.FMeasure) ? "0" : bucket.FMeasure.ToString());
+                        sortedbucketsMCC[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.MCC) ? "0" : bucket.MCC.ToString());
+                        sortedbucketsMSE[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.MSE) ? "0" : bucket.MSE.ToString());
+                        sortedbucketsRMSE[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.RMSE) ? "0" : bucket.RMSE.ToString());
+                        sortedbucketsMAE[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.MAE) ? "0" : bucket.MAE.ToString());
+                        sortedbucketsRSE[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.RSE) ? "0" : bucket.RSE.ToString());
+                        sortedbucketsRRSE[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.RRSE) ? "0" : bucket.RRSE.ToString());
+                        sortedbucketsRAE[String.Join(" ", bucket.Parameters)].Add(double.IsNaN(bucket.RAE) ? "0" : bucket.RAE.ToString());
                     }
                 }
 
@@ -1275,8 +1204,6 @@ namespace Analyser
             OxyPlot.PlotModel model_glob_accuracy_target,
             OxyPlot.PlotModel model_glob_mcc_target,
             OxyPlot.PlotModel model_glob_fmetric_target,
-            ref Dictionary<String, int> validSequences,
-            ref Dictionary<String, int> predictedSequences,
             ref int counter,
             String folder, 
             String type
@@ -1286,187 +1213,114 @@ namespace Analyser
             List<String> exportrows = new List<string>();
             exportrows.Add("sequenceid," +
                            "sequencelength," +
-                           "prefix,sumprevious," +
-                           "timestamp,completion," +
-                           "gt_sumprevious," +
-                           "gt_timestamp," +
+                           "prefix," +
+                           "completion," +
+                           "prediction," +
+                           "gt_prediction," +
                            "gt_planned," +
                            "gt_instance," +
                            "prefix_activities," +
-                           "predicted_activities," +
                            "suffix_activities," +
                            "accuracy_sumprevious," +
-                           "accuracy_timestamp," +
                            "violation_effective," +
-                           "violation_predicted_sp," +
-                           "violation_predicted_ts," +
-                           "violation_string_sp," +
-                           "violation_string_ts," +
-                           "deviation_abs_sp," +
-                           "deviation_abs_ts," +
-                           "valid_suffix," +
+                           "violation_predicted," +
+                           "violation_string," +
+                           "deviation_abs," +
                            "reliability," +
                            "bucket_level");
             foreach (var line in output)
             {
-                exportrows.Add($"{line.SequenceID}," +
+                exportrows.Add($"{line.SequenceID}," +                               
                                $"{line.SequenceLength}," +
                                $"{line.Prefix}," +
-                               $"{line.SumPrevious}," +
-                               $"{line.Timestamp}," +
                                $"{line.Completion}," +
-                               $"{line.GT_SumPrevious}," +
-                               $"{line.GT_Timestamp}," +
+                               $"{line.TargetValue}," +
+                               $"{line.GT_TargetValue}," +
                                $"{line.GT_Planned}," +
                                $"{line.GT_InstanceID}," +
                                $"{line.PrefixActivities}," +
-                               $"{line.PredictedActivities}," +
                                $"{line.SuffixActivities}," +
-                               $"{line.AccuracySumprevious}," +
-                               $"{line.AccuracyTimestamp}," +
+                               $"{line.Accuracy}," +
                                $"{line.Violation_Effective}," +
-                               $"{line.Violation_PredictedSP}," +
-                               $"{line.Violation_PredictedTS}," +
-                               $"{line.Violation_StringSP}," +
-                               $"{line.Violation_StringTS}," +
-                               $"{line.DeviationAbsoluteSumprevious}," +
-                               $"{line.DeviationAbsoluteTimestamp}," +
-                               $"{line.IsValidPrediction}," +
+                               $"{line.Violation_Predicted}," +
+                               $"{line.Violation_String}," +
+                               $"{line.DeviationFromTarget}," +
                                $"{line.Reliability},"+
                                $"{line.Bucket.BucketLevel}");
             }
 
             //add buckets
             exportrows.Add("bucket_level," +
-                           "Count_SP," +
-                           "Count(TP)_SP," +
-                           "Count(FP)_SP," +
-                           "Count(TN)_SP," +
-                           "Count(FN)_SP," +
-                           "Count_TS," +
-                           "Count(TP)_TS," +
-                           "Count(FP)_TS," +
-                           "Count(TN)_TS," +
-                           "Count(FN)_TS," +
-                           "Median RelativeDeviation SP," +
-                           "Median RelativeDeviation TS," +
-                           "MSE_SP," +
-                           "RMSE_SP," +
-                           "MAE_SP," +
-                           "RSE_SP," +
-                           "RRSE_SP," +
-                           "RAE_SP," +
-                           "Precision_SP," +
-                           "Recall_SP," +
-                           "Specificity_SP," +
-                           "FalsePositiveRate_SP," +
-                           "NegativePredictedValue_SP," +
-                           "Accuracy_SP," +
-                           "F-Measure_SP," +
-                           "MCC_SP," +
-                           "MSE_TS," +
-                           "RMSE_TS," +
-                           "MAE_TS," +
-                           "RSE_TS," +
-                           "RRSE_TS," +
-                           "RAE_TS," +
-                           "Precision_TS," +
-                           "Recall_TS," +
-                           "Specificity_TS," +
-                           "FalsePositiveRate_TS," +
-                           "NegativePredictedValue_TS," +
-                           "Accuracy_TS," +
-                           "F-Measure_TS," +
-                           "MCC_TS," +
+                           "Count," +
+                           "Count(TP)," +
+                           "Count(FP)," +
+                           "Count(TN)," +
+                           "Count(FN)," +
+                           "Median," +
+                           "Deviations," +
+                           "MSE," +
+                           "RMSE," +
+                           "MAE," +
+                           "RSE," +
+                           "RRSE," +
+                           "RAE," +
+                           "Precision," +
+                           "Recall," +
+                           "Specificity," +
+                           "FalsePositiveRate," +
+                           "NegativePredictedValue," +
+                           "Accuracy," +
+                           "F-Measure," +
+                           "MCC," +
                            "AvgReliability"
             );
             foreach (var bucket in BucketList)
-                if (bucket.ViolationStringsTS.Any())
+                if (bucket.ViolationStrings.Any())
                     exportrows.Add($"{bucket.BucketLevel * BucketGranularity}," +
-                                   $"{bucket.ViolationStringsSP.Count}," +
-                                   $"{bucket.TPcountSP}," +
-                                   $"{bucket.FPcountSP}," +
-                                   $"{bucket.TNcountSP}," +
-                                   $"{bucket.FNcountSP}," +
-                                   $"{bucket.ViolationStringsTS.Count}," +
-                                   $"{bucket.TPcountTS}," +
-                                   $"{bucket.FPcountTS}," +
-                                   $"{bucket.TNcountTS}," +
-                                   $"{bucket.FNcountTS}," +
-                                   $"{bucket.PredictionMedianSP}," +
-                                   $"{bucket.PredictionMedianTS}," +
-                                   $"{bucket.MSE_SP}," +
-                                   $"{bucket.RMSE_SP}," +
-                                   $"{bucket.MAE_SP}," +
-                                   $"{bucket.RSE_SP}," +
-                                   $"{bucket.RRSE_SP}," +
-                                   $"{bucket.RAE_SP}," +
-                                   $"{bucket.PrecisionSP}," +
-                                   $"{bucket.RecallSP}," +
-                                   $"{bucket.SpecificitySP}," +
-                                   $"{bucket.FalsePositiveRateSP}," +
-                                   $"{bucket.NegativePredictedValueSP}," +
-                                   $"{bucket.AccuracySP}," +
-                                   $"{bucket.FMeasureSP}," +
-                                   $"{bucket.MCC_SP}," +
-                                   $"{bucket.MSE_TS}," +
-                                   $"{bucket.RMSE_TS}," +
-                                   $"{bucket.MAE_TS}," +
-                                   $"{bucket.RSE_TS}," +
-                                   $"{bucket.RRSE_TS}," +
-                                   $"{bucket.RAE_TS}," +
-                                   $"{bucket.PrecisionTS}," +
-                                   $"{bucket.RecallTS}," +
-                                   $"{bucket.SpecificityTS}," +
-                                   $"{bucket.FalsePositiveRateTS}," +
-                                   $"{bucket.NegativePredictedValueTS}," +
-                                   $"{bucket.AccuracyTS}," +
-                                   $"{bucket.FMeasureTS}," +
-                                   $"{bucket.MCC_TS}," +
+                                   $"{bucket.ViolationStrings.Count}," +
+                                   $"{bucket.TPcount}," +
+                                   $"{bucket.FPcount}," +
+                                   $"{bucket.TNcount}," +
+                                   $"{bucket.FNcount}," +
+                                   $"{bucket.PredictionMedian}," +
+                                   $"{bucket.DeviationsAbsolute}," +
+                                   $"{bucket.MSE}," +
+                                   $"{bucket.RMSE}," +
+                                   $"{bucket.MAE}," +
+                                   $"{bucket.RSE}," +
+                                   $"{bucket.RRSE}," +
+                                   $"{bucket.RAE}," +
+                                   $"{bucket.Precision}," +
+                                   $"{bucket.Recall}," +
+                                   $"{bucket.Specificity}," +
+                                   $"{bucket.FalsePositiveRate}," +
+                                   $"{bucket.NegativePredictedValue}," +
+                                   $"{bucket.Accuracy}," +
+                                   $"{bucket.FMeasure}," +
+                                   $"{bucket.MCC}," +
                                    $"{bucket.AvgReliability}"
                     );
             exportrows.Add($"Total," +
-                           $"{BucketList.Sum(t => t.ViolationStringsSP.Count)}," +
-                           $"{BucketList.Sum(t => t.TPcountSP)}," +
-                           $"{BucketList.Sum(t => t.FPcountSP)}," +
-                           $"{BucketList.Sum(t => t.TNcountSP)}," +
-                           $"{BucketList.Sum(t => t.FNcountSP)}," +
-                           $"{BucketList.Sum(t => t.ViolationStringsTS.Count)}," +
-                           $"{BucketList.Sum(t => t.TPcountTS)}," +
-                           $"{BucketList.Sum(t => t.FPcountTS)}," +
-                           $"{BucketList.Sum(t => t.TNcountTS)}," +
-                           $"{BucketList.Sum(t => t.FNcountTS)}," +
-                           $"{BucketList.Where(t => t.ViolationStringsSP.Count > 0).Sum(t => t.PredictionMedianSP) / (double)BucketList.Count(t => t.ViolationStringsSP.Any())}," +
-                           $"{BucketList.Where(t => t.ViolationStringsTS.Count > 0).Sum(t => t.PredictionMedianTS) / (double)BucketList.Count(t => t.ViolationStringsTS.Any())}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.MSE_SP) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.RMSE_SP) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.MAE_SP) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.RSE_SP) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.RRSE_SP) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.RAE_SP) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.PrecisionSP) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.RecallSP) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.SpecificitySP) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.FalsePositiveRateSP) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.NegativePredictedValueSP) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.AccuracySP) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.FMeasureSP) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsSP.Count > 0) ? BucketList.Where(t => t.ViolationStringsSP.Count > 0).Average(t => t.MCC_SP) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.MSE_TS) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.RMSE_TS) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.MAE_TS) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.RSE_TS) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.RRSE_TS) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.RAE_TS) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.PrecisionTS) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.RecallTS) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.SpecificityTS) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.FalsePositiveRateTS) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.NegativePredictedValueTS) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.AccuracyTS) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.FMeasureTS) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.MCC_TS) : double.NaN)}," +
-                           $"{(BucketList.Any(t => t.ViolationStringsTS.Count > 0) ? BucketList.Where(t => t.ViolationStringsTS.Count > 0).Average(t => t.AvgReliability) : double.NaN)}"
+                           $"{BucketList.Sum(t => t.ViolationStrings.Count)}," +
+                           $"{BucketList.Sum(t => t.TPcount)}," +
+                           $"{BucketList.Sum(t => t.FPcount)}," +
+                           $"{BucketList.Sum(t => t.TNcount)}," +
+                           $"{BucketList.Sum(t => t.FNcount)}," +
+                           $"{BucketList.Where(t => t.ViolationStrings.Count > 0).Sum(t => t.PredictionMedian) / (double)BucketList.Count(t => t.ViolationStrings.Any())}," +
+                           $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.MSE) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.RMSE) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.MAE) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.RSE) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.RRSE) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.RAE) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.Precision) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.Recall) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.Specificity) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.FalsePositiveRate) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.NegativePredictedValue) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.Accuracy) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.FMeasure) : double.NaN)}," +
+                           $"{(BucketList.Any(t => t.ViolationStrings.Count > 0) ? BucketList.Where(t => t.ViolationStrings.Count > 0).Average(t => t.MCC) : double.NaN)}"
             );
 
             ////export as csv to match LSTM input examples
@@ -1516,37 +1370,37 @@ namespace Analyser
                 allBuckets.Add(bucket);
 
                 precisionSeries_target.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                    bucket.PrecisionTarget));
+                    bucket.Precision));
                 recallSeries_target.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                    bucket.RecallTarget));
+                    bucket.Recall));
                 speceficitySeries_target.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                    bucket.SpecificityTarget));
+                    bucket.Specificity));
                 falsepositivesSeries_target.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                    bucket.FalsePositiveRateTarget));
+                    bucket.FalsePositiveRate));
                 negativepredictedSeries_target.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                    bucket.NegativePredictedValueTarget));
+                    bucket.NegativePredictedValue));
                 accuracySeries_target.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                    bucket.AccuracyTarget));
+                    bucket.Accuracy));
                 fmetricSeries_target.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                    bucket.FMeasureTarget));
-                MCCSeries_target.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC_Target));
+                    bucket.FMeasure));
+                MCCSeries_target.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.MCC));
 
                 precisionSeries_target_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                    bucket.PrecisionTarget));
+                    bucket.Precision));
                 recallSeries_target_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                    bucket.RecallTarget));
+                    bucket.Recall));
                 speceficitySeries_target_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                    bucket.SpecificityTarget));
+                    bucket.Specificity));
                 falsepositivesSeries_target_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                    bucket.FalsePositiveRateTarget));
+                    bucket.FalsePositiveRate));
                 negativepredictedSeries_target_global.Points.Add(
-                    new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.NegativePredictedValueTarget));
+                    new DataPoint(bucket.BucketLevel * BucketGranularity, bucket.NegativePredictedValue));
                 accuracySeries_target_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                    bucket.AccuracyTarget));
+                    bucket.Accuracy));
                 fmetricSeries_target_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                    bucket.FMeasureTarget));
+                    bucket.FMeasure));
                 MCCSeries_target_global.Points.Add(new DataPoint(bucket.BucketLevel * BucketGranularity,
-                    bucket.MCC_Target));
+                    bucket.MCC));
             }
 
             model_target.Series.Add(precisionSeries_target);
@@ -1577,10 +1431,6 @@ namespace Analyser
             model_glob_fmetric_target.Series.Add(fmetricSeries_target_global);
             model_glob_mcc_target.Series.Add(MCCSeries_target_global);
 
-            //get valid/predicted sequences
-            validSequences.Add(String.Join(" ", Parameters), output.Count(t => t.IsValidPrediction));
-            predictedSequences.Add(String.Join(" ", Parameters), output.Count);
-
             //add bucketlist to ensembleList
             ensembleBuckets.Add(BucketList);
             bagLines.Add(output);
@@ -1588,7 +1438,7 @@ namespace Analyser
             Console.WriteLine($"[{type}] finished file {counter} in folder {folder}");
         }
 
-        public static List<Line> GetLinesFromData(String FullPathToFile, TextFieldParser parser, ref int rows, bool IsBinaryPrediction, bool IsRGBencoding, bool pPositiveIsViolation)
+        public static List<Line> GetLinesFromData(String FullPathToFile, TextFieldParser parser, ref int rows, bool pPositiveIsViolation)
         {
             bool firstline = true;
             List<Line> output = new List<Line>();
@@ -1631,48 +1481,38 @@ namespace Analyser
                 {
                     FullPathToFile = FullPathToFile,
 
-                    IsBinaryPrediction = IsBinaryPrediction,
-                    IsRGBEncoding = IsRGBencoding,
-
                     //c2k
+                    SequenceID = int.Parse(fields[0]),
+                    SequenceLength = int.Parse(fields[1]),
+                    Prefix = int.Parse(fields[2]),
+                    Completion = double.Parse(fields[3], CultureInfo.InvariantCulture),
+                    TargetValue = double.Parse(fields[4], CultureInfo.InvariantCulture),
+                    GT_TargetValue = (int)double.Parse(fields[5]),
+                    GT_Planned = (int)double.Parse(fields[6]),
+                    GT_InstanceID = fields[7],
+                    PrefixActivities = fields[8],
+                    SuffixActivities = fields[9]
+
+                    //bpi2012
                     //SequenceID = int.Parse(fields[0]),
                     //SequenceLength = int.Parse(fields[1]),
                     //Prefix = int.Parse(fields[2]),
                     //SumPrevious = double.Parse(fields[3], CultureInfo.InvariantCulture),
-                    //Timestamp = double.Parse(fields[4], CultureInfo.InvariantCulture),
-                    //Completion = double.Parse(fields[5], CultureInfo.InvariantCulture),
-                    //GT_SumPrevious = (int)double.Parse(fields[6]),
-                    //GT_Timestamp = (int)double.Parse(fields[7]),
-                    //GT_Planned = (int)double.Parse(fields[8]),
-                    //GT_InstanceID = fields[9],
-                    //PrefixActivities = fields[10],
+                    //Timestamp = double.Parse(fields[3], CultureInfo.InvariantCulture),
+                    //Completion = double.Parse(fields[4], CultureInfo.InvariantCulture),
+                    //GT_SumPrevious = fields[5] == "True" ? 1 : 0,
+                    //GT_Timestamp = fields[5] == "True" ? 1 : 0,
+                    //GT_Planned = 0.5d,
+                    //GT_InstanceID = fields[6],
+                    //PrefixActivities = fields[7],
                     ////PredictedActivities = fields[11],
-                    //SuffixActivities = fields[11]
-
-                    //bpi2012
-                    SequenceID = int.Parse(fields[0]),
-                    SequenceLength = int.Parse(fields[1]),
-                    Prefix = int.Parse(fields[2]),
-                    SumPrevious = double.Parse(fields[3], CultureInfo.InvariantCulture),
-                    Timestamp = double.Parse(fields[3], CultureInfo.InvariantCulture),
-                    Completion = double.Parse(fields[4], CultureInfo.InvariantCulture),
-                    GT_SumPrevious = fields[5] == "True" ? 1 : 0,
-                    GT_Timestamp = fields[5] == "True" ? 1 : 0,
-                    GT_Planned = 0.5d,
-                    GT_InstanceID = fields[6],
-                    PrefixActivities = fields[7],
-                    //PredictedActivities = fields[11],
-                    SuffixActivities = fields[8]
+                    //SuffixActivities = fields[8]
                 };
-                if (IsBinaryPrediction)
-                    line.Predicted_Violations = fields[13] == "true";
 
                 //calculate accuracy values
-                line.Violation_Effective = pPositiveIsViolation == (line.GT_Timestamp > line.GT_Planned);
-                line.Violation_PredictedSP = pPositiveIsViolation == (line.SumPrevious > line.GT_Planned);
-                line.Violation_PredictedTS = pPositiveIsViolation == (line.Timestamp > line.GT_Planned);
-                line.AccuracySumprevious = CalculateAccuracy(line.SumPrevious, line.GT_SumPrevious);
-                line.AccuracyTimestamp = CalculateAccuracy(line.Timestamp, line.GT_Timestamp);
+                line.Violation_Effective = pPositiveIsViolation == (line.GT_TargetValue > line.GT_Planned);
+                line.Violation_Predicted = pPositiveIsViolation == (line.TargetValue > line.GT_Planned);
+                line.Accuracy = CalculateAccuracy(line.TargetValue, line.GT_TargetValue);
                 output.Add(line);
             }
             return output;
@@ -1688,18 +1528,12 @@ namespace Analyser
                     var line = new Line()
                     {
                         FullPathToFile = "ensemble",
-
-                        IsBinaryPrediction = IsBinaryPrediction,
-                        IsRGBEncoding = IsRGBencoding,
-
                         SequenceID = enLine.SequenceId,
                         SequenceLength = enLine.InstanceLength,
                         Prefix = enLine.Prefix,
-                        SumPrevious = enLine.MedianPrediction,
-                        Timestamp = enLine.MedianPrediction,
+                        TargetValue = enLine.MedianPrediction,
                         Completion = enLine.Completion,
-                        GT_SumPrevious = enLine.ActualValue,
-                        GT_Timestamp = enLine.ActualValue,
+                        GT_TargetValue = enLine.ActualValue,
                         GT_Planned = enLine.ActualPlanned,
                         GT_InstanceID = enLine.InstanceId,
                         PrefixActivities = enLine.PrefixActivities,
@@ -1707,8 +1541,7 @@ namespace Analyser
                         SuffixActivities = enLine.SuffixActivities,
 
                         Violation_Effective = enLine.ActualViolation,
-                        Violation_PredictedSP = enLine.PredictedViolation,
-                        Violation_PredictedTS = enLine.PredictedViolation,
+                        Violation_Predicted = enLine.PredictedViolation,
 
                         Reliability = enLine.Reliability
                     };
@@ -1753,20 +1586,15 @@ namespace Analyser
             /// </summary>
             public String FullPathToFile { get; set; }
 
-            public bool IsBinaryPrediction { get; set; }
-            public bool IsRGBEncoding { get; set; }
-
             public Bucket Bucket { get; set; }
 
             //input
             public int SequenceID { get; set; }
             public int SequenceLength { get; set; }
             public int Prefix { get; set; }
-            public double SumPrevious { get; set; }
-            public double Timestamp { get; set; }
+            public double TargetValue { get; set; }
             public double Completion { get; set; }
-            public double GT_SumPrevious { get; set; }
-            public double GT_Timestamp { get; set; }
+            public double GT_TargetValue { get; set; }
             public double GT_Planned { get; set; }
             public String GT_InstanceID { get; set; }
             public String PrefixActivities { get; set; }
@@ -1776,109 +1604,49 @@ namespace Analyser
             public double? Reliability { get; set; }
 
             //output
-            public double AccuracySumprevious { get; set; }
-            public double AccuracyTimestamp { get; set; }
-            public double DeviationAbsoluteSumprevious => SumPrevious - GT_SumPrevious;
-            public double DeviationAbsoluteTimestamp => Timestamp - GT_Timestamp;
+            public double Accuracy { get; set; }
+            public double DeviationFromTarget => TargetValue - GT_TargetValue;
             public bool Violation_Effective { get; set; }
-            public bool Violation_PredictedTS { get; set; }
-            public bool Violation_PredictedSP { get; set; }
-            public String Violation_StringTS => CalculateViolationString(Violation_Effective, Violation_PredictedTS);
-            public String Violation_StringSP => CalculateViolationString(Violation_Effective, IsBinaryPrediction ? Predicted_Violations : Violation_PredictedSP);
-            public bool IsValidPrediction => IsValidSequence(PredictedActivities, PrefixActivities, IsRGBEncoding);
+            public bool Violation_Predicted { get; set; }
+            public String Violation_String => CalculateViolationString(Violation_Effective, Violation_Predicted);
 
         }
 
         public class Bucket
         {
-
-
             public List<Line> Lines { get; set; }
             public int BucketLevel { get; set; }
             public List<String> Parameters { get; set; }
-            public TargetData Target { get; set; }
 
             //counts
-            public int TPcountSP => ViolationStringsSP.Count(t => t == "TP");
-            public int FPcountSP => ViolationStringsSP.Count(t => t == "FP");
-            public int TNcountSP => ViolationStringsSP.Count(t => t == "TN");
-            public int FNcountSP => ViolationStringsSP.Count(t => t == "FN");
-            public int TPcountTS => ViolationStringsTS.Count(t => t == "TP");
-            public int FPcountTS => ViolationStringsTS.Count(t => t == "FP");
-            public int TNcountTS => ViolationStringsTS.Count(t => t == "TN");
-            public int FNcountTS => ViolationStringsTS.Count(t => t == "FN");
-            public int TPcountTarget => ViolationStringsTarget.Count(t => t == "TP");
-            public int FPcountTarget => ViolationStringsTarget.Count(t => t == "FP");
-            public int TNcountTarget => ViolationStringsTarget.Count(t => t == "TN");
-            public int FNcountTarget => ViolationStringsTarget.Count(t => t == "FN");
+            public int TPcount => ViolationStrings.Count(t => t == "TP");
+            public int FPcount => ViolationStrings.Count(t => t == "FP");
+            public int TNcount => ViolationStrings.Count(t => t == "TN");
+            public int FNcount => ViolationStrings.Count(t => t == "FN");
 
-
-            public List<Double> Prediction_SP { get; set; }
-            public List<Double> Prediction_TS { get; set; }
-            public List<String> ViolationStringsTS { get; set; }
-            public List<String> ViolationStringsSP { get; set; }
-            public List<String> ViolationStringsTarget { get; set; }
-            public List<Double> PredictionAccuraciesSP { get; set; }
-            public List<Double> PredictionAccuraciesTS { get; set; }
-            public List<Double> DeviationsAbsoluteSP { get; set; }
-            public List<Double> DeviationsAbsoluteTS { get; set; }
+            public List<Double> Prediction { get; set; }
+            public List<String> ViolationStrings { get; set; }
+            public List<Double> PredictionAccuracies { get; set; }
+            public List<Double> DeviationsAbsolute { get; set; }
             //binary prediction
-            public double PrecisionSP => (double)ViolationStringsSP.Count(t => t == "TP") / (double)ViolationStringsSP.Count(t => t == "TP" || t == "FP");
-            public double RecallSP => (double)ViolationStringsSP.Count(t => t == "TP") / (double)ViolationStringsSP.Count(t => t == "TP" || t == "FN");
-            public double SpecificitySP => (double)ViolationStringsSP.Count(t => t == "TN") / (double)ViolationStringsSP.Count(t => t == "TN" || t == "FP");
-            public double FalsePositiveRateSP => (double)ViolationStringsSP.Count(t => t == "FP") / (double)ViolationStringsSP.Count(t => t == "FP" || t == "TN");
-            public double NegativePredictedValueSP => (double)ViolationStringsSP.Count(t => t == "TN") / (double)ViolationStringsSP.Count(t => t == "TN" || t == "TP");
-            public double AccuracySP => (double)ViolationStringsSP.Count(t => t == "TN" || t == "TP") / (double)ViolationStringsSP.Count;
-            public double FMeasureSP => ((1 + Math.Pow(FmetricBeta, 2)) * PrecisionSP * RecallSP) / ((Math.Pow(FmetricBeta, 2) * PrecisionSP) + RecallSP);
-            public double MCC_SP => (double)((TPcountSP * TNcountSP) - (FPcountSP * FNcountSP)) / Math.Sqrt((double)(TPcountSP + FPcountSP) * (TPcountSP + FNcountSP) * (TNcountSP + FPcountSP) * (TNcountSP + FNcountSP));
-
-            public double PrecisionTS => (double)ViolationStringsTS.Count(t => t == "TP") / (double)ViolationStringsTS.Count(t => t == "TP" || t == "FP");
-            public double RecallTS => (double)ViolationStringsTS.Count(t => t == "TP") / (double)ViolationStringsTS.Count(t => t == "TP" || t == "FN");
-            public double SpecificityTS => (double)ViolationStringsTS.Count(t => t == "TN") / (double)ViolationStringsTS.Count(t => t == "TN" || t == "FP");
-            public double FalsePositiveRateTS => (double)ViolationStringsTS.Count(t => t == "FP") / (double)ViolationStringsTS.Count(t => t == "FP" || t == "TN");
-            public double NegativePredictedValueTS => (double)ViolationStringsTS.Count(t => t == "TN") / (double)ViolationStringsTS.Count(t => t == "TN" || t == "TP");
-            public double AccuracyTS => (double)ViolationStringsTS.Count(t => t == "TN" || t == "TP") / (double)ViolationStringsTS.Count;
-            public double FMeasureTS => ((1 + Math.Pow(FmetricBeta, 2)) * PrecisionTS * RecallTS) / ((Math.Pow(FmetricBeta, 2) * PrecisionTS) + RecallTS);
-            public double MCC_TS => (double)((TPcountTS * TNcountTS) - (FPcountTS * FNcountTS)) / Math.Sqrt((double)(TPcountTS + FPcountTS) * (TPcountTS + FNcountTS) * (TNcountTS + FPcountTS) * (TNcountTS + FNcountTS));
-
-            //target metric
-            public double PrecisionTarget => (double)ViolationStringsTarget.Count(t => t == "TP") / (double)ViolationStringsTarget.Count(t => t == "TP" || t == "FP");
-            public double RecallTarget => (double)ViolationStringsTarget.Count(t => t == "TP") / (double)ViolationStringsTarget.Count(t => t == "TP" || t == "FN");
-            public double SpecificityTarget => (double)ViolationStringsTarget.Count(t => t == "TN") / (double)ViolationStringsTarget.Count(t => t == "TN" || t == "FP");
-            public double FalsePositiveRateTarget => (double)ViolationStringsTarget.Count(t => t == "FP") / (double)ViolationStringsTarget.Count(t => t == "FP" || t == "TN");
-            public double NegativePredictedValueTarget => (double)ViolationStringsTarget.Count(t => t == "TN") / (double)ViolationStringsTarget.Count(t => t == "TN" || t == "TP");
-            public double AccuracyTarget => (double)ViolationStringsTarget.Count(t => t == "TN" || t == "TP") / (double)ViolationStringsTarget.Count;
-            public double FMeasureTarget => ((1 + Math.Pow(FmetricBeta, 2)) * PrecisionTarget * RecallTarget) / ((Math.Pow(FmetricBeta, 2) * PrecisionTarget) + RecallTarget);
-            public double MCC_Target => CheckNaN((double)((TPcountTarget * TNcountTarget) - (FPcountTarget * FNcountTarget)) / Math.Sqrt((double)(TPcountTarget + FPcountTarget) * (TPcountTarget + FNcountTarget) * (TNcountTarget + FPcountTarget) * (TNcountTarget + FNcountTarget)), 0);
-
+            public double Precision => (double)ViolationStrings.Count(t => t == "TP") / (double)ViolationStrings.Count(t => t == "TP" || t == "FP");
+            public double Recall => (double)ViolationStrings.Count(t => t == "TP") / (double)ViolationStrings.Count(t => t == "TP" || t == "FN");
+            public double Specificity => (double)ViolationStrings.Count(t => t == "TN") / (double)ViolationStrings.Count(t => t == "TN" || t == "FP");
+            public double FalsePositiveRate => (double)ViolationStrings.Count(t => t == "FP") / (double)ViolationStrings.Count(t => t == "FP" || t == "TN");
+            public double NegativePredictedValue => (double)ViolationStrings.Count(t => t == "TN") / (double)ViolationStrings.Count(t => t == "TN" || t == "TP");
+            public double Accuracy => (double)ViolationStrings.Count(t => t == "TN" || t == "TP") / (double)ViolationStrings.Count;
+            public double FMeasure => ((1 + Math.Pow(FmetricBeta, 2)) * Precision * Recall) / ((Math.Pow(FmetricBeta, 2) * Precision) + Recall);
+            public double MCC => (double)((TPcount * TNcount) - (FPcount * FNcount)) / Math.Sqrt((double)(TPcount + FPcount) * (TPcount + FNcount) * (TNcount + FPcount) * (TNcount + FNcount));
             //regression prediction
-            public double PredictionMedianSP => Median(PredictionAccuraciesSP.ToArray());
-            public double PredictionMedianTS => Median(PredictionAccuraciesTS.ToArray());
+            public double PredictionMedian => Median(PredictionAccuracies.ToArray());
 
             //numeric metrics
-            public double MSE_SP => DeviationsAbsoluteSP.Sum(t => Math.Pow(t, 2)) / DeviationsAbsoluteSP.Count;
-            public double RMSE_SP => Math.Sqrt(DeviationsAbsoluteSP.Sum(t => Math.Pow(t, 2)) / DeviationsAbsoluteSP.Count);
-            public double MAE_SP => DeviationsAbsoluteSP.Sum(t => Math.Abs(t)) / DeviationsAbsoluteSP.Count;
-            public double RSE_SP => DeviationsAbsoluteSP.Sum(t => Math.Pow(t, 2)) / (Prediction_SP.Sum(t => Math.Pow(t - Prediction_SP.Average(), 2)));
-            public double RRSE_SP => Math.Sqrt(DeviationsAbsoluteSP.Sum(t => Math.Pow(t, 2)) / (Prediction_SP.Sum(t => Math.Pow(t - Prediction_SP.Average(), 2))));
-            public double RAE_SP => DeviationsAbsoluteSP.Sum(t => Math.Abs(t)) /
-                                    (Prediction_SP.Sum(t => Math.Abs(t - Prediction_SP.Average())));
-
-            public double MSE_TS => DeviationsAbsoluteTS.Sum(t => Math.Pow(t, 2)) / DeviationsAbsoluteTS.Count;
-            public double RMSE_TS => Math.Sqrt(DeviationsAbsoluteTS.Sum(t => Math.Pow(t, 2)) / DeviationsAbsoluteTS.Count);
-            public double MAE_TS => DeviationsAbsoluteTS.Sum(t => Math.Abs(t)) / DeviationsAbsoluteTS.Count;
-            public double RSE_TS => DeviationsAbsoluteTS.Sum(t => Math.Pow(t, 2)) / (Prediction_TS.Sum(t => Math.Pow(t - Prediction_TS.Average(), 2)));
-            public double RRSE_TS => Math.Sqrt(DeviationsAbsoluteTS.Sum(t => Math.Pow(t, 2)) / (Prediction_TS.Sum(t => Math.Pow(t - Prediction_TS.Average(), 2))));
-            public double RAE_TS => DeviationsAbsoluteTS.Sum(t => Math.Abs(t)) /
-                                    (Prediction_TS.Sum(t => Math.Abs(t - Prediction_TS.Average())));
-
-            //numeric target metrics
-            public double MSE_Target => Target == TargetData.SP ? MSE_SP : MSE_TS;
-            public double RMSE_Target => Target == TargetData.SP ? RMSE_SP : RMSE_TS;
-            public double MAE_Target => Target == TargetData.SP ? MAE_SP : MAE_TS;
-            public double RSE_Target => Target == TargetData.SP ? RSE_SP : RSE_TS;
-            public double RRSE_Target => Target == TargetData.SP ? RRSE_SP : RRSE_TS;
-            public double RAE_Target => Target == TargetData.SP ? RAE_SP : RAE_TS;
+            public double MSE => DeviationsAbsolute.Sum(t => Math.Pow(t, 2)) / DeviationsAbsolute.Count;
+            public double RMSE => Math.Sqrt(DeviationsAbsolute.Sum(t => Math.Pow(t, 2)) / DeviationsAbsolute.Count);
+            public double MAE => DeviationsAbsolute.Sum(t => Math.Abs(t)) / DeviationsAbsolute.Count;
+            public double RSE => DeviationsAbsolute.Sum(t => Math.Pow(t, 2)) / (Prediction.Sum(t => Math.Pow(t - Prediction.Average(), 2)));
+            public double RRSE => Math.Sqrt(DeviationsAbsolute.Sum(t => Math.Pow(t, 2)) / (Prediction.Sum(t => Math.Pow(t - Prediction.Average(), 2))));
+            public double RAE => DeviationsAbsolute.Sum(t => Math.Abs(t)) / (Prediction.Sum(t => Math.Abs(t - Prediction.Average())));
 
             public double AvgReliability => Lines.Any(t => t.Reliability != null) ? Lines.Average(t => t.Reliability).Value : -1d;
         }
@@ -2074,8 +1842,8 @@ namespace Analyser
                     var parameterbuckets2 = buckets.Where(t => t.Parameters[0] == parameter2);
 
                     //get data values
-                    List<double> data1 = parameterbuckets1.Where(t => !double.IsNaN(t.MCC_Target)).Select(t => t.MCC_Target).ToList();
-                    List<double> data2 = parameterbuckets2.Where(t => !double.IsNaN(t.MCC_Target)).Select(t => t.MCC_Target).ToList();
+                    List<double> data1 = parameterbuckets1.Where(t => !double.IsNaN(t.MCC)).Select(t => t.MCC).ToList();
+                    List<double> data2 = parameterbuckets2.Where(t => !double.IsNaN(t.MCC)).Select(t => t.MCC).ToList();
 
                     //get p-value
                     if (parameter1 == parameter2)
@@ -2115,8 +1883,5 @@ namespace Analyser
         {
             return double.IsNaN(pValue) ? pDefault : pValue;
         }
-        public enum TargetData { SP, TS }
-
-    }
-
+     }
 }

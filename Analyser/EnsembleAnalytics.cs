@@ -83,12 +83,12 @@ namespace Analyser
 
             //create single votes
             foreach (var line in pLines)
-                EnsembleVotes.Add(new EnsembleVote(line.Violation_PredictedTS, line.Timestamp));
+                EnsembleVotes.Add(new EnsembleVote(line.Violation_Predicted, line.TargetValue));
 
             //set ground truth values; should be equal across all input lines
             SequenceId = pLines.First().SequenceID;
             ActualViolation = pLines.First().Violation_Effective;
-            ActualValue = pLines.First().GT_Timestamp;
+            ActualValue = pLines.First().GT_TargetValue;
             Prefix = pLines.First().Prefix;
             InstanceLength = pLines.First().SequenceLength;
             InstanceId = pLines.First().GT_InstanceID;
