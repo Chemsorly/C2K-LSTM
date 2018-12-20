@@ -196,6 +196,10 @@ namespace Analyser
                         output = GetLinesFromData(file.FullName, parser, ref rows, PositiveIsViolation);
                     }
 
+                    //check for inconsistencies
+                    if (TestCasesCount != -1 && output.Count != TestCasesCount)
+                        ErrorLogger.AddErrorMessage($"{file.FullName} line count does not equal {TestCasesCount}");
+
                     //save longest sequence
                     if (rows > maxSequences)
                         maxSequences = rows;
@@ -1201,6 +1205,9 @@ namespace Analyser
 
                 Console.WriteLine($"finished folder {folder}");
             }
+
+            //out the stuff in the logger
+            ErrorLogger.WriteLogToFilesystem("errorlog.txt");
         }
 
         public static void RunPerFileWorkload(List<Line> output, ref ConcurrentBag<List<Line>> bagLines, List<Bucket> BucketList, ref List<Bucket> allBuckets, ref List<List<Bucket>> ensembleBuckets, List<String> Parameters, String file,
