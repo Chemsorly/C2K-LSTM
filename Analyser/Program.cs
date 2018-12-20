@@ -40,6 +40,11 @@ namespace Analyser
         //C2K dataset: true
         private static readonly bool PositiveIsViolation = true;
 
+        /// <summary>
+        /// number of test cases to check against. ignores the entry if number is not equal and notifies the user after the procedure; -1 for ignore
+        /// </summary>
+        public static readonly int TestCasesCount = 17690;
+
         //removes test instances from ensembles if they are below the threshold
         //true: test instances do not appear in the output (i.e. only instances with r >= R are considered)
         //false: test instances with r < R have their true predictions turned into false predictions (i.e. no adaptation considered)

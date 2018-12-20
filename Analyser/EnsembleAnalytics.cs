@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using MoreLinq;
 using System.Text;
 using System.Threading.Tasks;
 using static Analyser.Program;
@@ -16,12 +17,21 @@ namespace Analyser
         {
             reliabilityThreshold = pReliabilityThreshold;
             EnsembleSize = pAllLines.Count;
-            for (int i = 0; i < pAllLines[0].Count; i++)
+            var largestTestCases = pAllLines.MaxBy(t => t.Count).First();
+
+            for (int i = 0; i < largestTestCases.Count; i++)
             {
                 // get all line objects from each model with process instance id i
                 List<Line> processInstanceLines = new List<Line>();
                 foreach (var model in pAllLines)
-                    processInstanceLines.Add(model[i]);
+                {
+                    if (Program.TestCasesCount != -1 && model.Count == Program.TestCasesCount)
+                        //if either -1 is defined or number equals target size, continue
+                        processInstanceLines.Add(model[i]);
+                    else
+                        //if incomplete dataset is found, ignore the file in ensemble creation; notify error
+                        ErrorLogger.AddErrorMessage($"incomplete result set found in {model[i].FullPathToFile}");                    
+                }
 
                 EnsembleLines.Add(new EnsembleLine(processInstanceLines, this));
             }
