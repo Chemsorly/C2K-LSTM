@@ -54,7 +54,9 @@ namespace Analyser
         private static readonly int PlotModelHeight = 512;
 
         static List<String> folders = Folderlist.GetFolderlist();
-        private const bool clearFolder = true;
+
+        private static readonly bool clearFolder = true;
+        private static readonly bool clearBadData = false;
 
         static void Main(string[] args)
         {
@@ -198,7 +200,15 @@ namespace Analyser
 
                     //check for inconsistencies
                     if (TestCasesCount != -1 && output.Count != TestCasesCount)
+                    {
                         ErrorLogger.AddErrorMessage($"{file.FullName} line count does not equal {TestCasesCount}");
+                        if (clearBadData)
+                        {
+                            ErrorLogger.AddErrorMessage($"deleting {file.FullName}");
+                            file.Directory.Delete(true);                            
+                        }
+                        return; //abort
+                    }                        
 
                     //save longest sequence
                     if (rows > maxSequences)
