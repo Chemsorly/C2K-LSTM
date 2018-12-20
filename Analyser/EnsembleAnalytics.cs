@@ -23,7 +23,7 @@ namespace Analyser
             {
                 // get all line objects from each model with process instance id i
                 List<Line> processInstanceLines = new List<Line>();
-                for(int j = 0; i < pAllLines.Count; j++) 
+                for(int j = 0; j < pAllLines.Count; j++) 
                 {
                     if (Program.TestCasesCount != -1 && pAllLines[j].Count == Program.TestCasesCount)
                         //if either -1 is defined or number equals target size, continue
