@@ -260,8 +260,11 @@ namespace Analyser
                         String targetFilename = $"raw_ensemble_size_unsorted{i}_mcc.csv";
 
                         List<List<Line>> items = new List<List<Line>>();
+                        List<String> filePaths = new List<String>();
                         for (int j = 0; j <= i; j++)
+                        {
                             items.Add(allLines[j]);
+                        }                            
 
                         Ensemble ensemble = new Ensemble(items, reliabilityThreshold);
                         mccensemblesizeUnsortedSeries.Points.Add(new DataPoint(ensemble.EnsembleSize, ensemble.MCC));

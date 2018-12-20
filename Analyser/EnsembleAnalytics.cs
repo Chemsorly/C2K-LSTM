@@ -23,14 +23,19 @@ namespace Analyser
             {
                 // get all line objects from each model with process instance id i
                 List<Line> processInstanceLines = new List<Line>();
-                foreach (var model in pAllLines)
+                for(int j = 0; i < pAllLines.Count; j++) 
                 {
-                    if (Program.TestCasesCount != -1 && model.Count == Program.TestCasesCount)
+                    if (Program.TestCasesCount != -1 && pAllLines[j].Count == Program.TestCasesCount)
                         //if either -1 is defined or number equals target size, continue
-                        processInstanceLines.Add(model[i]);
+                        processInstanceLines.Add(pAllLines[j][i]);
                     else
+                    {
                         //if incomplete dataset is found, ignore the file in ensemble creation; notify error
-                        ErrorLogger.AddErrorMessage($"incomplete result set found in {model[i].FullPathToFile}");                    
+                        if (!pAllLines[j].Any())
+                            ErrorLogger.AddErrorMessage($"empty model found in {largestTestCases[0].FullPathToFile} at fileindex {j}");
+                        else
+                            ErrorLogger.AddErrorMessage($"incomplete result set found in {pAllLines[j][i].FullPathToFile}. Expected {largestTestCases.Count} but found {pAllLines[j].Count}");
+                    }
                 }
 
                 EnsembleLines.Add(new EnsembleLine(processInstanceLines, this));
