@@ -6,9 +6,17 @@ using System.Threading.Tasks;
 
 namespace Analyser
 {
-    public static class ErrorLogger
+    public static class Logger
     {
         static List<String> ErrorMessages { get; } = new List<string>();
+        static List<String> LogMessages { get; } = new List<string>();
+
+        public static void AddLogMessage(String pMessage, bool pVerbose)
+        {
+            LogMessages.Add(pMessage);
+            if(pVerbose)
+                Console.WriteLine(pMessage);
+        }
 
         public static void AddErrorMessage(String pMessage) {
             if (!ErrorMessages.Contains(pMessage))
@@ -27,7 +35,8 @@ namespace Analyser
             return ErrorMessages.ToList();
         }
 
-        public static void WriteLogToFilesystem(String pPath) { System.IO.File.WriteAllLines(pPath, ErrorMessages); }
+        public static void WriteErrorLogToFilesystem(String pPath) { System.IO.File.WriteAllLines(pPath, ErrorMessages); }
+        public static void WriteLogToFilesystem(String pPath) { System.IO.File.WriteAllLines(pPath, LogMessages); }
 
     }
 }

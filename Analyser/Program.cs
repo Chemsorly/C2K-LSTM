@@ -57,6 +57,7 @@ namespace Analyser
 
         private static readonly bool clearFolder = true;
         private static readonly bool clearBadData = false;
+        private static readonly bool verbose = true;
 
         static void Main(string[] args)
         {
@@ -84,7 +85,7 @@ namespace Analyser
 
                 if (!InFiles.Any())
                 {
-                    Console.WriteLine($"ERROR: no files found in {ResultsFolder.FullName}");
+                    Logger.AddErrorMessage($"ERROR: no files found in {ResultsFolder.FullName}");
                     continue;
                 }
                    
@@ -201,10 +202,10 @@ namespace Analyser
                     //check for inconsistencies
                     if (TestCasesCount != -1 && output.Count != TestCasesCount)
                     {
-                        ErrorLogger.AddErrorMessage($"{file.FullName} line count does not equal {TestCasesCount}");
+                        Logger.AddErrorMessage($"{file.FullName} line count does not equal {TestCasesCount}");
                         if (clearBadData)
                         {
-                            ErrorLogger.AddErrorMessage($"deleting {file.FullName}");
+                            Logger.AddErrorMessage($"deleting {file.FullName}");
                             file.Directory.Delete(true);                            
                         }
                         return; //abort
@@ -1213,11 +1214,12 @@ namespace Analyser
                 //File.WriteAllLines($"{OutFolder.FullName}\\pvalues_ttest_rows.csv", ttestRowOutlines);
                 #endregion statistics                
 
-                Console.WriteLine($"finished folder {folder}");
+                Logger.AddLogMessage($"finished folder {folder}");
             }
 
             //out the stuff in the logger
-            ErrorLogger.WriteLogToFilesystem("errorlog.txt");
+            Logger.WriteErrorLogToFilesystem("errorlog.txt");
+            Logger.WriteLogToFilesystem("log.txt");
         }
 
         public static void RunPerFileWorkload(List<Line> output, ref ConcurrentBag<List<Line>> bagLines, List<Bucket> BucketList, ref List<Bucket> allBuckets, ref List<List<Bucket>> ensembleBuckets, List<String> Parameters, String file,
@@ -1462,7 +1464,7 @@ namespace Analyser
             ensembleBuckets.Add(BucketList);
             bagLines.Add(output);
             counter++;
-            Console.WriteLine($"[{type}] finished file {counter} in folder {folder}");
+            Logger.AddLogMessage($"[{type}] finished file {counter} in folder {folder}", verbose);
         }
 
         public static List<Line> GetLinesFromData(String FullPathToFile, TextFieldParser parser, ref int rows, bool pPositiveIsViolation)

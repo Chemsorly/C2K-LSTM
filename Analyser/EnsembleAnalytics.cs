@@ -32,9 +32,9 @@ namespace Analyser
                     {
                         //if incomplete dataset is found, ignore the file in ensemble creation; notify error
                         if (!pAllLines[j].Any())
-                            ErrorLogger.AddErrorMessage($"empty model found in {largestTestCases[0].FullPathToFile} at fileindex {j}");
+                            Logger.AddErrorMessage($"empty model found in {largestTestCases[0].FullPathToFile} at fileindex {j}");
                         else
-                            ErrorLogger.AddErrorMessage($"incomplete result set found in {pAllLines[j][i].FullPathToFile}. Expected {largestTestCases.Count} but found {pAllLines[j].Count}");
+                            Logger.AddErrorMessage($"incomplete result set found in {pAllLines[j][i].FullPathToFile}. Expected {largestTestCases.Count} but found {pAllLines[j].Count}");
                     }
                 }
 

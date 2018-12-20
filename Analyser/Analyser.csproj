@@ -89,7 +89,7 @@
   <ItemGroup>
     <Compile Include="Bucketing.cs" />
     <Compile Include="EnsembleAnalytics.cs" />
-    <Compile Include="ErrorLogger.cs" />
+    <Compile Include="Logger.cs" />
     <Compile Include="Folderlist.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
