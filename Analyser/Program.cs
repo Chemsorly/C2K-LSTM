@@ -56,7 +56,7 @@ namespace Analyser
         static List<String> folders = Folderlist.GetFolderlist();
 
         private static readonly bool clearFolder = true;
-        private static readonly bool clearBadData = false;
+        private static readonly bool clearBadData = true;
         private static readonly bool verbose = true;
 
         static void Main(string[] args)
@@ -1214,7 +1214,7 @@ namespace Analyser
                 //File.WriteAllLines($"{OutFolder.FullName}\\pvalues_ttest_rows.csv", ttestRowOutlines);
                 #endregion statistics                
 
-                Logger.AddLogMessage($"finished folder {folder}");
+                Logger.AddLogMessage($"finished folder {folder}", verbose);
             }
 
             //out the stuff in the logger
