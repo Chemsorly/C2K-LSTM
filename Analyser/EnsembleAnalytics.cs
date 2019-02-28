@@ -25,7 +25,7 @@ namespace Analyser
                 List<Line> processInstanceLines = new List<Line>();
                 for(int j = 0; j < pAllLines.Count; j++) 
                 {
-                    if (Program.TestCasesCount != -1 && pAllLines[j].Count == Program.TestCasesCount)
+                    if (Program.TestCasesCount == -1 || pAllLines[j].Count == Program.TestCasesCount)
                         //if either -1 is defined or number equals target size, continue
                         processInstanceLines.Add(pAllLines[j][i]);
                     else

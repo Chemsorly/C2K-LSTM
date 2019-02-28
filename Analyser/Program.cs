@@ -18,7 +18,7 @@ namespace Analyser
 {
     public class Program
     {
-        private static readonly int MaxTasks = 12;
+        private static readonly int MaxTasks = 12; //maximum amount of parallel tasks
         private static readonly double BucketGranularity = 0.1; //creates a bucket every 0.1 of completion
         private static readonly double FmetricBeta = 1;
         private static readonly double[] ReliabilityThresholds = {
@@ -32,8 +32,8 @@ namespace Analyser
 
         //bucketing type: defines how results are bucketet
         //1 = normal bucketing over all results
-        //2 = triple ranged: 0% - 50%, 50%, 50% - 100%
-        private static readonly int BucketingType = 2;
+        //2 = triple ranged: 0% - 50%, 50%, 50% - 100% (c2k only)
+        private static readonly int BucketingType = 1;
 
         //violation type: predictions bigger than planned equal violation
         //TT dataset: false
@@ -43,7 +43,7 @@ namespace Analyser
         /// <summary>
         /// number of test cases to check against. ignores the entry if number is not equal and notifies the user after the procedure; -1 for ignore
         /// </summary>
-        public static readonly int TestCasesCount = 17690;
+        public static readonly int TestCasesCount = -1; //49002;//17690;
 
         //removes test instances from ensembles if they are below the threshold
         //true: test instances do not appear in the output (i.e. only instances with r >= R are considered)
@@ -56,7 +56,7 @@ namespace Analyser
         static List<String> folders = Folderlist.GetFolderlist();
 
         private static readonly bool clearFolder = true;
-        private static readonly bool clearBadData = true;
+        private static readonly bool clearBadData = false;
         private static readonly bool verbose = true;
 
         static void Main(string[] args)
@@ -1220,6 +1220,8 @@ namespace Analyser
             //out the stuff in the logger
             Logger.WriteErrorLogToFilesystem("errorlog.txt");
             Logger.WriteLogToFilesystem("log.txt");
+            Console.WriteLine("Done");
+            Console.ReadKey();
         }
 
         public static void RunPerFileWorkload(List<Line> output, ref ConcurrentBag<List<Line>> bagLines, List<Bucket> BucketList, ref List<Bucket> allBuckets, ref List<List<Bucket>> ensembleBuckets, List<String> Parameters, String file,
@@ -1464,7 +1466,7 @@ namespace Analyser
             ensembleBuckets.Add(BucketList);
             bagLines.Add(output);
             counter++;
-            Logger.AddLogMessage($"[{type}] finished file {counter} in folder {folder}", verbose);
+            Logger.AddLogMessage($"[{type}] finished file {counter} in folder {folder} with {output.Count} lines", verbose);
         }
 
         public static List<Line> GetLinesFromData(String FullPathToFile, TextFieldParser parser, ref int rows, bool pPositiveIsViolation)
@@ -1511,13 +1513,25 @@ namespace Analyser
                     FullPathToFile = FullPathToFile,
 
                     //c2k
+                    //SequenceID = int.Parse(fields[0]),
+                    //SequenceLength = int.Parse(fields[1]),
+                    //Prefix = int.Parse(fields[2]),
+                    //Completion = double.Parse(fields[3], CultureInfo.InvariantCulture),
+                    //TargetValue = double.Parse(fields[4], CultureInfo.InvariantCulture),
+                    //GT_TargetValue = (int)double.Parse(fields[5]),
+                    //GT_Planned = (int)double.Parse(fields[6]),
+                    //GT_InstanceID = fields[7],
+                    //PrefixActivities = fields[8],
+                    //SuffixActivities = fields[9]
+
+                    //bpi2012, bpi2017
                     SequenceID = int.Parse(fields[0]),
                     SequenceLength = int.Parse(fields[1]),
                     Prefix = int.Parse(fields[2]),
                     Completion = double.Parse(fields[3], CultureInfo.InvariantCulture),
                     TargetValue = double.Parse(fields[4], CultureInfo.InvariantCulture),
-                    GT_TargetValue = (int)double.Parse(fields[5]),
-                    GT_Planned = (int)double.Parse(fields[6]),
+                    GT_TargetValue = fields[5] == "True" ? 1 : 0,
+                    GT_Planned = double.Parse(fields[6]),
                     GT_InstanceID = fields[7],
                     PrefixActivities = fields[8],
                     SuffixActivities = fields[9]
@@ -1658,14 +1672,14 @@ namespace Analyser
             public List<Double> PredictionAccuracies { get; set; }
             public List<Double> DeviationsAbsolute { get; set; }
             //binary prediction
-            public double Precision => (double)ViolationStrings.Count(t => t == "TP") / (double)ViolationStrings.Count(t => t == "TP" || t == "FP");
-            public double Recall => (double)ViolationStrings.Count(t => t == "TP") / (double)ViolationStrings.Count(t => t == "TP" || t == "FN");
-            public double Specificity => (double)ViolationStrings.Count(t => t == "TN") / (double)ViolationStrings.Count(t => t == "TN" || t == "FP");
-            public double FalsePositiveRate => (double)ViolationStrings.Count(t => t == "FP") / (double)ViolationStrings.Count(t => t == "FP" || t == "TN");
-            public double NegativePredictedValue => (double)ViolationStrings.Count(t => t == "TN") / (double)ViolationStrings.Count(t => t == "TN" || t == "TP");
-            public double Accuracy => (double)ViolationStrings.Count(t => t == "TN" || t == "TP") / (double)ViolationStrings.Count;
-            public double FMeasure => ((1 + Math.Pow(FmetricBeta, 2)) * Precision * Recall) / ((Math.Pow(FmetricBeta, 2) * Precision) + Recall);
-            public double MCC => (double)((TPcount * TNcount) - (FPcount * FNcount)) / Math.Sqrt((double)(TPcount + FPcount) * (TPcount + FNcount) * (TNcount + FPcount) * (TNcount + FNcount));
+            public double Precision => NaNtoDefault((double)ViolationStrings.Count(t => t == "TP") / (double)ViolationStrings.Count(t => t == "TP" || t == "FP"),0);
+            public double Recall => NaNtoDefault((double)ViolationStrings.Count(t => t == "TP") / (double)ViolationStrings.Count(t => t == "TP" || t == "FN"),0);
+            public double Specificity => NaNtoDefault((double)ViolationStrings.Count(t => t == "TN") / (double)ViolationStrings.Count(t => t == "TN" || t == "FP"),0);
+            public double FalsePositiveRate => NaNtoDefault((double)ViolationStrings.Count(t => t == "FP") / (double)ViolationStrings.Count(t => t == "FP" || t == "TN"),0);
+            public double NegativePredictedValue => NaNtoDefault((double)ViolationStrings.Count(t => t == "TN") / (double)ViolationStrings.Count(t => t == "TN" || t == "TP"),0);
+            public double Accuracy => NaNtoDefault((double)ViolationStrings.Count(t => t == "TN" || t == "TP") / (double)ViolationStrings.Count,0);
+            public double FMeasure => NaNtoDefault(((1 + Math.Pow(FmetricBeta, 2)) * Precision * Recall) / ((Math.Pow(FmetricBeta, 2) * Precision) + Recall),0);
+            public double MCC => NaNtoDefault((double)((TPcount * TNcount) - (FPcount * FNcount)) / Math.Sqrt((double)(TPcount + FPcount) * (TPcount + FNcount) * (TNcount + FPcount) * (TNcount + FNcount)),0);
             //regression prediction
             public double PredictionAccuraciesMedian => Median(PredictionAccuracies.ToArray());
             public double PredictionMedian => Median(Prediction.ToArray());
@@ -1679,6 +1693,13 @@ namespace Analyser
             public double RAE => DeviationsAbsolute.Sum(t => Math.Abs(t)) / (Prediction.Sum(t => Math.Abs(t - Prediction.Average())));
 
             public double AvgReliability => Lines.Any(t => t.Reliability != null) ? Lines.Average(t => t.Reliability).Value : -1d;
+        }
+
+        public static double NaNtoDefault(double pValue, double pDefault)
+        {
+            if (double.IsNaN(pValue))
+                return pDefault;
+            return pValue;
         }
 
         public static double Median(double[] xs)
