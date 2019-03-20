@@ -38,7 +38,7 @@ namespace Analyser
         //violation type: predictions bigger than planned equal violation
         //TT dataset: false
         //C2K dataset: true
-        private static readonly bool PositiveIsViolation = true;
+        private static readonly bool PositiveIsViolation = false;
 
         /// <summary>
         /// number of test cases to check against. ignores the entry if number is not equal and notifies the user after the procedure; -1 for ignore
@@ -1508,48 +1508,25 @@ namespace Analyser
                 //15 violation_predicted bool
                 //16 violation_string string
 
+                //extract target value (usually either bool or double)
+                double target;
+                if (!double.TryParse(fields[5], out target))
+                    target = fields[5] == "True" ? 1 : 0;
+
                 Line line = new Line()
                 {
                     FullPathToFile = FullPathToFile,
 
-                    //c2k
-                    //SequenceID = int.Parse(fields[0]),
-                    //SequenceLength = int.Parse(fields[1]),
-                    //Prefix = int.Parse(fields[2]),
-                    //Completion = double.Parse(fields[3], CultureInfo.InvariantCulture),
-                    //TargetValue = double.Parse(fields[4], CultureInfo.InvariantCulture),
-                    //GT_TargetValue = (int)double.Parse(fields[5]),
-                    //GT_Planned = (int)double.Parse(fields[6]),
-                    //GT_InstanceID = fields[7],
-                    //PrefixActivities = fields[8],
-                    //SuffixActivities = fields[9]
-
-                    //bpi2012, bpi2017
                     SequenceID = int.Parse(fields[0]),
                     SequenceLength = int.Parse(fields[1]),
                     Prefix = int.Parse(fields[2]),
                     Completion = double.Parse(fields[3], CultureInfo.InvariantCulture),
                     TargetValue = double.Parse(fields[4], CultureInfo.InvariantCulture),
-                    GT_TargetValue = fields[5] == "True" ? 1 : 0,
+                    GT_TargetValue = target,
                     GT_Planned = double.Parse(fields[6]),
                     GT_InstanceID = fields[7],
                     PrefixActivities = fields[8],
                     SuffixActivities = fields[9]
-
-                    //bpi2012
-                    //SequenceID = int.Parse(fields[0]),
-                    //SequenceLength = int.Parse(fields[1]),
-                    //Prefix = int.Parse(fields[2]),
-                    //SumPrevious = double.Parse(fields[3], CultureInfo.InvariantCulture),
-                    //Timestamp = double.Parse(fields[3], CultureInfo.InvariantCulture),
-                    //Completion = double.Parse(fields[4], CultureInfo.InvariantCulture),
-                    //GT_SumPrevious = fields[5] == "True" ? 1 : 0,
-                    //GT_Timestamp = fields[5] == "True" ? 1 : 0,
-                    //GT_Planned = 0.5d,
-                    //GT_InstanceID = fields[6],
-                    //PrefixActivities = fields[7],
-                    ////PredictedActivities = fields[11],
-                    //SuffixActivities = fields[8]
                 };
 
                 //calculate accuracy values
